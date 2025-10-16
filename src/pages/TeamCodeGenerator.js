@@ -5,11 +5,31 @@ import './codegen.css';
 const leagues = [
 	"League of Ireland Premier Division",
 	"League of Ireland First Division",
-];
+	"Northern Ireland Football League Premiership",
+	"Scottish Premiership",
+	"English Premier League",
+	"English Championship",
+	"English League One",
+	"English League Two",
+	"Spanish La Liga",
+	"Italian Serie A",
+	"German Bundesliga",
+	"French Ligue 1",
+	];
 
 const codes = {
 	"League of Ireland Premier Division": 'IR1',
 	"League of Ireland First Division": 'IR2',
+	"Northern Ireland Football League Premiership": 'NIR1',
+	"Scottish Premiership": 'SC1',
+	"English Premier League": 'GB1',
+	"English Championship": 'GB2',
+	"English League One": 'GB3',
+	"English League Two": 'GB4',
+	"Spanish La Liga": 'ES1',
+	"Italian Serie A": 'IT1',
+	"German Bundesliga": 'DE1',
+	"French Ligue 1": 'FR1',
 };
 
 const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'http://65.109.20.138:8000';
@@ -56,7 +76,6 @@ function TeamCodeGenerator() {
 						map[club.name] = club.id;
 						return map;
 					}, {});
-					console.log(teamMapping);
 					setTeamMap(teamMapping);
 				} catch (error) {
 					console.error("Error fetching teams:", error);
