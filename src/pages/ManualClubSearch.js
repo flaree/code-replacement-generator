@@ -335,6 +335,7 @@ function ManualClubSearch() {
                             <input
                                 type="text"
                                 value={competition}
+                                placeholder='SSE Airtricity League Mens Premier Division'
                                 onChange={(e) => setCompetition(e.target.value)}
                                 style={inputStyle}
                             />
@@ -346,6 +347,7 @@ function ManualClubSearch() {
                             <textarea
                                 value={additionalCodes}
                                 onChange={(e) => setAdditionalCodes(e.target.value)}
+                                placeholder='iaa    in action against (use a tab between codes and description)'
                                 onKeyDown={(e) => {
                                     if (e.key === 'Tab') {
                                         e.preventDefault();

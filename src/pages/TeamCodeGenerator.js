@@ -320,6 +320,7 @@ function TeamCodeGenerator() {
 										<textarea
 											value={additionalCodes}
 											onChange={(e) => setAdditionalCodes(e.target.value)}
+											placeholder='iaa    in action against (use a tab between codes and description)'
 											onKeyDown={(e) => {
 												if (e.key === 'Tab') {
 													e.preventDefault();
