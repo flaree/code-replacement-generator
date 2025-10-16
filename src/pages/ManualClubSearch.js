@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './codegen.css';
 
-const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://transfermarkt-api.fly.dev';
+const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'http://65.109.20.138';
 
 function ManualClubSearch() {
 	const [teamSearch1, setTeamSearch1] = useState('');
