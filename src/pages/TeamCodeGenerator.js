@@ -61,6 +61,7 @@ function TeamCodeGenerator() {
 	const [delimiter2, setDelimiter2] = useState('');
 	const [shouldShorten, setShouldShorten] = useState(true);
 	const [selectedFormat, setSelectedFormat] = useState(formats[0]); // Default to the first format
+	const [loading, setLoading] = useState(false); // New state for loading indicator
 
 
 	useEffect(() => {
@@ -90,6 +91,7 @@ function TeamCodeGenerator() {
 
 	const handleGenerate = async () => {
 		try {
+			setLoading(true); // Set loading to true when generation starts
 			const clubInfo = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam1]}/profile`);
 			const clubData = await clubInfo.json();
 
@@ -121,14 +123,14 @@ function TeamCodeGenerator() {
 
 			const code = [
 				...squad1Filtered.map(
-					(player) => `${delimiter1 || '-'}${player.number || '-'}\t${player.position === 'Goalkeeper' ? formatPlayer(player, selectedTeam1, delimiter1) : formatPlayer(player, selectedTeam1, delimiter1)}`
+					(player) => `${delimiter1 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam1, delimiter1)}`
 				), "\n",
 
 				...squad1Filtered.map(
 					(player) => `.${delimiter1}${player.number || '-'}\t${player.name || '-'}`
 				), "\n",
 				...squad2Filtered.map(
-					(player) => `${delimiter2 || '-'}${player.number || '-'}\t${player.position === 'Goalkeeper' ? formatPlayer(player, selectedTeam2, delimiter2) : formatPlayer(player, selectedTeam2, delimiter2)}`
+					(player) => `${delimiter2 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam2, delimiter2)}`
 				), "\n",
 				...squad2Filtered.map(
 					(player) => `.${delimiter2}${player.number || '-'}\t${player.name || '-'}`
@@ -146,11 +148,11 @@ function TeamCodeGenerator() {
 			}
 
 			setGeneratedCode(finalCodes);
-
-			setGeneratedCode(finalCodes);
 		} catch (error) {
 			console.error("Error fetching squad data:", error);
 			alert("Failed to fetch squad/club data. Please try again.");
+		} finally {
+			setLoading(false); // Set loading to false when generation is complete
 		}
 	};
 
@@ -375,19 +377,20 @@ function TeamCodeGenerator() {
 				)}
 				<button
 					type="submit"
-					disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2}
+					disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
 					style={{
 						padding: '10px 20px',
-						backgroundColor: !selectedLeague || !selectedTeam1 || !selectedTeam2 ? '#ccc' : '#007BFF',
+						backgroundColor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? '#ccc' : '#007BFF',
 						color: 'white',
 						border: 'none',
 						borderRadius: '4px',
-						cursor: !selectedLeague || !selectedTeam1 || !selectedTeam2 ? 'not-allowed' : 'pointer',
+						cursor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
 					}}
 				>
-					Generate Code
+					{loading ? 'Generating...' : 'Generate Code'} {/* Show loading text */}
 				</button>
 			</form>
+			{loading && <p style={{ color: 'white' }}>Loading, please wait...</p>} {/* Show loading indicator */}
 			{generatedCode && (
 				<div>
 					<h2>Generated Code:</h2>

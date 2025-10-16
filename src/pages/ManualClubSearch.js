@@ -31,6 +31,7 @@ function ManualClubSearch() {
     const [selectedDate, setSelectedDate] = useState('');
     const [selectedFormat, setSelectedFormat] = useState(formats[0]); 
     const [shouldShorten, setShouldShorten] = useState(true);
+    const [loading, setLoading] = useState(false); // New state for loading indicator
 
     const handleSearch = async (searchTerm, setResults, resetSelection) => {
         try {
@@ -49,6 +50,7 @@ function ManualClubSearch() {
 
     const handleGenerate = async () => {
         try {
+            setLoading(true); // Set loading to true when generation starts
             setGeneratedCode('');
             const clubInfo = await fetch(`${BASE_URL}/clubs/${selectedTeam1.id}/profile`);
             const clubData = await clubInfo.json();
@@ -109,6 +111,8 @@ function ManualClubSearch() {
         } catch (error) {
             console.error("Error generating code:", error);
             alert("Failed to generate code. Please try again.");
+        } finally {
+            setLoading(false); // Set loading to false when generation is complete
         }
     };
 
@@ -372,19 +376,20 @@ function ManualClubSearch() {
             )}
             <button
                 onClick={handleGenerate}
-                disabled={!selectedTeam1 || !selectedTeam2}
+                disabled={!selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
                 style={{
                     padding: '10px 20px',
-                    backgroundColor: !selectedTeam1 || !selectedTeam2 ? '#ccc' : '#007BFF',
+                    backgroundColor: !selectedTeam1 || !selectedTeam2 || loading ? '#ccc' : '#007BFF',
                     color: 'white',
                     border: 'none',
                     borderRadius: '4px',
-                    cursor: !selectedTeam1 || !selectedTeam2 ? 'not-allowed' : 'pointer',
+                    cursor: !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
                     marginTop: '20px',
                 }}
             >
-                Generate Code
+                {loading ? 'Generating...' : 'Generate Code'} {/* Show loading text */}
             </button>
+            {loading && <p style={{ color: 'white' }}>Loading, please wait...</p>} {/* Show loading indicator */}
             {generatedCode && (
                 <div>
                     <h2>Generated Code:</h2>
