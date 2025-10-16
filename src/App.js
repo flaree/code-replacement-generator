@@ -14,10 +14,10 @@ function App() {
           <nav style={navStyle}>
             <ul style={navListStyle}>
               <li style={navItemStyle}>
-                <Link to="/" style={linkStyle}>League Game</Link>
+                <Link to="/" style={linkStyle}>Clubs</Link>
               </li>
               <li style={navItemStyle}>
-                <Link to="/manual" style={linkStyle}>Manual Search</Link>
+                <Link to="/league" style={linkStyle}>League</Link>
               </li>
               <li style={navItemStyle}>
                 <Link to="/about" style={linkStyle}>About</Link>
@@ -26,8 +26,8 @@ function App() {
           </nav>
         </header>
         <Routes>
-          <Route path="/" element={<TeamCodeGenerator />} />
-          <Route path="/manual" element={<ManualClubSearch />} />
+          <Route path="/" element={<ManualClubSearch />} />
+          <Route path="/league" element={<TeamCodeGenerator />} />
           <Route path="/about" element={<About />} />
         </Routes>
         <footer style={footerStyle}>

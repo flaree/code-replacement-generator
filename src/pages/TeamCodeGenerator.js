@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './codegen.css';
 
+
 const leagues = [
 	"League of Ireland Premier Division",
 	"League of Ireland First Division",
@@ -13,6 +14,18 @@ const codes = {
 
 const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'http://65.109.20.138:8000';
 
+const formats = [
+    "{playerName} of {team}",
+    "{team} player {playerName}",
+    "{playerName} ({team})",
+	"{team} #{shirtNumber} {playerName}",
+	"{playerName}, {team}",
+	"{playerName}",
+	"{team} {playerName} #{shirtNumber}",
+	"{playerName} - {team} ({shirtNumber})",
+];
+
+
 function TeamCodeGenerator() {
 	const [selectedLeague, setSelectedLeague] = useState('');
 	const [teams, setTeams] = useState([]);
@@ -22,9 +35,13 @@ function TeamCodeGenerator() {
 	const [selectedDate, setSelectedDate] = useState('');
 	const [generatedCode, setGeneratedCode] = useState('');
 	const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
-	const [stadium, setStadium] = useState('');
 	const [referee, setReferee] = useState('');
 	const [additionalCodes, setAdditionalCodes] = useState('');
+	const [delimiter1, setDelimiter1] = useState('');
+	const [delimiter2, setDelimiter2] = useState('');
+	const [shouldShorten, setShouldShorten] = useState(true);
+	const [selectedFormat, setSelectedFormat] = useState(formats[0]); // Default to the first format
+
 
 	useEffect(() => {
 		if (selectedLeague) {
@@ -56,7 +73,6 @@ function TeamCodeGenerator() {
 		try {
 			const clubInfo = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam1]}/profile`);
 			const clubData = await clubInfo.json();
-			setStadium(clubData.stadiumName);
 
 			const response1 = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam1]}/players`);
 			const squad1 = await response1.json();
@@ -65,30 +81,38 @@ function TeamCodeGenerator() {
 			const squad2 = await response2.json();
 
 			const squad1Filtered = squad1.players.map((player) => ({
-				number: player.foot,
+				number: player.shirtNumber,
 				name: player.name,
 				position: player.position,
 			}));
 
 			const squad2Filtered = squad2.players.map((player) => ({
-				number: player.foot,
+				number: player.shirtNumber,
 				name: player.name,
 				position: player.position,
 			}));
 
+			const formatPlayer = (player, team, delimiter) => {
+                return selectedFormat
+                    .replace("{playerName}", player.name || "-")
+                    .replace("{team}", team || "-")
+                    .replace("{delimiter}", delimiter || "-")
+					.replace("{shirtNumber}", player.number || "-");
+            };
+
 			const code = [
 				...squad1Filtered.map(
-					(player) => `${selectedTeam1[0]?.toLowerCase() || '-'}${player.number || '-'}\t${player.position === 'Goalkeeper' ? `${selectedTeam1} goalkeeper ${player.name || '-'}` : `${player.name || '-'} of ${selectedTeam1 || '-'}`}`
+					(player) => `${delimiter1 || '-'}${player.number || '-'}\t${player.position === 'Goalkeeper' ? formatPlayer(player, selectedTeam1, delimiter1) : formatPlayer(player, selectedTeam1, delimiter1)}`
 				), "\n",
 
 				...squad1Filtered.map(
-					(player) => `.${selectedTeam1[0]?.toLowerCase() || '-'}${player.number || '-'}\t${player.name || '-'}`
+					(player) => `.${delimiter1}${player.number || '-'}\t${player.name || '-'}`
 				), "\n",
 				...squad2Filtered.map(
-					(player) => `${selectedTeam2[0]?.toLowerCase() || '-'}${player.number || '-'}\t${player.position === 'Goalkeeper' ? `${selectedTeam2} goalkeeper ${player.name || '-'}` : `${player.name || '-'} of ${selectedTeam2 || '-'}`}`
+					(player) => `${delimiter2 || '-'}${player.number || '-'}\t${player.position === 'Goalkeeper' ? formatPlayer(player, selectedTeam2, delimiter2) : formatPlayer(player, selectedTeam2, delimiter2)}`
 				), "\n",
 				...squad2Filtered.map(
-					(player) => `.${selectedTeam2[0]?.toLowerCase() || '-'}${player.number || '-'}\t${player.name || '-'}`
+					(player) => `.${delimiter2}${player.number || '-'}\t${player.name || '-'}`
 				),
 			].join('\n');
 
@@ -96,7 +120,13 @@ function TeamCodeGenerator() {
 				? `Ref	Referee ${referee || '-'}\nref	referee ${referee || '-'}\n${additionalCodes}\n\n`
 				: '';
 
-			const finalCodes = `${additionalInfo}st	${stadium || '-'}\n${selectedTeam1[0]?.toLowerCase()} ${selectedTeam1}\n${selectedTeam1[0]?.toLowerCase()}p ${selectedTeam1} players\n${selectedTeam1[0]?.toLowerCase()}s ${selectedTeam1} supporters\n${selectedTeam2[0]?.toLowerCase()} ${selectedTeam2}\n${selectedTeam2[0]?.toLowerCase()}p ${selectedTeam2} players\n${selectedTeam2[0]?.toLowerCase()}s ${selectedTeam1} supporters\n\n\n${code}`;
+			let finalCodes = `${additionalInfo}st	${clubData.stadiumName || '-'}\n${delimiter1} ${selectedTeam1}\n${delimiter1}p ${selectedTeam1} players\n${delimiter1}s ${selectedTeam1} supporters\n${delimiter2} ${selectedTeam2}\n${delimiter2}p ${selectedTeam2} players\n${delimiter2}s ${selectedTeam2} supporters\n\n\n${code}`;
+
+			if (shouldShorten) {
+				finalCodes = finalCodes.replace(/Football Club/g, 'FC');
+			}
+
+			setGeneratedCode(finalCodes);
 
 			setGeneratedCode(finalCodes);
 		} catch (error) {
@@ -115,7 +145,7 @@ function TeamCodeGenerator() {
 	};
 
 	return (
-		<div style={{ padding: '20px', textAlign: 'center' }} className='generated-code-page'>
+		<div style={{ padding: '20px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }} className='generated-code-page'>
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
@@ -151,57 +181,86 @@ function TeamCodeGenerator() {
 						<div>
 							<label>
 								Select Home Team:
-								<select
-									value={selectedTeam1}
-									onChange={(e) => setSelectedTeam1(e.target.value)}
-									required
-									style={inputStyle}
-								>
-									<option value="" disabled>
-										-- Select Home Team --
-									</option>
-									{teams.map((team) => (
-										<option key={team} value={team}>
-											{team}
+								<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+									<select
+										value={selectedTeam1}
+										onChange={(e) => {
+											setSelectedTeam1(e.target.value);
+											setDelimiter1(e.target.value[0]?.toLowerCase() || ''); // Default delimiter to the first letter
+										}}
+										required
+										style={inputStyle}
+									>
+										<option value="" disabled>
+											-- Select Home Team --
 										</option>
-									))}
-								</select>
+										{teams.map((team) => (
+											<option key={team} value={team}>
+												{team}
+											</option>
+										))}
+									</select>
+									<div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
+										<label style={{ fontSize: '12px' }}>Delim:</label>
+										<input
+											type="text"
+											value={delimiter1}
+											onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())} // Limit input to one lowercase letter
+											style={{
+												width: '40px',
+												textAlign: 'center',
+												padding: '8px',
+												border: '1px solid #ccc',
+												borderRadius: '4px',
+											}}
+										/>
+									</div>
+								</div>
 							</label>
 						</div>
 						<div>
 							<label>
 								Select Away Team:
-								<select
-									value={selectedTeam2}
-									onChange={(e) => setSelectedTeam2(e.target.value)}
-									required
-									style={inputStyle}
-								>
-									<option value="" disabled>
-										-- Select Away Team --
-									</option>
-									{teams.map((team) => (
-										<option key={team} value={team}>
-											{team}
+								<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+									<select
+										value={selectedTeam2}
+										onChange={(e) => {
+											setSelectedTeam2(e.target.value);
+											setDelimiter2(e.target.value[0]?.toLowerCase() || ''); // Default delimiter to the first letter
+										}}
+										required
+										style={inputStyle}
+									>
+										<option value="" disabled>
+											-- Select Away Team --
 										</option>
-									))}
-								</select>
+										{teams.map((team) => (
+											<option key={team} value={team}>
+												{team}
+											</option>
+										))}
+									</select>
+									<div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
+										<label style={{ fontSize: '12px' }}>Delim:</label>
+										<input
+											type="text"
+											value={delimiter2}
+											onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())} // Limit input to one lowercase letter
+											style={{
+												width: '40px',
+												textAlign: 'center',
+												padding: '8px',
+												border: '1px solid #ccc',
+												borderRadius: '4px',
+											}}
+										/>
+									</div>
+								</div>
 							</label>
 						</div>
 						<div>
 							<label>
-								Select Fixture Date (Optional):
-								<input
-									type="date"
-									value={selectedDate}
-									onChange={(e) => setSelectedDate(e.target.value)}
-									style={inputStyle}
-								/>
-							</label>
-						</div>
-						<div>
-							<label>
-								Additional Info:
+								Additional Options:
 								<input
 									type="checkbox"
 									checked={showAdditionalInfo}
@@ -212,6 +271,17 @@ function TeamCodeGenerator() {
 						</div>
 						{showAdditionalInfo && (
 							<>
+								<div>
+									<label>
+										Select Fixture Date:
+										<input
+											type="date"
+											value={selectedDate}
+											onChange={(e) => setSelectedDate(e.target.value)}
+											style={inputStyle}
+										/>
+									</label>
+								</div>
 								<div>
 									<label>
 										Referee:
@@ -253,6 +323,31 @@ function TeamCodeGenerator() {
 												resize: 'none', // Disable manual resizing
 											}}
 										/>
+									</label>
+									<label>
+										Replace 'Football Club' with 'FC':
+										<input
+											type="checkbox"
+											checked={shouldShorten}
+											onChange={(e) => setShouldShorten(e.target.checked)}
+											style={{ marginLeft: '10px' }}
+										/>
+									</label>
+								</div>
+								<div>
+									<label>
+										Select Format:
+										<select
+											value={selectedFormat}
+											onChange={(e) => setSelectedFormat(e.target.value)}
+											style={inputStyle}
+										>
+											{formats.map((format, index) => (
+												<option key={index} value={format}>
+													{format}
+												</option>
+											))}
+										</select>
 									</label>
 								</div>
 							</>
