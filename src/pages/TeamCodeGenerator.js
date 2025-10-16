@@ -11,7 +11,7 @@ const codes = {
 	"League of Ireland First Division": 'IR2',
 };
 
-const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'http://65.109.20.138';
+const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'http://65.109.20.138:8000';
 
 function TeamCodeGenerator() {
 	const [selectedLeague, setSelectedLeague] = useState('');
