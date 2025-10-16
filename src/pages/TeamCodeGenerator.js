@@ -28,7 +28,7 @@ const codes = {
 	"English League Two": 'GB4',
 	"Spanish La Liga": 'ES1',
 	"Italian Serie A": 'IT1',
-	"German Bundesliga": 'DE1',
+	"German Bundesliga": 'L1',
 	"French Ligue 1": 'FR1',
 };
 
