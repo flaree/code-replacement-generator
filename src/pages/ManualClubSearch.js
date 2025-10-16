@@ -32,10 +32,12 @@ function ManualClubSearch() {
     const [selectedFormat, setSelectedFormat] = useState(formats[0]); 
     const [shouldShorten, setShouldShorten] = useState(true);
     const [loading, setLoading] = useState(false); // New state for loading indicator
+    const [searchingTeam1, setSearchingTeam1] = useState(false);
+    const [searchingTeam2, setSearchingTeam2] = useState(false);
 
-    const handleSearch = async (searchTerm, setResults, resetSelection) => {
+    const handleSearch = async (searchTerm, setResults, resetSelection, setSearching) => {
         try {
-            // Reset the selection and results before searching
+            setSearching(true); // Set searching to true
             resetSelection();
             setResults([]);
 
@@ -45,6 +47,8 @@ function ManualClubSearch() {
         } catch (error) {
             console.error("Error searching for teams:", error);
             alert("Failed to search for teams. Please try again.");
+        } finally {
+            setSearching(false); // Set searching to false
         }
     };
 
@@ -140,18 +144,19 @@ function ManualClubSearch() {
                         onClick={() => handleSearch(teamSearch1, setTeamResults1, () => {
                             setSelectedTeam1(null);
                             setDelimiter1('');
-                        })}
+                        }, setSearchingTeam1)}
+                        disabled={searchingTeam1} // Disable button when searching
                         style={{
                             padding: '8px 16px',
                             marginLeft: '10px',
-                            backgroundColor: '#007BFF',
+                            backgroundColor: searchingTeam1 ? '#ccc' : '#007BFF', // Change color when disabled
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
-                            cursor: 'pointer',
+                            cursor: searchingTeam1 ? 'not-allowed' : 'pointer',
                         }}
                     >
-                        Search
+                        {searchingTeam1 ? 'Searching...' : 'Search'} {/* Update text */}
                     </button>
                 </label>
                 {teamResults1.length > 0 && (
@@ -210,18 +215,19 @@ function ManualClubSearch() {
                         onClick={() => handleSearch(teamSearch2, setTeamResults2, () => {
                             setSelectedTeam2(null);
                             setDelimiter2('');
-                        })}
+                        }, setSearchingTeam2)}
+                        disabled={searchingTeam2} // Disable button when searching
                         style={{
                             padding: '8px 16px',
                             marginLeft: '10px',
-                            backgroundColor: '#007BFF',
+                            backgroundColor: searchingTeam2 ? '#ccc' : '#007BFF', // Change color when disabled
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
-                            cursor: 'pointer',
+                            cursor: searchingTeam2 ? 'not-allowed' : 'pointer',
                         }}
                     >
-                        Search
+                        {searchingTeam2 ? 'Searching...' : 'Search'} {/* Update text */}
                     </button>
                 </label>
                 {teamResults2.length > 0 && (
@@ -369,7 +375,7 @@ function ManualClubSearch() {
                                 style={{
                                     ...inputStyle,
                                     overflow: 'hidden', // Prevent scrollbars
-                                    resize: 'none', // Disable manual resizing
+                                    resize: 'vertical', // Disable manual resizing
                                 }}
                             />
                         </label>
