@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import './codegen.css';
 
-const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://api.lensflxre.com';
+const BASE_URL = process.env.NODE_ENV === 'development' ? 'https://api.lensflxre.com' : 'https://api.lensflxre.com';
 
 const formats = [
     "{playerName} of {team}",
     "{team} player {playerName}",
     "{playerName} ({team})",
-	"{team} #{shirtNumber} {playerName}",
-	"{playerName}, {team}",
-	"{playerName}",
-	"{team} {playerName} #{shirtNumber}",
-	"{playerName} - {team} (#{shirtNumber})",
+    "{team} #{shirtNumber} {playerName}",
+    "{playerName}, {team}",
+    "{playerName}",
+    "{team} {playerName} #{shirtNumber}",
+    "{playerName} - {team} (#{shirtNumber})",
 ];
 
 function ManualClubSearch() {
@@ -29,11 +29,12 @@ function ManualClubSearch() {
     const [referee, setReferee] = useState('');
     const [additionalCodes, setAdditionalCodes] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
-    const [selectedFormat, setSelectedFormat] = useState(formats[0]); 
+    const [selectedFormat, setSelectedFormat] = useState(formats[0]);
     const [shouldShorten, setShouldShorten] = useState(true);
     const [loading, setLoading] = useState(false); // New state for loading indicator
     const [searchingTeam1, setSearchingTeam1] = useState(false);
     const [searchingTeam2, setSearchingTeam2] = useState(false);
+    const [sortOption, setSortOption] = useState('position');
 
     const handleSearch = async (searchTerm, setResults, resetSelection, setSearching) => {
         try {
@@ -81,21 +82,35 @@ function ManualClubSearch() {
                     .replace("{playerName}", player.name || "-")
                     .replace("{team}", team || "-")
                     .replace("{delimiter}", delimiter || "-")
-					.replace("{shirtNumber}", player.number || "-");
+                    .replace("{shirtNumber}", player.number || "-");
             };
 
+            const sortPlayers = (players) => {
+				if (sortOption === 'number') {
+					return players.sort((a, b) => {
+						if ((a.number === undefined || a.number === '-') && (b.number !== undefined && b.number !== '-')) return 1;
+						if ((a.number !== undefined && a.number !== '-') && (b.number === undefined || b.number === '-')) return -1;
+						return Number(a.number) - Number(b.number);
+					});
+				}
+				return players;
+			};
+
+            const sortedSquad1 = sortPlayers(squad1Filtered);
+            const sortedSquad2 = sortPlayers(squad2Filtered);
+
             const code = [
-                ...squad1Filtered.map(
+                ...sortedSquad1.map(
                     (player) => `${delimiter1 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam1.name, delimiter1)}`
                 ), "\n",
 
-                ...squad1Filtered.map(
+                ...sortedSquad1.map(
                     (player) => `.${delimiter1}${player.number || '-'}\t${player.name || '-'}`
                 ), "\n",
-                ...squad2Filtered.map(
+                ...sortedSquad2.map(
                     (player) => `${delimiter2 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam2.name, delimiter2)}`
                 ), "\n",
-                ...squad2Filtered.map(
+                ...sortedSquad2.map(
                     (player) => `.${delimiter2}${player.number || '-'}\t${player.name || '-'}`
                 ),
             ].join('\n');
@@ -378,6 +393,19 @@ function ManualClubSearch() {
                                     resize: 'vertical', // Disable manual resizing
                                 }}
                             />
+                        </label>
+                    </div>
+                    <div>
+                        <label>
+                            Sort Players By:
+                            <select
+                                value={sortOption}
+                                onChange={(e) => setSortOption(e.target.value)}
+                                style={inputStyle}
+                            >
+                                <option value="number">Number</option>
+                                <option value="position">Position</option>
+                            </select>
                         </label>
                     </div>
                 </>

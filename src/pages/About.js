@@ -25,6 +25,9 @@ function About() {
     <div style={aboutStyle}>
       <h1 style={headingStyle}>About This App</h1>
       <p style={paragraphStyle}>
+        Note that this app is still a work in progress. UI is not my strong suit so please excuse the basic design and the small formatting issues etc.
+      </p>
+      <p style={paragraphStyle}>
         This app was created to simplify the process of generating photomechanic code replacements for football matches. By selecting teams from various leagues, users can quickly obtain the necessary codes for their workflows.
       </p>
       <p style={paragraphStyle}>It was a quick project with no thought/planning, just the info needed to make generating of the code replacements simple and easy.</p>

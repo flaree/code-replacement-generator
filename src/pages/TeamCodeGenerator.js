@@ -1,22 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './codegen.css';
 
-
-const leagues = [
-	"League of Ireland Premier Division",
-	"League of Ireland First Division",
-	"Northern Ireland Football League Premiership",
-	"Scottish Premiership",
-	"English Premier League",
-	"English Championship",
-	"English League One",
-	"English League Two",
-	"Spanish La Liga",
-	"Italian Serie A",
-	"German Bundesliga",
-	"French Ligue 1",
-	];
-
 const codes = {
 	"League of Ireland Premier Division": 'IR1',
 	"League of Ireland First Division": 'IR2',
@@ -30,14 +14,18 @@ const codes = {
 	"Italian Serie A": 'IT1',
 	"German Bundesliga": 'L1',
 	"French Ligue 1": 'FR1',
+	"Liga Portugal": 'PO1',
+	"Brazilian Serie A": 'BRA1',
+	"Major League Soccer": 'MLS1',
+	"Dutch Eredivisie": 'NL1',
 };
 
-const BASE_URL = process.env.NODE_ENV === 'development' ? 'http://127.0.0.1:8000' : 'https://api.lensflxre.com';
+const BASE_URL = process.env.NODE_ENV === 'development' ? 'https://api.lensflxre.com' : 'https://api.lensflxre.com';
 
 const formats = [
-    "{playerName} of {team}",
-    "{team} player {playerName}",
-    "{playerName} ({team})",
+	"{playerName} of {team}",
+	"{team} player {playerName}",
+	"{playerName} ({team})",
 	"{team} #{shirtNumber} {playerName}",
 	"{playerName}, {team}",
 	"{playerName}",
@@ -62,12 +50,14 @@ function TeamCodeGenerator() {
 	const [shouldShorten, setShouldShorten] = useState(true);
 	const [selectedFormat, setSelectedFormat] = useState(formats[0]); // Default to the first format
 	const [loading, setLoading] = useState(false); // New state for loading indicator
+	const [sortOption, setSortOption] = useState('position'); // 'number' or 'name'
 
 
 	useEffect(() => {
 		if (selectedLeague) {
 			const fetchTeams = async () => {
 				try {
+					setTeams([]); // Clear previous teams
 					const response = await fetch(`${BASE_URL}/competitions/${codes[selectedLeague]}/clubs`);
 					const data = await response.json();
 
@@ -113,26 +103,44 @@ function TeamCodeGenerator() {
 				position: player.position,
 			}));
 
+			const sortPlayers = (players) => {
+				if (sortOption === 'number') {
+					return players.sort((a, b) => {
+						if ((a.number === undefined || a.number === '-') && (b.number !== undefined && b.number !== '-')) return 1;
+						if ((a.number !== undefined && a.number !== '-') && (b.number === undefined || b.number === '-')) return -1;
+						return Number(a.number) - Number(b.number);
+					});
+				}
+				return players;
+			};
+
+			const sortedSquad1 = sortPlayers(squad1Filtered);
+			const sortedSquad2 = sortPlayers(squad2Filtered);
+
+			console.log("Sorted Squad 1:", sortedSquad1);
+			
+			console.log("Sorted Squad 2:", sortedSquad2);
+
 			const formatPlayer = (player, team, delimiter) => {
-                return selectedFormat
-                    .replace("{playerName}", player.name || "-")
-                    .replace("{team}", team || "-")
-                    .replace("{delimiter}", delimiter || "-")
+				return selectedFormat
+					.replace("{playerName}", player.name || "-")
+					.replace("{team}", team || "-")
+					.replace("{delimiter}", delimiter || "-")
 					.replace("{shirtNumber}", player.number || "-");
-            };
+			};
 
 			const code = [
-				...squad1Filtered.map(
+				...sortedSquad1.map(
 					(player) => `${delimiter1 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam1, delimiter1)}`
 				), "\n",
 
-				...squad1Filtered.map(
+				...sortedSquad1.map(
 					(player) => `.${delimiter1}${player.number || '-'}\t${player.name || '-'}`
 				), "\n",
-				...squad2Filtered.map(
+				...sortedSquad2.map(
 					(player) => `${delimiter2 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam2, delimiter2)}`
 				), "\n",
-				...squad2Filtered.map(
+				...sortedSquad2.map(
 					(player) => `.${delimiter2}${player.number || '-'}\t${player.name || '-'}`
 				),
 			].join('\n');
@@ -157,16 +165,16 @@ function TeamCodeGenerator() {
 	};
 
 	const inputStyle = {
-		padding: '8px',
-		margin: '8px 0',
-		border: '1px solid #ccc',
-		borderRadius: '4px',
-		width: '100%',
-		boxSizing: 'border-box',
-	};
+        padding: '8px',
+        margin: '8px 0',
+        border: '1px solid #ccc',
+        borderRadius: '4px',
+        width: '100%',
+        boxSizing: 'border-box',
+    };
 
 	return (
-		<div style={{ padding: '20px', textAlign: 'center', maxWidth: '800px', margin: '0 auto' }} className='generated-code-page'>
+		<div style={{ padding: '20px', textAlign: 'center' }} className='generated-code-page'>
 			<form
 				onSubmit={(e) => {
 					e.preventDefault();
@@ -189,7 +197,7 @@ function TeamCodeGenerator() {
 							<option value="" disabled>
 								-- Select a League --
 							</option>
-							{leagues.map((league) => (
+							{Object.keys(codes).map((league) => (
 								<option key={league} value={league}>
 									{league}
 								</option>
@@ -286,7 +294,7 @@ function TeamCodeGenerator() {
 									type="checkbox"
 									checked={showAdditionalInfo}
 									onChange={(e) => setShowAdditionalInfo(e.target.checked)}
-									style={{ marginLeft: '10px' }}
+									// style={{ marginLeft: '10px' }}
 								/>
 							</label>
 						</div>
@@ -336,13 +344,12 @@ function TeamCodeGenerator() {
 												}
 											}}
 											onInput={(e) => {
-												e.target.style.height = 'auto'; // Reset height to calculate new height
 												e.target.style.height = `${e.target.scrollHeight}px`; // Set height based on scroll height
 											}}
 											style={{
 												...inputStyle,
 												overflow: 'hidden', // Prevent scrollbars
-												resize: 'none', // Disable manual resizing
+												resize: 'vertical', // Disable manual resizing
 											}}
 										/>
 									</label>
@@ -356,71 +363,86 @@ function TeamCodeGenerator() {
 										/>
 									</label>
 								</div>
-								<div>
-									<label>
-										Select Format:
-										<select
-											value={selectedFormat}
-											onChange={(e) => setSelectedFormat(e.target.value)}
-											style={inputStyle}
-										>
-											{formats.map((format, index) => (
-												<option key={index} value={format}>
-													{format}
-												</option>
-											))}
-										</select>
-									</label>
-								</div>
-							</>
-						)}
+							<div>
+								<label>
+									Sort Players By:
+									<select
+										value={sortOption}
+										onChange={(e) => setSortOption(e.target.value)}
+										style={inputStyle}
+									>
+										<option value="number">Number</option>
+										<option value="position">Position</option>
+									</select>
+								</label>
+							</div>
+						<div>
+							<label>
+								Select Format:
+								<select
+									value={selectedFormat}
+									onChange={(e) => setSelectedFormat(e.target.value)}
+									style={inputStyle}
+								>
+									{formats.map((format, index) => (
+										<option key={index} value={format}>
+											{format}
+										</option>
+									))}
+								</select>
+							</label>
+						</div>
 					</>
 				)}
+			</>
+				)}
+			<button
+				type="submit"
+				disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
+				style={{
+					padding: '10px 20px',
+					backgroundColor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? '#ccc' : '#007BFF',
+					color: 'white',
+					border: 'none',
+					borderRadius: '4px',
+					cursor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
+				}}
+			>
+				{loading ? 'Generating...' : 'Generate Code'} {/* Show loading text */}
+			</button>
+		</form>
+			{ loading && <p style={{ color: 'white' }}>Loading, please wait...</p> } {/* Show loading indicator */ }
+	{
+		generatedCode && (
+			<div>
+				<h2>Generated Code:</h2>
 				<button
-					type="submit"
-					disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
+					onClick={() => {
+						const blob = new Blob([generatedCode], { type: 'text/plain' });
+						const link = document.createElement('a');
+						link.href = URL.createObjectURL(blob);
+						link.download = `${selectedDate ? selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}-vs-${selectedTeam2}.txt`;
+						link.click();
+					}}
 					style={{
 						padding: '10px 20px',
-						backgroundColor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? '#ccc' : '#007BFF',
+						backgroundColor: '#28A745',
 						color: 'white',
 						border: 'none',
 						borderRadius: '4px',
-						cursor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
+						cursor: 'pointer',
+						marginBottom: '10px',
 					}}
 				>
-					{loading ? 'Generating...' : 'Generate Code'} {/* Show loading text */}
+					Download Code
 				</button>
-			</form>
-			{loading && <p style={{ color: 'white' }}>Loading, please wait...</p>} {/* Show loading indicator */}
-			{generatedCode && (
-				<div>
-					<h2>Generated Code:</h2>
-					<button
-						onClick={() => {
-							const blob = new Blob([generatedCode], { type: 'text/plain' });
-							const link = document.createElement('a');
-							link.href = URL.createObjectURL(blob);
-							link.download = `${selectedDate ? selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}-vs-${selectedTeam2}.txt`;
-							link.click();
-						}}
-						style={{
-							padding: '10px 20px',
-							backgroundColor: '#28A745',
-							color: 'white',
-							border: 'none',
-							borderRadius: '4px',
-							cursor: 'pointer',
-							marginBottom: '10px',
-						}}
-					>
-						Download Code
-					</button>
-					<pre style={{ fontSize: '12px', color: 'black', background: '#f4f4f4', padding: '10px', textAlign: 'left' }}>
-						{generatedCode}
-					</pre>
-				</div>
-			)}
-		</div>
+				<pre style={{ fontSize: '12px', color: 'black', background: '#f4f4f4', padding: '10px', textAlign: 'left' }}>
+					{generatedCode}
+				</pre>
+			</div>
+		)
+	}
+		</div >
 	);
 }
 
