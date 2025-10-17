@@ -4,7 +4,8 @@ import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
 import ManualClubSearch from './pages/ManualClubSearch';
 import About from './pages/About';
-
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 
 function App() {
   return (
@@ -33,6 +34,20 @@ function App() {
         <footer style={footerStyle}>
           <p>Note, information is received via transfermarkt website. Information may not be 100% accurate.</p>
           <p>© 2025 Jamie McGuinness. All rights reserved.</p>
+          <div style={socialMediaInlineStyle}>
+            <a href="https://twitter.com/jxmiemcg" target="_blank" rel="noopener noreferrer" style={iconStyle}>
+              <FontAwesomeIcon icon={faTwitter} />
+            </a>
+            <a href="https://lensflxre.com" target="_blank" rel="noopener noreferrer" style={iconStyle}>
+              <FontAwesomeIcon icon={faChrome} />
+            </a>
+            <a href="https://instagram.com/lensflxre" target="_blank" rel="noopener noreferrer" style={iconStyle}>
+              <FontAwesomeIcon icon={faInstagram} />
+            </a>
+            <a href="https://github.com/flaree" target="_blank" rel="noopener noreferrer" style={iconStyle}>
+              <FontAwesomeIcon icon={faGithub} />
+            </a>
+          </div>
         </footer>
       </div>
     </Router>
@@ -69,6 +84,20 @@ const footerStyle = {
   backgroundColor: '#282c34',
   color: 'white',
   marginTop: '20px',
+};
+
+const socialMediaInlineStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '15px',
+  marginTop: '10px',
+};
+
+const iconStyle = {
+  color: 'white',
+  fontSize: '24px',
+  textDecoration: 'none',
+  transition: 'transform 0.2s',
 };
 
 export default App;
