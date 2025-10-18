@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './codegen.css';
+import AdditionalOptions from '../components/AdditionalOptions';
+import { generateCode } from "../utils/codeGenerator";
+
 
 const codes = {
 	"League of Ireland Premier Division": 'IR1',
@@ -40,18 +43,18 @@ function TeamCodeGenerator() {
 	const [teamMap, setTeamMap] = useState({});
 	const [selectedTeam1, setSelectedTeam1] = useState('');
 	const [selectedTeam2, setSelectedTeam2] = useState('');
-	const [selectedDate, setSelectedDate] = useState('');
 	const [generatedCode, setGeneratedCode] = useState('');
+	const [loading, setLoading] = useState(false); // New state for loading indicator
 	const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
+	const [shouldShorten, setShouldShorten] = useState(true);
+	const [selectedDate, setSelectedDate] = useState('');
 	const [referee, setReferee] = useState('');
+	const [competition, setCompetition] = useState('');
 	const [additionalCodes, setAdditionalCodes] = useState('');
+	const [sortOption, setSortOption] = useState('position');
+	const [selectedFormat, setSelectedFormat] = useState(formats[0]);
 	const [delimiter1, setDelimiter1] = useState('');
 	const [delimiter2, setDelimiter2] = useState('');
-	const [shouldShorten, setShouldShorten] = useState(true);
-	const [selectedFormat, setSelectedFormat] = useState(formats[0]); // Default to the first format
-	const [loading, setLoading] = useState(false); // New state for loading indicator
-	const [sortOption, setSortOption] = useState('position'); // 'number' or 'name'
-
 
 	useEffect(() => {
 		if (selectedLeague) {
@@ -103,58 +106,22 @@ function TeamCodeGenerator() {
 				position: player.position,
 			}));
 
-			const sortPlayers = (players) => {
-				if (sortOption === 'number') {
-					return players.sort((a, b) => {
-						if ((a.number === undefined || a.number === '-') && (b.number !== undefined && b.number !== '-')) return 1;
-						if ((a.number !== undefined && a.number !== '-') && (b.number === undefined || b.number === '-')) return -1;
-						return Number(a.number) - Number(b.number);
-					});
-				}
-				return players;
-			};
-
-			const sortedSquad1 = sortPlayers(squad1Filtered);
-			const sortedSquad2 = sortPlayers(squad2Filtered);
-
-			console.log("Sorted Squad 1:", sortedSquad1);
-			
-			console.log("Sorted Squad 2:", sortedSquad2);
-
-			const formatPlayer = (player, team, delimiter) => {
-				return selectedFormat
-					.replace("{playerName}", player.name || "-")
-					.replace("{team}", team || "-")
-					.replace("{delimiter}", delimiter || "-")
-					.replace("{shirtNumber}", player.number || "-");
-			};
-
-			const code = [
-				...sortedSquad1.map(
-					(player) => `${delimiter1 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam1, delimiter1)}`
-				), "\n",
-
-				...sortedSquad1.map(
-					(player) => `.${delimiter1}${player.number || '-'}\t${player.name || '-'}`
-				), "\n",
-				...sortedSquad2.map(
-					(player) => `${delimiter2 || '-'}${player.number || '-'}\t${formatPlayer(player, selectedTeam2, delimiter2)}`
-				), "\n",
-				...sortedSquad2.map(
-					(player) => `.${delimiter2}${player.number || '-'}\t${player.name || '-'}`
-				),
-			].join('\n');
-
-			const additionalInfo = showAdditionalInfo
-				? `Ref	Referee ${referee || '-'}\nref	referee ${referee || '-'}\n${additionalCodes}\n\n`
-				: '';
-
-			let finalCodes = `${additionalInfo}st	${clubData.stadiumName || '-'}\n${delimiter1}	${selectedTeam1}\n${delimiter1}p	${selectedTeam1} players\n${delimiter1}s	${selectedTeam1} supporters\n${delimiter2}	${selectedTeam2}\n${delimiter2}p	${selectedTeam2} players\n${delimiter2}s	${selectedTeam2} supporters\n\n\n${code}`;
-
-			if (shouldShorten) {
-				finalCodes = finalCodes.replace(/Football Club/g, 'FC');
-			}
-
+			const finalCodes = generateCode({
+					squad1: squad1Filtered,
+					squad2: squad2Filtered,
+					selectedTeam1: selectedTeam1,
+					selectedTeam2: selectedTeam2,
+					delimiter1,
+					delimiter2,
+					selectedFormat,
+					sortOption,
+					showAdditionalInfo,
+					referee,
+					competition,
+					additionalCodes,
+					shouldShorten,
+					clubData,
+				  });
 			setGeneratedCode(finalCodes);
 		} catch (error) {
 			console.error("Error fetching squad data:", error);
@@ -287,115 +254,29 @@ function TeamCodeGenerator() {
 								</div>
 							</label>
 						</div>
-						<div>
-							<label>
-								Additional Options:
-								<input
-									type="checkbox"
-									checked={showAdditionalInfo}
-									onChange={(e) => setShowAdditionalInfo(e.target.checked)}
-									// style={{ marginLeft: '10px' }}
-								/>
-							</label>
-						</div>
-						{showAdditionalInfo && (
-							<>
-								<div>
-									<label>
-										Select Fixture Date:
-										<input
-											type="date"
-											value={selectedDate}
-											onChange={(e) => setSelectedDate(e.target.value)}
-											style={inputStyle}
-										/>
-									</label>
-								</div>
-								<div>
-									<label>
-										Referee:
-										<input
-											type="text"
-											value={referee}
-											onChange={(e) => setReferee(e.target.value)}
-											style={inputStyle}
-										/>
-									</label>
-								</div>
-								<div>
-									<label>
-										Additional Codes:
-										<textarea
-											value={additionalCodes}
-											onChange={(e) => setAdditionalCodes(e.target.value)}
-											placeholder='iaa    in action against (use a tab between codes and description)'
-											onKeyDown={(e) => {
-												if (e.key === 'Tab') {
-													e.preventDefault();
-													const start = e.target.selectionStart;
-													const end = e.target.selectionEnd;
-													setAdditionalCodes(
-														additionalCodes.substring(0, start) + '\t' + additionalCodes.substring(end)
-													);
-													// Move the cursor after the inserted tab
-													setTimeout(() => {
-														e.target.selectionStart = e.target.selectionEnd = start + 1;
-													}, 0);
-												}
-											}}
-											onInput={(e) => {
-												e.target.style.height = `${e.target.scrollHeight}px`; // Set height based on scroll height
-											}}
-											style={{
-												...inputStyle,
-												overflow: 'hidden', // Prevent scrollbars
-												resize: 'vertical', // Disable manual resizing
-											}}
-										/>
-									</label>
-									<label>
-										Replace 'Football Club' with 'FC':
-										<input
-											type="checkbox"
-											checked={shouldShorten}
-											onChange={(e) => setShouldShorten(e.target.checked)}
-											style={{ marginLeft: '10px' }}
-										/>
-									</label>
-								</div>
-							<div>
-								<label>
-									Sort Players By:
-									<select
-										value={sortOption}
-										onChange={(e) => setSortOption(e.target.value)}
-										style={inputStyle}
-									>
-										<option value="number">Number</option>
-										<option value="position">Position</option>
-									</select>
-								</label>
-							</div>
-						<div>
-							<label>
-								Select Format:
-								<select
-									value={selectedFormat}
-									onChange={(e) => setSelectedFormat(e.target.value)}
-									style={inputStyle}
-								>
-									{formats.map((format, index) => (
-										<option key={index} value={format}>
-											{format}
-										</option>
-									))}
-								</select>
-							</label>
-						</div>
-					</>
-				)}
+						
 			</>
 				)}
+				<AdditionalOptions
+        showInfo={showAdditionalInfo}
+        setShowInfo={setShowAdditionalInfo}
+        shouldShorten={shouldShorten}
+        setShouldShorten={setShouldShorten}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        referee={referee}
+        setReferee={setReferee}
+        competition={competition}
+        setCompetition={setCompetition}
+        additionalCodes={additionalCodes}
+        setAdditionalCodes={setAdditionalCodes}
+        sortOption={sortOption}
+        setSortOption={setSortOption}
+        formats={formats}
+        selectedFormat={selectedFormat}
+        setSelectedFormat={setSelectedFormat}
+        inputStyle={inputStyle}
+      />
 			<button
 				type="submit"
 				disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
