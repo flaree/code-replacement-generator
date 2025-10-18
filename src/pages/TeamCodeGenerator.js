@@ -149,7 +149,7 @@ function TeamCodeGenerator() {
 				? `Ref	Referee ${referee || '-'}\nref	referee ${referee || '-'}\n${additionalCodes}\n\n`
 				: '';
 
-			let finalCodes = `${additionalInfo}st	${clubData.stadiumName || '-'}\n${delimiter1} ${selectedTeam1}\n${delimiter1}p ${selectedTeam1} players\n${delimiter1}s ${selectedTeam1} supporters\n${delimiter2} ${selectedTeam2}\n${delimiter2}p ${selectedTeam2} players\n${delimiter2}s ${selectedTeam2} supporters\n\n\n${code}`;
+			let finalCodes = `${additionalInfo}st	${clubData.stadiumName || '-'}\n${delimiter1}	${selectedTeam1}\n${delimiter1}p	${selectedTeam1} players\n${delimiter1}s	${selectedTeam1} supporters\n${delimiter2}	${selectedTeam2}\n${delimiter2}p	${selectedTeam2} players\n${delimiter2}s	${selectedTeam2} supporters\n\n\n${code}`;
 
 			if (shouldShorten) {
 				finalCodes = finalCodes.replace(/Football Club/g, 'FC');
@@ -165,13 +165,13 @@ function TeamCodeGenerator() {
 	};
 
 	const inputStyle = {
-        padding: '8px',
-        margin: '8px 0',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        width: '100%',
-        boxSizing: 'border-box',
-    };
+		padding: '8px',
+		margin: '8px 0',
+		border: '1px solid #ccc',
+		borderRadius: '4px',
+		width: '100%',
+		boxSizing: 'border-box',
+	};
 
 	return (
 		<div style={{ padding: '20px', textAlign: 'center' }} className='generated-code-page'>
