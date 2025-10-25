@@ -19,6 +19,8 @@ function AdditionalOptions({
   selectedFormat,
   setSelectedFormat,
   inputStyle,
+  shouldChangeGoalkeeperStyle,
+  setShouldChangeGoalkeeperStyle,
 }) {
   const containerStyle = {
     marginTop: '20px',
@@ -110,6 +112,17 @@ function AdditionalOptions({
                   </option>
                 ))}
               </select>
+            </label>
+          </div>
+          <div style={formGroupStyle}>
+            <label style={labelStyle}>
+              Seperate Goalkeeper Style:
+              <input
+                type="checkbox"
+                checked={shouldChangeGoalkeeperStyle}
+                onChange={(e) => setShouldChangeGoalkeeperStyle(e.target.checked)}
+                style={checkboxStyle}
+              />
             </label>
           </div>
           <div style={formGroupStyle}>
