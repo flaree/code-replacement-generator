@@ -13,8 +13,17 @@ export const generateCode = ({
   additionalCodes,
   shouldShorten,
   clubData,
+  shouldChangeGoalkeeperStyle,
 }) => {
-  const formatPlayer = (player, team, delimiter) => {
+  const formatPlayer = (player, team, delimiter, shouldChangeGoalkeeperStyle) => {
+    if(shouldChangeGoalkeeperStyle && player.position === "Goalkeeper") {
+      const goalkeeperFormat = "{team} goalkeeper {playerName}"
+      return goalkeeperFormat
+        .replace("{playerName}", player.name || "-")
+        .replace("{team}", team || "-")
+        .replace("{delimiter}", delimiter || "-")
+        .replace("{shirtNumber}", player.number || "-");
+    }
     return selectedFormat
       .replace("{playerName}", player.name || "-")
       .replace("{team}", team || "-")
@@ -52,7 +61,8 @@ export const generateCode = ({
         `${delimiter1 || "-"}${player.number || "-"}\t${formatPlayer(
           player,
           selectedTeam1,
-          delimiter1
+          delimiter1,
+          shouldChangeGoalkeeperStyle
         )}`
     ),
     "\n",
@@ -66,7 +76,8 @@ export const generateCode = ({
         `${delimiter2 || "-"}${player.number || "-"}\t${formatPlayer(
           player,
           selectedTeam2,
-          delimiter2
+          delimiter2,
+          shouldChangeGoalkeeperStyle
         )}`
     ),
     "\n",

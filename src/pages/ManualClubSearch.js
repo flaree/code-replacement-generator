@@ -40,6 +40,7 @@ function ManualClubSearch() {
   const [searchingTeam1, setSearchingTeam1] = useState(false);
   const [searchingTeam2, setSearchingTeam2] = useState(false);
   const [sortOption, setSortOption] = useState("position");
+  const [shouldChangeGoalkeeperStyle, setShouldChangeGoalkeeperStyle] = useState(false);
 
   const handleSearch = async (searchTerm, setResults, resetSelection, setSearching) => {
     try {
@@ -109,6 +110,7 @@ function ManualClubSearch() {
         additionalCodes,
         shouldShorten,
         clubData,
+        shouldChangeGoalkeeperStyle
       });
 
       setGeneratedCode(finalCodes);
@@ -314,6 +316,8 @@ function ManualClubSearch() {
         selectedFormat={selectedFormat}
         setSelectedFormat={setSelectedFormat}
         inputStyle={inputStyle}
+        shouldChangeGoalkeeperStyle={shouldChangeGoalkeeperStyle}
+        setShouldChangeGoalkeeperStyle={setShouldChangeGoalkeeperStyle}
       />
       <button
         onClick={handleGenerate}

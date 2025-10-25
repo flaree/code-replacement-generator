@@ -55,6 +55,7 @@ function TeamCodeGenerator() {
 	const [selectedFormat, setSelectedFormat] = useState(formats[0]);
 	const [delimiter1, setDelimiter1] = useState('');
 	const [delimiter2, setDelimiter2] = useState('');
+	const [shouldChangeGoalkeeperStyle, setShouldChangeGoalkeeperStyle] = useState(false);
 
 	useEffect(() => {
 		if (selectedLeague) {
@@ -276,6 +277,8 @@ function TeamCodeGenerator() {
         selectedFormat={selectedFormat}
         setSelectedFormat={setSelectedFormat}
         inputStyle={inputStyle}
+		shouldChangeGoalkeeperStyle={shouldChangeGoalkeeperStyle}
+		setShouldChangeGoalkeeperStyle={setShouldChangeGoalkeeperStyle}
       />
 			<button
 				type="submit"
