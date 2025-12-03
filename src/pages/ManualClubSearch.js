@@ -131,8 +131,20 @@ function ManualClubSearch() {
     boxSizing: 'border-box',
   };
 
+  const warningStyle = {
+    backgroundColor: '#ffcccc',
+    color: '#cc0000',
+    padding: '10px',
+    borderRadius: '5px',
+    marginBottom: '20px',
+    fontWeight: 'bold',
+  };
+
   return (
     <div style={{ padding: '20px', textAlign: 'center' }} className="generated-code-page">
+      <div style={warningStyle}>
+        Warning: This project is currently not working due to issues communicating/scraping the Transfermarkt site. <br></br>It is being looked into
+      </div>
       <div>
         <label>
           Search for Team 1:
