@@ -41,6 +41,7 @@ function ManualClubSearch() {
   const [searchingTeam2, setSearchingTeam2] = useState(false);
   const [sortOption, setSortOption] = useState("position");
   const [shouldChangeGoalkeeperStyle, setShouldChangeGoalkeeperStyle] = useState(false);
+  const [showPopup, setShowPopup] = useState(true); // State to control the visibility of the popup
 
   const handleSearch = async (searchTerm, setResults, resetSelection, setSearching) => {
     try {
@@ -131,20 +132,38 @@ function ManualClubSearch() {
     boxSizing: 'border-box',
   };
 
-  const warningStyle = {
-    backgroundColor: '#ffcccc',
-    color: '#cc0000',
+  const popupStyle = {
+    backgroundColor: '#e7f3fe',
+    color: '#3178c6',
     padding: '10px',
     borderRadius: '5px',
     marginBottom: '20px',
     fontWeight: 'bold',
+    position: 'relative',
+    textAlign: 'left',
+  };
+
+  const closeButtonStyle = {
+    position: 'absolute',
+    top: '5px',
+    right: '10px',
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: '#3178c6',
+    fontSize: '16px',
+    cursor: 'pointer',
   };
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }} className="generated-code-page">
-      <div style={warningStyle}>
-        Warning: This project is currently not working due to issues communicating/scraping the Transfermarkt site. <br></br>It is being looked into
-      </div>
+      {showPopup && (
+        <div style={popupStyle}>
+          <button style={closeButtonStyle} onClick={() => setShowPopup(false)}>
+            &times;
+          </button>
+          The project may experience some intermittent issues due to Transfermarkt being strict with scraping. I am working on a more robust solution.
+        </div>
+      )}
       <div>
         <label>
           Search for Team 1:
