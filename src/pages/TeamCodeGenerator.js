@@ -25,18 +25,6 @@ const codes = {
 
 const BASE_URL = process.env.NODE_ENV === 'development' ? 'https://api.lensflxre.com' : 'https://api.lensflxre.com';
 
-const formats = [
-	"{playerName} of {team}",
-	"{team} player {playerName}",
-	"{playerName} ({team})",
-	"{team} #{shirtNumber} {playerName}",
-	"{playerName}, {team}",
-	"{playerName}",
-	"{team} {playerName} #{shirtNumber}",
-	"{playerName} - {team} ({shirtNumber})",
-];
-
-
 function TeamCodeGenerator() {
 	const [selectedLeague, setSelectedLeague] = useState('');
 	const [teams, setTeams] = useState([]);
@@ -45,17 +33,31 @@ function TeamCodeGenerator() {
 	const [selectedTeam2, setSelectedTeam2] = useState('');
 	const [generatedCode, setGeneratedCode] = useState('');
 	const [loading, setLoading] = useState(false); // New state for loading indicator
-	const [showAdditionalInfo, setShowAdditionalInfo] = useState(false);
-	const [shouldShorten, setShouldShorten] = useState(true);
-	const [selectedDate, setSelectedDate] = useState('');
-	const [referee, setReferee] = useState('');
-	const [competition, setCompetition] = useState('');
-	const [additionalCodes, setAdditionalCodes] = useState('');
-	const [sortOption, setSortOption] = useState('position');
-	const [selectedFormat, setSelectedFormat] = useState(formats[0]);
 	const [delimiter1, setDelimiter1] = useState('');
 	const [delimiter2, setDelimiter2] = useState('');
-	const [shouldChangeGoalkeeperStyle, setShouldChangeGoalkeeperStyle] = useState(false);
+	const [options, setOptions] = useState({
+		showInfo: false,
+		shouldShorten: true,
+		selectedDate: '',
+		referee: '',
+		competition: '',
+		additionalCodes: '',
+		sortOption: 'position',
+		formats: [
+		  "{playerName} of {team}",
+		  "{team} player {playerName}",
+		  "{playerName} ({team})",
+		  "{team} #{shirtNumber} {playerName}",
+		  "{playerName}, {team}",
+		  "{playerName}",
+		  "{team} {playerName} #{shirtNumber}",
+		  "{playerName} - {team} ({shirtNumber})",
+		],
+		selectedFormat: "{playerName} of {team}",
+		shouldChangeGoalkeeperStyle: false,
+		includeNoNumberPlayers: true,
+
+	  });
 
 	useEffect(() => {
 		if (selectedLeague) {
@@ -114,14 +116,16 @@ function TeamCodeGenerator() {
 					selectedTeam2: selectedTeam2,
 					delimiter1,
 					delimiter2,
-					selectedFormat,
-					sortOption,
-					showAdditionalInfo,
-					referee,
-					competition,
-					additionalCodes,
-					shouldShorten,
+					selectedFormat: options.selectedFormat,
+					sortOption: options.sortOption,
+					showAdditionalInfo: options.showAdditionalInfo,
+					referee: options.referee,
+					competition: options.competition,
+					additionalCodes: options.additionalCodes,
+					shouldShorten: options.shouldShorten,
 					clubData,
+					shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
+					ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
 				  });
 			setGeneratedCode(finalCodes);
 		} catch (error) {
@@ -259,27 +263,10 @@ function TeamCodeGenerator() {
 			</>
 				)}
 				<AdditionalOptions
-        showInfo={showAdditionalInfo}
-        setShowInfo={setShowAdditionalInfo}
-        shouldShorten={shouldShorten}
-        setShouldShorten={setShouldShorten}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        referee={referee}
-        setReferee={setReferee}
-        competition={competition}
-        setCompetition={setCompetition}
-        additionalCodes={additionalCodes}
-        setAdditionalCodes={setAdditionalCodes}
-        sortOption={sortOption}
-        setSortOption={setSortOption}
-        formats={formats}
-        selectedFormat={selectedFormat}
-        setSelectedFormat={setSelectedFormat}
-        inputStyle={inputStyle}
-		shouldChangeGoalkeeperStyle={shouldChangeGoalkeeperStyle}
-		setShouldChangeGoalkeeperStyle={setShouldChangeGoalkeeperStyle}
-      />
+				options={options}
+				setOptions={setOptions}
+				inputStyle={inputStyle}
+				/>
 			<button
 				type="submit"
 				disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
@@ -292,7 +279,7 @@ function TeamCodeGenerator() {
 					cursor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
 				}}
 			>
-				{loading ? 'Generating...' : 'Generate Code'} {/* Show loading text */}
+				{loading ? 'Generating...' : 'Generate Code Replacements'} {/* Show loading text */}
 			</button>
 		</form>
 			{ loading && <p style={{ color: 'white' }}>Loading, please wait...</p> } {/* Show loading indicator */ }
@@ -305,7 +292,7 @@ function TeamCodeGenerator() {
 						const blob = new Blob([generatedCode], { type: 'text/plain' });
 						const link = document.createElement('a');
 						link.href = URL.createObjectURL(blob);
-						link.download = `${selectedDate ? selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}-vs-${selectedTeam2}.txt`;
+						link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}-vs-${selectedTeam2}.txt`;
 						link.click();
 					}}
 					style={{
@@ -318,7 +305,7 @@ function TeamCodeGenerator() {
 						marginBottom: '10px',
 					}}
 				>
-					Download Code
+					Download Code Replacements
 				</button>
 				<pre style={{ fontSize: '12px', color: 'black', background: '#f4f4f4', padding: '10px', textAlign: 'left' }}>
 					{generatedCode}

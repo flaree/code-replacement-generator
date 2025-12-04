@@ -8,16 +8,6 @@ const BASE_URL =
     ? "https://api.lensflxre.com"
     : "https://api.lensflxre.com";
 
-const formats = [
-  "{playerName} of {team}",
-  "{team} player {playerName}",
-  "{playerName} ({team})",
-  "{team} #{shirtNumber} {playerName}",
-  "{playerName}, {team}",
-  "{playerName}",
-  "{team} {playerName} #{shirtNumber}",
-  "{playerName} - {team} (#{shirtNumber})",
-];
 
 function ManualClubSearch() {
   const [teamSearch1, setTeamSearch1] = useState("");
@@ -29,18 +19,32 @@ function ManualClubSearch() {
   const [delimiter1, setDelimiter1] = useState("");
   const [delimiter2, setDelimiter2] = useState("");
   const [generatedCode, setGeneratedCode] = useState("");
-  const [showInfo, setShowInfo] = useState(false);
-  const [competition, setCompetition] = useState("");
-  const [referee, setReferee] = useState("");
-  const [additionalCodes, setAdditionalCodes] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedFormat, setSelectedFormat] = useState(formats[0]);
-  const [shouldShorten, setShouldShorten] = useState(true);
   const [loading, setLoading] = useState(false);
   const [searchingTeam1, setSearchingTeam1] = useState(false);
   const [searchingTeam2, setSearchingTeam2] = useState(false);
-  const [sortOption, setSortOption] = useState("position");
-  const [shouldChangeGoalkeeperStyle, setShouldChangeGoalkeeperStyle] = useState(false);
+  const [options, setOptions] = useState({
+    showInfo: false,
+    shouldShorten: true,
+    selectedDate: '',
+    referee: '',
+    competition: '',
+    additionalCodes: '',
+    sortOption: 'position',
+    formats: [
+      "{playerName} of {team}",
+      "{team} player {playerName}",
+      "{playerName} ({team})",
+      "{team} #{shirtNumber} {playerName}",
+      "{playerName}, {team}",
+      "{playerName}",
+      "{team} {playerName} #{shirtNumber}",
+      "{playerName} - {team} ({shirtNumber})",
+    ],
+    selectedFormat: "{playerName} of {team}",
+    shouldChangeGoalkeeperStyle: false,
+    includeNoNumberPlayers: true,
+  });
+  
   const [showPopup, setShowPopup] = useState(true); // State to control the visibility of the popup
 
   const handleSearch = async (searchTerm, setResults, resetSelection, setSearching) => {
@@ -103,15 +107,16 @@ function ManualClubSearch() {
         selectedTeam2: selectedTeam2.name,
         delimiter1,
         delimiter2,
-        selectedFormat,
-        sortOption,
-        showInfo,
-        referee,
-        competition,
-        additionalCodes,
-        shouldShorten,
+        selectedFormat: options.selectedFormat,
+        sortOption: options.sortOption,
+        showInfo: options.showInfo,
+        referee: options.referee,
+        competition: options.competition,
+        additionalCodes: options.additionalCodes,
+        shouldShorten: options.shouldShorten,
         clubData,
-        shouldChangeGoalkeeperStyle
+        shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
+        includeNoNumberPlayers: options.includeNoNumberPlayers,
       });
 
       setGeneratedCode(finalCodes);
@@ -329,26 +334,9 @@ function ManualClubSearch() {
         )}
       </div>
       <AdditionalOptions
-        showInfo={showInfo}
-        setShowInfo={setShowInfo}
-        shouldShorten={shouldShorten}
-        setShouldShorten={setShouldShorten}
-        selectedDate={selectedDate}
-        setSelectedDate={setSelectedDate}
-        referee={referee}
-        setReferee={setReferee}
-        competition={competition}
-        setCompetition={setCompetition}
-        additionalCodes={additionalCodes}
-        setAdditionalCodes={setAdditionalCodes}
-        sortOption={sortOption}
-        setSortOption={setSortOption}
-        formats={formats}
-        selectedFormat={selectedFormat}
-        setSelectedFormat={setSelectedFormat}
+        options={options}
+        setOptions={setOptions}
         inputStyle={inputStyle}
-        shouldChangeGoalkeeperStyle={shouldChangeGoalkeeperStyle}
-        setShouldChangeGoalkeeperStyle={setShouldChangeGoalkeeperStyle}
       />
       <button
         onClick={handleGenerate}
@@ -374,7 +362,7 @@ function ManualClubSearch() {
               const blob = new Blob([generatedCode], { type: 'text/plain' });
               const link = document.createElement('a');
               link.href = URL.createObjectURL(blob);
-              link.download = `${selectedDate ? selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1.name}-vs-${selectedTeam2.name}.txt`;
+              link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1.name}-vs-${selectedTeam2.name}.txt`;
               link.click();
             }}
             style={{

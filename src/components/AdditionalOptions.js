@@ -1,27 +1,20 @@
 import React from 'react';
 
-function AdditionalOptions({
-  showInfo,
-  setShowInfo,
-  shouldShorten,
-  setShouldShorten,
-  selectedDate,
-  setSelectedDate,
-  referee,
-  setReferee,
-  competition,
-  setCompetition,
-  additionalCodes,
-  setAdditionalCodes,
-  sortOption,
-  setSortOption,
-  formats,
-  selectedFormat,
-  setSelectedFormat,
-  inputStyle,
-  shouldChangeGoalkeeperStyle,
-  setShouldChangeGoalkeeperStyle,
-}) {
+function AdditionalOptions({ options, setOptions, inputStyle }) {
+  const {
+    showInfo,
+    shouldShorten,
+    selectedDate,
+    referee,
+    competition,
+    additionalCodes,
+    sortOption,
+    formats,
+    selectedFormat,
+    shouldChangeGoalkeeperStyle,
+    includeNoNumberPlayers,
+  } = options;
+
   const containerStyle = {
     marginTop: '20px',
     padding: '20px',
@@ -60,6 +53,13 @@ function AdditionalOptions({
     marginLeft: '10px',
   };
 
+  const handleOptionChange = (key, value) => {
+    setOptions((prevOptions) => ({
+      ...prevOptions,
+      [key]: value,
+    }));
+  };
+
   return (
     <>
       <div>
@@ -68,7 +68,7 @@ function AdditionalOptions({
           <input
             type="checkbox"
             checked={showInfo}
-            onChange={(e) => setShowInfo(e.target.checked)}
+            onChange={(e) => handleOptionChange('showInfo', e.target.checked)}
             style={checkboxStyle}
           />
         </label>
@@ -82,7 +82,18 @@ function AdditionalOptions({
               <input
                 type="checkbox"
                 checked={shouldShorten}
-                onChange={(e) => setShouldShorten(e.target.checked)}
+                onChange={(e) => handleOptionChange('shouldShorten', e.target.checked)}
+                style={checkboxStyle}
+              />
+            </label>
+          </div>
+          <div style={formGroupStyle}>
+            <label style={labelStyle}>
+              Show Players Without Numbers:
+              <input
+                type="checkbox"
+                checked={includeNoNumberPlayers}
+                onChange={(e) => handleOptionChange('includeNoNumberPlayers', e.target.checked)}
                 style={checkboxStyle}
               />
             </label>
@@ -93,7 +104,7 @@ function AdditionalOptions({
               <input
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                onChange={(e) => handleOptionChange('selectedDate', e.target.value)}
                 style={inputStyle}
               />
             </label>
@@ -103,7 +114,7 @@ function AdditionalOptions({
               Select Format:
               <select
                 value={selectedFormat}
-                onChange={(e) => setSelectedFormat(e.target.value)}
+                onChange={(e) => handleOptionChange('selectedFormat', e.target.value)}
                 style={inputStyle}
               >
                 {formats.map((format, index) => (
@@ -116,11 +127,11 @@ function AdditionalOptions({
           </div>
           <div style={formGroupStyle}>
             <label style={labelStyle}>
-              Seperate Goalkeeper Style:
+              Separate Goalkeeper Style:
               <input
                 type="checkbox"
                 checked={shouldChangeGoalkeeperStyle}
-                onChange={(e) => setShouldChangeGoalkeeperStyle(e.target.checked)}
+                onChange={(e) => handleOptionChange('shouldChangeGoalkeeperStyle', e.target.checked)}
                 style={checkboxStyle}
               />
             </label>
@@ -131,7 +142,7 @@ function AdditionalOptions({
               <input
                 type="text"
                 value={referee}
-                onChange={(e) => setReferee(e.target.value)}
+                onChange={(e) => handleOptionChange('referee', e.target.value)}
                 style={inputStyle}
               />
             </label>
@@ -143,7 +154,7 @@ function AdditionalOptions({
                 type="text"
                 value={competition}
                 placeholder="SSE Airtricity League Mens Premier Division"
-                onChange={(e) => setCompetition(e.target.value)}
+                onChange={(e) => handleOptionChange('competition', e.target.value)}
                 style={inputStyle}
               />
             </label>
@@ -153,14 +164,15 @@ function AdditionalOptions({
               Additional Codes:
               <textarea
                 value={additionalCodes}
-                onChange={(e) => setAdditionalCodes(e.target.value)}
+                onChange={(e) => handleOptionChange('additionalCodes', e.target.value)}
                 placeholder="iaa    in action against (use a tab between codes and description)"
                 onKeyDown={(e) => {
                   if (e.key === 'Tab') {
                     e.preventDefault();
                     const start = e.target.selectionStart;
                     const end = e.target.selectionEnd;
-                    setAdditionalCodes(
+                    handleOptionChange(
+                      'additionalCodes',
                       additionalCodes.substring(0, start) + '\t' + additionalCodes.substring(end)
                     );
                     setTimeout(() => {
@@ -177,7 +189,7 @@ function AdditionalOptions({
               Sort Players By:
               <select
                 value={sortOption}
-                onChange={(e) => setSortOption(e.target.value)}
+                onChange={(e) => handleOptionChange('sortOption', e.target.value)}
                 style={inputStyle}
               >
                 <option value="number">Number</option>

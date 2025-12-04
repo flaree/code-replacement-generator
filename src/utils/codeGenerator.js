@@ -14,10 +14,11 @@ export const generateCode = ({
   shouldShorten,
   clubData,
   shouldChangeGoalkeeperStyle,
+  ignoreNoNumberPlayers,
 }) => {
   const formatPlayer = (player, team, delimiter, shouldChangeGoalkeeperStyle) => {
-    if(shouldChangeGoalkeeperStyle && player.position === "Goalkeeper") {
-      const goalkeeperFormat = "{team} goalkeeper {playerName}"
+    if (shouldChangeGoalkeeperStyle && player.position === "Goalkeeper") {
+      const goalkeeperFormat = "{team}'s goalkeeper {playerName}";
       return goalkeeperFormat
         .replace("{playerName}", player.name || "-")
         .replace("{team}", team || "-")
@@ -52,8 +53,21 @@ export const generateCode = ({
     return players;
   };
 
-  const sortedSquad1 = sortPlayers(squad1);
-  const sortedSquad2 = sortPlayers(squad2);
+  // Filter players if ignoreNoNumberPlayers is true
+  const filterPlayers = (players) => {
+    if (ignoreNoNumberPlayers) {
+      return players.filter(
+        (player) => player.number !== undefined && player.number !== "-" && player.number !== null
+      );
+    }
+    return players;
+  };
+
+  const filteredSquad1 = filterPlayers(squad1);
+  const filteredSquad2 = filterPlayers(squad2);
+
+  const sortedSquad1 = sortPlayers(filteredSquad1);
+  const sortedSquad2 = sortPlayers(filteredSquad2);
 
   const code = [
     ...sortedSquad1.map(
@@ -93,9 +107,9 @@ export const generateCode = ({
       }\nco\t${competition}\n${additionalCodes}\n\n`
     : "";
 
-let finalCodes = `${additionalInfo}st\t${
-	clubData?.stadiumName || "-"
-}\n${delimiter1}\t${selectedTeam1}\n${delimiter1}p\t${selectedTeam1} players\n${delimiter1}s\t${selectedTeam1} supporters\n${delimiter2}\t${selectedTeam2}\n${delimiter2}p\t${selectedTeam2} players\n${delimiter2}s\t${selectedTeam2} supporters\n\n\n${code}`;
+  let finalCodes = `${additionalInfo}st\t${
+    clubData?.stadiumName || "-"
+  }\n${delimiter1}\t${selectedTeam1}\n${delimiter1}p\t${selectedTeam1} players\n${delimiter1}s\t${selectedTeam1} supporters\n${delimiter2}\t${selectedTeam2}\n${delimiter2}p\t${selectedTeam2} players\n${delimiter2}s\t${selectedTeam2} supporters\n\n\n${code}`;
 
   if (shouldShorten) {
     finalCodes = finalCodes.replace(/Football Club/g, "FC");
