@@ -65,7 +65,7 @@ function ManualClubSearch() {
   };
 
   const handleGenerate = async () => {
-    try {
+      try {
       setLoading(true);
       setGeneratedCode("");
       let clubData = null;
@@ -83,10 +83,14 @@ function ManualClubSearch() {
       );
       const squad1 = await response1.json();
 
-      const response2 = await fetch(
-        `${BASE_URL}/clubs/${selectedTeam2.id}/players`
-      );
-      const squad2 = await response2.json();
+      // If Team 2 is selected, fetch players; otherwise use empty list
+      let squad2 = { players: [] };
+      if (selectedTeam2) {
+        const response2 = await fetch(
+          `${BASE_URL}/clubs/${selectedTeam2.id}/players`
+        );
+        squad2 = await response2.json();
+      }
 
       const squad1Filtered = squad1.players.map((player) => ({
         number: player.shirtNumber,
@@ -94,7 +98,7 @@ function ManualClubSearch() {
         position: player.position,
       }));
 
-      const squad2Filtered = squad2.players.map((player) => ({
+      const squad2Filtered = (squad2.players || []).map((player) => ({
         number: player.shirtNumber,
         name: player.name,
         position: player.position,
@@ -104,7 +108,7 @@ function ManualClubSearch() {
         squad1: squad1Filtered,
         squad2: squad2Filtered,
         selectedTeam1: selectedTeam1.name,
-        selectedTeam2: selectedTeam2.name,
+        selectedTeam2: selectedTeam2 ? selectedTeam2.name : '',
         delimiter1,
         delimiter2,
         selectedFormat: options.selectedFormat,
@@ -253,7 +257,7 @@ function ManualClubSearch() {
       </div>
       <div>
         <label>
-          Search for Team 2:
+          Search for Team 2 (optional):
           <input
             type="text"
             value={teamSearch2}
@@ -293,7 +297,7 @@ function ManualClubSearch() {
         {teamResults2.length > 0 && (
           <div>
             <label>
-              Select Team 2:
+              Select Team 2 (optional):
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <select
                   value={selectedTeam2?.id || ''}
@@ -340,14 +344,14 @@ function ManualClubSearch() {
       />
       <button
         onClick={handleGenerate}
-        disabled={!selectedTeam1 || !selectedTeam2 || loading}
+        disabled={!selectedTeam1 || loading}
         style={{
           padding: '10px 20px',
-          backgroundColor: !selectedTeam1 || !selectedTeam2 || loading ? '#ccc' : '#007BFF',
+          backgroundColor: !selectedTeam1 || loading ? '#ccc' : '#007BFF',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
-          cursor: !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
+          cursor: !selectedTeam1 || loading ? 'not-allowed' : 'pointer',
           marginTop: '20px',
         }}
       >
@@ -362,7 +366,7 @@ function ManualClubSearch() {
               const blob = new Blob([generatedCode], { type: 'text/plain' });
               const link = document.createElement('a');
               link.href = URL.createObjectURL(blob);
-              link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1.name}-vs-${selectedTeam2.name}.txt`;
+              link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1.name}${selectedTeam2 ? '-vs-' + selectedTeam2.name : ''}.txt`;
               link.click();
             }}
             style={{
