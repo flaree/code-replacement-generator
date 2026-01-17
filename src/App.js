@@ -4,6 +4,7 @@ import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
 import ManualClubSearch from './pages/ManualClubSearch';
 import About from './pages/About';
+import PhotoMetadata from './pages/PhotoMetadata';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 
@@ -21,6 +22,9 @@ function App() {
                 <Link to="/league" style={linkStyle}>League</Link>
               </li>
               <li style={navItemStyle}>
+                <Link to="/photo-meta" style={linkStyle}>Metadata Generator</Link>
+              </li>
+              <li style={navItemStyle}>
                 <Link to="/about" style={linkStyle}>About</Link>
               </li>
             </ul>
@@ -29,6 +33,7 @@ function App() {
         <Routes>
           <Route path="/" element={<ManualClubSearch />} />
           <Route path="/league" element={<TeamCodeGenerator />} />
+          <Route path="/photo-meta" element={<PhotoMetadata />} />
           <Route path="/about" element={<About />} />
         </Routes>
         <footer style={footerStyle}>
