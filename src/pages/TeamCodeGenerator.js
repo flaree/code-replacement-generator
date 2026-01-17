@@ -94,8 +94,11 @@ function TeamCodeGenerator() {
 			const response1 = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam1]}/players`);
 			const squad1 = await response1.json();
 
-			const response2 = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam2]}/players`);
-			const squad2 = await response2.json();
+			let squad2 = { players: [] };
+			if (selectedTeam2) {
+				const response2 = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam2]}/players`);
+				squad2 = await response2.json();
+			}
 
 			const squad1Filtered = squad1.players.map((player) => ({
 				number: player.shirtNumber,
@@ -103,7 +106,7 @@ function TeamCodeGenerator() {
 				position: player.position,
 			}));
 
-			const squad2Filtered = squad2.players.map((player) => ({
+			const squad2Filtered = (squad2.players || []).map((player) => ({
 				number: player.shirtNumber,
 				name: player.name,
 				position: player.position,
@@ -113,7 +116,7 @@ function TeamCodeGenerator() {
 					squad1: squad1Filtered,
 					squad2: squad2Filtered,
 					selectedTeam1: selectedTeam1,
-					selectedTeam2: selectedTeam2,
+					selectedTeam2: selectedTeam2 || '',
 					delimiter1,
 					delimiter2,
 					selectedFormat: options.selectedFormat,
@@ -221,7 +224,7 @@ function TeamCodeGenerator() {
 						</div>
 						<div>
 							<label>
-								Select Away Team:
+								Select Away Team (optional):
 								<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
 									<select
 										value={selectedTeam2}
@@ -229,7 +232,7 @@ function TeamCodeGenerator() {
 											setSelectedTeam2(e.target.value);
 											setDelimiter2(e.target.value[0]?.toLowerCase() || ''); // Default delimiter to the first letter
 										}}
-										required
+									// optional
 										style={inputStyle}
 									>
 										<option value="" disabled>
@@ -269,17 +272,17 @@ function TeamCodeGenerator() {
 				/>
 			<button
 				type="submit"
-				disabled={!selectedLeague || !selectedTeam1 || !selectedTeam2 || loading} // Disable button when loading
+				disabled={!selectedLeague || !selectedTeam1 || loading} // Now allow single-team generation (away optional)
 				style={{
 					padding: '10px 20px',
-					backgroundColor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? '#ccc' : '#007BFF',
+					backgroundColor: !selectedLeague || !selectedTeam1 || loading ? '#ccc' : '#007BFF',
 					color: 'white',
 					border: 'none',
 					borderRadius: '4px',
-					cursor: !selectedLeague || !selectedTeam1 || !selectedTeam2 || loading ? 'not-allowed' : 'pointer',
+					cursor: !selectedLeague || !selectedTeam1 || loading ? 'not-allowed' : 'pointer',
 				}}
 			>
-				{loading ? 'Generating...' : 'Generate Code Replacements'} {/* Show loading text */}
+				{loading ? 'Generating...' : 'Generate Code Replacements'}
 			</button>
 		</form>
 			{ loading && <p style={{ color: 'white' }}>Loading, please wait...</p> } {/* Show loading indicator */ }
@@ -292,7 +295,7 @@ function TeamCodeGenerator() {
 						const blob = new Blob([generatedCode], { type: 'text/plain' });
 						const link = document.createElement('a');
 						link.href = URL.createObjectURL(blob);
-						link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}-vs-${selectedTeam2}.txt`;
+						link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}${selectedTeam2 ? '-vs-' + selectedTeam2 : ''}.txt`;
 						link.click();
 					}}
 					style={{
