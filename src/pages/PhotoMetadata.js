@@ -52,16 +52,17 @@ export default function PhotoMetadata() {
     const desc = escapeXml(m.description);
     const byline = escapeXml(m.byline);
     const credit = escapeXml(m.credit);
-    const jobId = escapeXml(m.jobId);
+    // const jobId = escapeXml(m.jobId);
     const copyright = escapeXml(m.copyright);
     const dateCreated = escapeXml(m.dateCreated);
     const city = escapeXml(m.city);
-    const state = escapeXml(m.state);
+    // const state = escapeXml(m.state);
     const country = escapeXml(m.country);
     const source = escapeXml(m.source);
 
     const keywordNodes = keywords.map(k => `            <rdf:li>${escapeXml(k)}</rdf:li>`).join('\n');
 
+    // eslint-disable-next-line no-useless-escape
     return `<?xpacket begin=\"\uFEFF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\">\n  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n           xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n           xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\">\n    <rdf:Description rdf:about=\"\">\n      <dc:title>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${title}</rdf:li>\n        </rdf:Alt>\n      </dc:title>\n      <dc:creator>\n        <rdf:Seq>\n          <rdf:li>${byline}</rdf:li>\n        </rdf:Seq>\n      </dc:creator>\n      <Iptc4xmpCore:Location>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${city}</rdf:li>\n        </rdf:Alt>\n      </Iptc4xmpCore:Location>\n      <Iptc4xmpCore:CountryCode>${country}</Iptc4xmpCore:CountryCode>\n      <dc:description>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${desc}</rdf:li>\n        </rdf:Alt>\n      </dc:description>\n      <dc:subject>\n        <rdf:Bag>\n${keywordNodes}\n        </rdf:Bag>\n      </dc:subject>\n      <Iptc4xmpCore:DateCreated>${dateCreated}</Iptc4xmpCore:DateCreated>\n      <Iptc4xmpCore:Credit>${credit}</Iptc4xmpCore:Credit>\n      <Iptc4xmpCore:CopyrightNotice>${copyright}</Iptc4xmpCore:CopyrightNotice>\n      <Iptc4xmpCore:Source>${source}</Iptc4xmpCore:Source>\n      <Iptc4xmpCore:Headline>${headline}</Iptc4xmpCore:Headline>\n    </rdf:Description>\n  </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end=\"w\"?>`;
   };
 
