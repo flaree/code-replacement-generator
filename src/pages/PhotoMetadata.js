@@ -398,7 +398,7 @@ export default function PhotoMetadata() {
       <label className="field-label" style={{ marginTop: 10 }}>Country</label>
       <input className="input" value={meta.country} onChange={handleChange('country')} />
       <label className="field-label" style={{ marginTop: 10 }}>Date created</label>
-      <div className="generated-inline-row">
+      <div className="generated-inline-row" style={{ alignItems: 'center' }}>
         <input
         className="input"
         type="date"
@@ -409,7 +409,7 @@ export default function PhotoMetadata() {
           setCheckToday(Boolean(val && val === todayISO()));
         }}
         />
-        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}>
         <input
           type="checkbox"
           checked={checkToday}
@@ -420,7 +420,7 @@ export default function PhotoMetadata() {
           else setMeta((prev) => ({ ...prev, dateCreated: '' }));
           }}
         />
-        <span>Fixture today</span>
+        Fixture today
         </label>
       </div>
       </div>

@@ -25,7 +25,7 @@ const codes = {
 
 const BASE_URL = process.env.NODE_ENV === 'development' ? 'https://api.lensflxre.com' : 'https://api.lensflxre.com';
 
-function TeamCodeGenerator() {
+export default function TeamCodeGenerator() {
 	const [selectedLeague, setSelectedLeague] = useState('');
 	const [teams, setTeams] = useState([]);
 	const [teamMap, setTeamMap] = useState({});
@@ -291,5 +291,3 @@ function TeamCodeGenerator() {
 									</div>
 	);
 }
-
-export default TeamCodeGenerator;

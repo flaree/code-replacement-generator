@@ -105,8 +105,7 @@ code {
   top: 0;
   z-index: 20;
   padding: 14px 18px 6px;
-  background: linear-gradient(to bottom, rgba(5, 7, 18, 0.94), rgba(5, 7, 18, 0.3))
-    0 0 / 100% 120% no-repeat;
+  background: var(--surface-soft);
 }
 
 .app-header-inner {
@@ -114,14 +113,9 @@ code {
   margin: 0 auto;
   padding: 10px 14px;
   border-radius: 999px;
-  background: linear-gradient(
-      135deg,
-      rgba(104, 139, 255, 0.14),
-      rgba(143, 123, 255, 0.05),
-      rgba(7, 10, 28, 0.9)
-    );
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow: 0 16px 40px rgba(4, 7, 22, 0.8);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -198,15 +192,14 @@ code {
   position: absolute;
   inset: 2px;
   border-radius: inherit;
-  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.12),
-      transparent 60%);
+  background: var(--accent-soft);
   opacity: 0;
   transition: opacity var(--transition-med);
 }
 
 .app-nav-link:hover {
   color: var(--text-primary);
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: var(--accent-soft);
   transform: translateY(-1px);
 }
 
@@ -217,7 +210,7 @@ code {
 .app-nav-link-active {
   color: var(--text-primary);
   background: var(--nav-active-bg);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 1px var(--border-subtle);
 }
 
 .app-nav-spacer {
@@ -233,8 +226,8 @@ code {
   gap: 5px;
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   cursor: pointer;
   padding: 0;
@@ -242,7 +235,8 @@ code {
 }
 
 .mobile-menu-toggle:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--accent-soft);
+  opacity: 0.8;
 }
 
 .hamburger-line {
@@ -259,6 +253,7 @@ code {
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
   z-index: 99;
+  -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
 
@@ -269,13 +264,9 @@ code {
   right: 0;
   height: 100vh;
   width: 280px;
-  background: linear-gradient(
-    135deg,
-    rgba(18, 24, 46, 0.98),
-    rgba(8, 13, 32, 0.98)
-  );
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+  background: var(--surface);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-soft);
   z-index: 100;
   padding: 24px 16px;
   overflow-y: auto;
@@ -304,18 +295,13 @@ code {
   margin: 0 auto;
   padding: 12px 18px;
   border-radius: 16px;
-  background: linear-gradient(
-      145deg,
-      rgba(9, 12, 30, 0.96),
-      rgba(10, 15, 40, 0.96),
-      rgba(8, 13, 32, 0.96)
-    );
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  box-shadow: 0 -14px 40px rgba(5, 8, 20, 0.92);
+  box-shadow: var(--shadow-subtle);
 }
 
 .app-footer-text {
@@ -348,10 +334,9 @@ code {
   justify-content: center;
   color: var(--text-muted);
   text-decoration: none;
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.05),
-      rgba(10, 14, 30, 0.95));
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
   transition: transform 140ms ease-out, box-shadow 140ms ease-out,
     background 160ms ease-out, color 160ms ease-out;
 }
@@ -359,9 +344,8 @@ code {
 .app-social-link:hover {
   transform: translateY(-1px) scale(1.03);
   color: var(--accent);
-  background: radial-gradient(circle at top, rgba(143, 123, 255, 0.16),
-      rgba(5, 8, 26, 0.98));
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.85);
+  background: var(--nav-active-bg);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Generic layout utilities */
@@ -373,11 +357,7 @@ code {
 .card {
   border-radius: var(--radius-lg);
   padding: 20px 18px 18px;
-  background: linear-gradient(
-      135deg,
-      rgba(126, 150, 255, 0.05),
-      rgba(5, 8, 22, 0.98)
-    );
+  background: var(--surface);
   border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-soft);
   color: var(--text-primary);
@@ -431,7 +411,7 @@ code {
   letter-spacing: 0.02em;
   text-transform: uppercase;
   margin-bottom: 6px;
-  color: rgba(177, 188, 226, 0.9);
+  color: var(--text-muted);
 }
 
 .input,
@@ -508,16 +488,16 @@ code {
 }
 
 .btn-secondary {
-  background: rgba(7, 11, 32, 0.95);
+  background: var(--surface-soft);
   color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-subtle);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-muted);
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: var(--border-subtle);
   box-shadow: none;
 }
 
@@ -527,9 +507,8 @@ code {
   padding: 3px 10px;
   border-radius: 999px;
   font-size: 11px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.08),
-      rgba(4, 7, 20, 0.96));
+  border: 1px solid var(--border-subtle);
+  background: var(--accent-soft);
   color: var(--text-muted);
 }
 
@@ -537,9 +516,8 @@ code {
   margin-top: 18px;
   padding: 10px 10px 12px;
   border-radius: 14px;
-  background: radial-gradient(circle at top left,
-      rgba(88, 121, 255, 0.16), rgba(6, 9, 24, 0.96));
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-subtle);
   box-shadow: var(--shadow-subtle);
 }
 
@@ -558,12 +536,12 @@ code {
   overflow: auto;
   padding: 10px 10px 8px;
   border-radius: 10px;
-  background: rgba(4, 7, 20, 0.96);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--input-bg);
+  border: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.5;
-  color: rgba(244, 247, 255, 0.95);
+  color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -597,7 +575,7 @@ code {
   padding: 3px 8px;
   border-radius: 999px;
   font-size: 11px;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--accent-soft);
   color: var(--text-muted);
 }
 
