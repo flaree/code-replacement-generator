@@ -116,6 +116,15 @@ export default function PhotoMetadata() {
   const [searchingAway, setSearchingAway] = useState(false);
   const [selectedHomeClub, setSelectedHomeClub] = useState(null);
   const [selectedAwayClub, setSelectedAwayClub] = useState(null);
+  const [checkToday, setCheckToday] = useState(false);
+
+  const todayISO = () => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   const handleClubSearch = async (term, setResults, setSearching) => {
     if (!term) return;
@@ -152,6 +161,12 @@ export default function PhotoMetadata() {
       // ignore
     }
   }, []);
+
+  // keep checkToday in sync with dateCreated
+  useEffect(() => {
+    const today = todayISO();
+    setCheckToday(Boolean(meta.dateCreated && meta.dateCreated === today));
+  }, [meta.dateCreated]);
 
   const saveCreatorRights = () => {
     const payload = {
@@ -324,7 +339,22 @@ export default function PhotoMetadata() {
             <input style={styles.input} value={meta.country} onChange={handleChange('country')} />
           </label>
           <label style={styles.label}>Date Created
-            <input style={styles.input} type="date" value={meta.dateCreated} onChange={handleChange('dateCreated')} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <input style={styles.input} type="date" value={meta.dateCreated} onChange={(e) => {
+                handleChange('dateCreated')(e);
+                const val = e.target.value;
+                setCheckToday(Boolean(val && val === todayISO()));
+              }} />
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+                <input type="checkbox" checked={checkToday} onChange={(e) => {
+                  const on = e.target.checked;
+                  setCheckToday(on);
+                  if (on) setMeta(prev => ({ ...prev, dateCreated: todayISO() }));
+                  else setMeta(prev => ({ ...prev, dateCreated: '' }));
+                }} />
+                <span>Fixture today</span>
+              </label>
+            </div>
           </label>
         </div>
 
