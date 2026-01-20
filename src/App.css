@@ -1,17 +1,8 @@
+/* App-specific overrides (most layout in index.css) */
 
-body {
-  background-color: #282c34;
-  margin: 0; /* Ensure no default margin around the body */
+.App {
+  min-height: 100vh;
 }
 
 
-.App-header {
-  background-color: #282c34;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
 

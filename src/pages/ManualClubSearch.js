@@ -7,8 +7,6 @@ const BASE_URL =
   process.env.NODE_ENV === "development"
     ? "https://api.lensflxre.com"
     : "https://api.lensflxre.com";
-
-
 function ManualClubSearch() {
   const [teamSearch1, setTeamSearch1] = useState("");
   const [teamSearch2, setTeamSearch2] = useState("");
@@ -132,260 +130,200 @@ function ManualClubSearch() {
     }
   };
 
-  const inputStyle = {
-    padding: '8px',
-    margin: '8px 0',
-    border: '1px solid #ccc',
-    borderRadius: '4px',
-    width: '100%',
-    boxSizing: 'border-box',
-  };
-
-  const popupStyle = {
-    backgroundColor: '#e7f3fe',
-    color: '#3178c6',
-    padding: '10px',
-    borderRadius: '5px',
-    marginBottom: '20px',
-    fontWeight: 'bold',
-    position: 'relative',
-    textAlign: 'left',
-  };
-
-  const closeButtonStyle = {
-    position: 'absolute',
-    top: '5px',
-    right: '10px',
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: '#3178c6',
-    fontSize: '16px',
-    cursor: 'pointer',
-  };
-
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }} className="generated-code-page">
-      {showPopup && (
-        <div style={popupStyle}>
-          <button style={closeButtonStyle} onClick={() => setShowPopup(false)}>
-            &times;
-          </button>
-          The project may experience some intermittent issues due to Transfermarkt being strict with scraping. I am working on a more robust solution.
+    <div className="generated-code-page container-page">
+      <div className="card generated-code-card">
+        {showPopup && (
+          <div className="generated-popup">
+            <span>
+              The project may experience intermittent issues due to Transfermarkt being strict with scraping. A more
+              robust solution is in progress.
+            </span>
+            <button onClick={() => setShowPopup(false)} aria-label="Dismiss notice">
+              &times;
+            </button>
+          </div>
+        )}
+        <div className="card-header">
+          <div>
+            <div className="card-title">Manual club search</div>
+            <div className="card-subtitle">
+              Search individual clubs and generate Photo Mechanic code replacements.
+            </div>
+          </div>
+          <span className="pill">Home required · Away optional</span>
         </div>
-      )}
-      <div>
-        <label>
-          Search for Team 1:
-          <input
-            type="text"
-            value={teamSearch1}
-            placeholder="e.g Celtic"
-            onChange={(e) => setTeamSearch1(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch(teamSearch1, setTeamResults1, () => {
-                  setSelectedTeam1(null);
-                  setDelimiter1('');
-                }, setSearchingTeam1);
-              }
-            }}
-            style={inputStyle}
-          />
-          <button
-            onClick={() =>
-              handleSearch(teamSearch1, setTeamResults1, () => {
-                setSelectedTeam1(null);
-                setDelimiter1('');
-              }, setSearchingTeam1)
-            }
-            disabled={searchingTeam1}
-            style={{
-              padding: '8px 16px',
-              marginLeft: '10px',
-              backgroundColor: searchingTeam1 ? '#ccc' : '#007BFF',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: searchingTeam1 ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {searchingTeam1 ? 'Searching...' : 'Search'}
-          </button>
-        </label>
+        <div className="generated-grid">
+          <div className="generated-column">
+            <label className="field-label">Search for Team 1</label>
+            <div className="generated-inline-row">
+              <input
+                type="text"
+                className="input"
+                value={teamSearch1}
+                placeholder="e.g Celtic"
+                onChange={(e) => setTeamSearch1(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(teamSearch1, setTeamResults1, () => {
+                      setSelectedTeam1(null);
+                      setDelimiter1('');
+                    }, setSearchingTeam1);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  handleSearch(teamSearch1, setTeamResults1, () => {
+                    setSelectedTeam1(null);
+                    setDelimiter1('');
+                  }, setSearchingTeam1)
+                }
+                disabled={searchingTeam1}
+              >
+                {searchingTeam1 ? 'Searching…' : 'Search'}
+              </button>
+            </div>
         {teamResults1.length > 0 && (
           <div>
-            <label>
-              Select Team 1:
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <select
-                  value={selectedTeam1?.id || ''}
-                  onChange={(e) => {
-                    const selected = teamResults1.find((team) => team.id === e.target.value);
-                    setSelectedTeam1(selected || null);
-                    setDelimiter1(selected?.name[0]?.toLowerCase() || '');
-                  }}
-                  style={inputStyle}
-                >
-                  <option value="" disabled>
-                    -- Select a Team --
+            <label className="field-label">Select Team 1</label>
+            <div className="generated-inline-row">
+              <select
+                className="select"
+                value={selectedTeam1?.id || ''}
+                onChange={(e) => {
+                  const selected = teamResults1.find((team) => team.id === e.target.value);
+                  setSelectedTeam1(selected || null);
+                  setDelimiter1(selected?.name[0]?.toLowerCase() || '');
+                }}
+              >
+                <option value="" disabled>
+                  -- Select a team --
+                </option>
+                {teamResults1.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name} - {team.country}
                   </option>
-                  {teamResults1.map((team) => (
-                    <option key={team.id} value={team.id}>
-                      {team.name} - {team.country}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
-                  <label style={{ fontSize: '12px' }}>Delim:</label>
-                  <input
-                    type="text"
-                    value={delimiter1}
-                    onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())}
-                    style={{
-                      width: '40px',
-                      textAlign: 'center',
-                      padding: '8px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
-                    }}
-                  />
-                </div>
+                ))}
+              </select>
+              <div className="generated-inline-row">
+                <span className="muted" style={{ fontSize: 12 }}>Delim</span>
+                <input
+                  type="text"
+                  className="input generated-delim-input"
+                  value={delimiter1}
+                  onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())}
+                />
               </div>
-            </label>
+            </div>
           </div>
         )}
-      </div>
-      <div>
-        <label>
-          Search for Team 2 (optional):
-          <input
-            type="text"
-            value={teamSearch2}
-            placeholder="e.g Bohemians"
-            onChange={(e) => setTeamSearch2(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                handleSearch(teamSearch2, setTeamResults2, () => {
-                  setSelectedTeam2(null);
-                  setDelimiter2('');
-                }, setSearchingTeam2);
-              }
-            }}
-            style={inputStyle}
-          />
-          <button
-            onClick={() =>
-              handleSearch(teamSearch2, setTeamResults2, () => {
-                setSelectedTeam2(null);
-                setDelimiter2('');
-              }, setSearchingTeam2)
-            }
-            disabled={searchingTeam2}
-            style={{
-              padding: '8px 16px',
-              marginLeft: '10px',
-              backgroundColor: searchingTeam2 ? '#ccc' : '#007BFF',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: searchingTeam2 ? 'not-allowed' : 'pointer',
-            }}
-          >
-            {searchingTeam2 ? 'Searching...' : 'Search'}
-          </button>
-        </label>
-        {teamResults2.length > 0 && (
-          <div>
-            <label>
-              Select Team 2 (optional):
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <select
-                  value={selectedTeam2?.id || ''}
-                  onChange={(e) => {
-                    const selected = teamResults2.find((team) => team.id === e.target.value);
-                    setSelectedTeam2(selected || null);
-                    setDelimiter2(selected?.name[0]?.toLowerCase() || '');
-                  }}
-                  style={inputStyle}
-                >
-                  <option value="" disabled>
-                    -- Select a Team --
-                  </option>
-                  {teamResults2.map((team) => (
-                    <option key={team.id} value={team.id}>
-                      {team.name} - {team.country}
-                    </option>
-                  ))}
-                </select>
-                <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
-                  <label style={{ fontSize: '12px' }}>Delim:</label>
-                  <input
-                    type="text"
-                    value={delimiter2}
-                    onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())}
-                    style={{
-                      width: '40px',
-                      textAlign: 'center',
-                      padding: '8px',
-                      border: '1px solid #ccc',
-                      borderRadius: '4px',
+          </div>
+          <div className="generated-column">
+            <label className="field-label">Search for Team 2 (optional)</label>
+            <div className="generated-inline-row">
+              <input
+                type="text"
+                className="input"
+                value={teamSearch2}
+                placeholder="e.g. Bohemians"
+                onChange={(e) => setTeamSearch2(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch(teamSearch2, setTeamResults2, () => {
+                      setSelectedTeam2(null);
+                      setDelimiter2('');
+                    }, setSearchingTeam2);
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() =>
+                  handleSearch(teamSearch2, setTeamResults2, () => {
+                    setSelectedTeam2(null);
+                    setDelimiter2('');
+                  }, setSearchingTeam2)
+                }
+                disabled={searchingTeam2}
+              >
+                {searchingTeam2 ? 'Searching…' : 'Search'}
+              </button>
+            </div>
+            {teamResults2.length > 0 && (
+              <div>
+                <label className="field-label">Select Team 2</label>
+                <div className="generated-inline-row">
+                  <select
+                    className="select"
+                    value={selectedTeam2?.id || ''}
+                    onChange={(e) => {
+                      const selected = teamResults2.find((team) => team.id === e.target.value);
+                      setSelectedTeam2(selected || null);
+                      setDelimiter2(selected?.name[0]?.toLowerCase() || '');
                     }}
-                  />
+                  >
+                    <option value="" disabled>
+                      -- Select a team --
+                    </option>
+                    {teamResults2.map((team) => (
+                      <option key={team.id} value={team.id}>
+                        {team.name} - {team.country}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="generated-inline-row">
+                    <span className="muted" style={{ fontSize: 12 }}>Delim</span>
+                    <input
+                      type="text"
+                      className="input generated-delim-input"
+                      value={delimiter2}
+                      onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())}
+                    />
+                  </div>
                 </div>
               </div>
-            </label>
+            )}
           </div>
-        )}
-      </div>
-      <AdditionalOptions
-        options={options}
-        setOptions={setOptions}
-        inputStyle={inputStyle}
-      />
-      <button
-        onClick={handleGenerate}
-        disabled={!selectedTeam1 || loading}
-        style={{
-          padding: '10px 20px',
-          backgroundColor: !selectedTeam1 || loading ? '#ccc' : '#007BFF',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: !selectedTeam1 || loading ? 'not-allowed' : 'pointer',
-          marginTop: '20px',
-        }}
-      >
-        {loading ? 'Generating...' : 'Generate Code'}
-      </button>
-      {loading && <p style={{ color: 'white' }}>Loading, please wait...</p>}
-      {generatedCode && (
-        <div>
-          <h2>Generated Code:</h2>
-          <button
-            onClick={() => {
-              const blob = new Blob([generatedCode], { type: 'text/plain' });
-              const link = document.createElement('a');
-              link.href = URL.createObjectURL(blob);
-              link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1.name}${selectedTeam2 ? '-vs-' + selectedTeam2.name : ''}.txt`;
-              link.click();
-            }}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28A745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              marginBottom: '10px',
-            }}
-          >
-            Download Code
-          </button>
-          <pre style={{ fontSize: '12px', color: 'black', background: '#f4f4f4', padding: '10px', textAlign: 'left' }}>
-            {generatedCode}
-          </pre>
         </div>
-      )}
+        <div className="generated-extra-card">
+          <AdditionalOptions options={options} setOptions={setOptions} />
+        </div>
+        <div className="btn-row">
+          <button
+            type="button"
+            className="btn"
+            onClick={handleGenerate}
+            disabled={loading || !selectedTeam1}
+          >
+            {loading ? 'Generating…' : 'Generate code'}
+          </button>
+        </div>
+        {generatedCode && (
+          <div className="preview-block" style={{ marginTop: 16 }}>
+            <div className="preview-heading">
+              <span>Generated code replacements</span>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
+                  const link = document.createElement('a');
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `${selectedTeam1 ? selectedTeam1.name : 'team'}_code_replacements.txt`;
+                  link.click();
+                }}
+              >
+                Download .txt
+              </button>
+            </div>
+            <pre className="preview-body">{generatedCode}</pre>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

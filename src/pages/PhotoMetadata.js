@@ -88,19 +88,6 @@ export default function PhotoMetadata() {
     link.download = `${meta.objectName || 'photo-metadata'}.xmp`;
     link.click();
   };
-
-  const styles = {
-    container: { padding: '20px', maxWidth: '900px', margin: '0 auto' },
-    groups: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginTop: '12px' },
-    groupBox: { border: '1px solid #ddd', borderRadius: '8px', padding: '12px', background: '#fafafa' },
-    groupTitle: { margin: '0 0 8px 0', fontSize: '14px', fontWeight: 700, color: '#333' },
-    label: { display: 'block', fontSize: '13px', color: '#222', marginBottom: '6px' },
-    input: { width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' },
-    textarea: { width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' },
-    buttons: { marginTop: '16px', display: 'flex', gap: '8px' },
-    preview: { background: '#fff', padding: '12px', border: '1px solid #eee', borderRadius: '6px', marginTop: '16px', fontSize: '13px' },
-  };
-
   const BASE_URL =
     process.env.NODE_ENV === 'development'
       ? 'https://api.lensflxre.com'
@@ -229,170 +216,290 @@ export default function PhotoMetadata() {
   };
 
   return (
-    <div className="codegen-container" style={styles.container}>
-      <h1>Photo Metadata (IPTC - common fields) - Under Development</h1>
-      <p>Fill in commonly used IPTC fields for Photo Mechanic/ingest. Keywords should be comma-separated.</p>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', marginTop: '8px' }}>
-        <div />
-        <button onClick={() => setShowClubSearch(s => !s)} style={{ padding: '8px 12px' }}>{showClubSearch ? 'Hide Club Search' : 'Use Club Search'}</button>
+  <div className="generated-code-page container-page">
+    <div className="card generated-code-card">
+    <div className="card-header">
+      <div>
+      <div className="card-title">Photo metadata (IPTC/XMP)</div>
+      <div className="card-subtitle">
+        Build IPTC fields for Photo Mechanic and export as XMP.
       </div>
-
-      {showClubSearch && (
-        <div style={{ marginTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-          <div style={styles.groupBox}>
-            <div style={styles.groupTitle}>Home Club Search</div>
-            <label style={styles.label}>Search
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input style={styles.input} value={homeSearchTerm} onChange={(e) => setHomeSearchTerm(e.target.value)} placeholder="e.g. Celtic" />
-                <button onClick={() => handleClubSearch(homeSearchTerm, setHomeResults, setSearchingHome)} disabled={searchingHome} style={{ padding: '8px 10px' }}>{searchingHome ? 'Searching...' : 'Search'}</button>
-              </div>
-            </label>
-            {homeResults.length > 0 && (
-              <label style={styles.label}>Results
-                <select style={styles.input} value={selectedHomeClub?.id || ''} onChange={(e) => {
-                  const sel = homeResults.find(r => r.id === e.target.value);
-                  setSelectedHomeClub(sel || null);
-                }}>
-                  <option value="">-- Select Home Club --</option>
-                  {homeResults.map(r => <option key={r.id} value={r.id}>{r.name} {r.country ? `- ${r.country}` : ''}</option>)}
-                </select>
-              </label>
-            )}
-            <div style={{ marginTop: '8px' }}>
-              <button onClick={() => { applyClubToMeta(); }} style={{ padding: '8px 12px' }} disabled={!selectedHomeClub}>Apply Home Club</button>
-            </div>
-          </div>
-
-          <div style={styles.groupBox}>
-            <div style={styles.groupTitle}>Away Club Search</div>
-            <label style={styles.label}>Search
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input style={styles.input} value={awaySearchTerm} onChange={(e) => setAwaySearchTerm(e.target.value)} placeholder="e.g. Bohemians" />
-                <button onClick={() => handleClubSearch(awaySearchTerm, setAwayResults, setSearchingAway)} disabled={searchingAway} style={{ padding: '8px 10px' }}>{searchingAway ? 'Searching...' : 'Search'}</button>
-              </div>
-            </label>
-            {awayResults.length > 0 && (
-              <label style={styles.label}>Results
-                <select style={styles.input} value={selectedAwayClub?.id || ''} onChange={(e) => {
-                  const sel = awayResults.find(r => r.id === e.target.value);
-                  setSelectedAwayClub(sel || null);
-                }}>
-                  <option value="">-- Select Away Club --</option>
-                  {awayResults.map(r => <option key={r.id} value={r.id}>{r.name} {r.country ? `- ${r.country}` : ''}</option>)}
-                </select>
-              </label>
-            )}
-            <div style={{ marginTop: '8px' }}>
-              <button onClick={() => { applyClubToMeta(); }} style={{ padding: '8px 12px' }} disabled={!selectedAwayClub}>Apply Away Club</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div style={styles.groups}>
-        <div style={styles.groupBox}>
-          <div style={styles.groupTitle}>Core</div>
-          <label style={styles.label}>Title (Object Name)
-            <input style={styles.input} value={meta.objectName} onChange={handleChange('objectName')} />
-          </label>
-          <label style={styles.label}>Headline
-            <input style={styles.input} value={meta.headline} onChange={handleChange('headline')} />
-          </label>
-          <label style={styles.label}>Description / Caption
-            <textarea style={{ ...styles.textarea, minHeight: '120px', maxHeight:'140px', resize: 'vertical' }}  value={meta.description} onChange={handleChange('description')}/>
-          </label>
-        </div>
-
-        <div style={styles.groupBox}>
-          <div style={styles.groupTitle}>Creator & Rights</div>
-          <label style={styles.label}>Byline (Author)
-            <input style={styles.input} value={meta.byline} onChange={handleChange('byline')} />
-          </label>
-          <label style={styles.label}>Credit
-            <input style={styles.input} value={meta.credit} onChange={handleChange('credit')} />
-          </label>
-          <label style={styles.label}>Job ID
-            <input style={styles.input} value={meta.jobId} onChange={handleChange('jobId')} />
-          </label>
-          <label style={styles.label}>Copyright Notice
-            <input style={styles.input} value={meta.copyright} onChange={handleChange('copyright')} />
-          </label>
-          <label style={styles.label}>Source
-            <input style={styles.input} value={meta.source} onChange={handleChange('source')} />
-          </label>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-            <button onClick={saveCreatorRights} style={{ padding: '8px 12px' }}>Save Creator/Rights</button>
-            <button onClick={clearSavedCreatorRights} style={{ padding: '8px 12px' }}>Clear Saved</button>
-          </div>
-        </div>
-
-        <div style={styles.groupBox}>
-          <div style={styles.groupTitle}>Location & Date</div>
-          <label style={styles.label}>City
-            <input style={styles.input} value={meta.city} onChange={handleChange('city')} />
-          </label>
-          <label style={styles.label}>State / Province
-            <input style={styles.input} value={meta.state} onChange={handleChange('state')} />
-          </label>
-          <label style={styles.label}>Country
-            <input style={styles.input} value={meta.country} onChange={handleChange('country')} />
-          </label>
-          <label style={styles.label}>Date Created
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input style={styles.input} type="date" value={meta.dateCreated} onChange={(e) => {
-                handleChange('dateCreated')(e);
-                const val = e.target.value;
-                setCheckToday(Boolean(val && val === todayISO()));
-              }} />
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-                <input type="checkbox" checked={checkToday} onChange={(e) => {
-                  const on = e.target.checked;
-                  setCheckToday(on);
-                  if (on) setMeta(prev => ({ ...prev, dateCreated: todayISO() }));
-                  else setMeta(prev => ({ ...prev, dateCreated: '' }));
-                }} />
-                <span>Fixture today</span>
-              </label>
-            </div>
-          </label>
-        </div>
-
-        <div style={styles.groupBox}>
-          <div style={styles.groupTitle}>Keywords</div>
-          <label style={styles.label}>Keywords (comma separated)
-            <textarea style={{ ...styles.textarea, minHeight: '180px', maxHeight:'200px', resize: 'vertical' }} value={meta.keywords} onChange={handleChange('keywords')} />
-          </label>
-        </div>
       </div>
-
-      <div style={styles.buttons}>
-        <button onClick={handleCopy} style={{ padding: '8px 12px' }}>Copy JSON</button>
-        <button onClick={() => {
-          let xmpToCopy = generateXMP(meta);
-          const insertionLines = [];
-          if (meta.objectName) {
-            const ev = escapeXml(meta.objectName);
-            insertionLines.push(`      <Iptc4xmpCore:Event>${ev}</Iptc4xmpCore:Event>`);
-          }
-          if (meta.jobId) {
-            const jid = escapeXml(meta.jobId);
-            insertionLines.push(`      <Iptc4xmpCore:JobID>${jid}</Iptc4xmpCore:JobID>`);
-            insertionLines.push(`      <Iptc4xmpCore:OriginalTransmissionReference>${jid}</Iptc4xmpCore:OriginalTransmissionReference>`);
-          }
-          if (insertionLines.length > 0) {
-            const insert = insertionLines.join('\n') + '\n    </rdf:Description>';
-            xmpToCopy = xmpToCopy.replace('</rdf:Description>', insert);
-          }
-          navigator.clipboard && navigator.clipboard.writeText(xmpToCopy);
-          alert('XMP copied to clipboard');
-        }} style={{ padding: '8px 12px' }}>Copy XMP</button>
-        <button onClick={handleDownload} style={{ padding: '8px 12px' }}>Download XMP</button>
-        <button onClick={() => { setMeta({ objectName: '', headline: '', description: '', byline: '', credit: '', copyright: '', jobId: '', keywords: '', dateCreated: '', city: '', state: '', country: '', source: '' }); }} style={{ padding: '8px 12px' }}>Clear</button>
-      </div>
-
-      <h3 style={{ marginTop: '18px' }}>Preview (JSON)</h3>
-      <pre style={{ ...styles.preview, whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{asJSON()}</pre>
+      <span className="pill">Club-aware · Job ID · Fixture today</span>
     </div>
+
+    <div className="stack-md" style={{ marginBottom: 10 }}>
+      <p className="muted" style={{ margin: 0 }}>
+      Keywords should be comma-separated. Creator & rights can be saved for reuse across sessions.
+      </p>
+      <div className="generated-inline-row" style={{ justifyContent: 'flex-end' }}>
+      <button
+        type="button"
+        className="btn btn-secondary"
+        onClick={() => setShowClubSearch((s) => !s)}
+      >
+        {showClubSearch ? 'Hide club search' : 'Use club search'}
+      </button>
+      </div>
+    </div>
+
+    {showClubSearch && (
+      <div className="generated-grid" style={{ marginBottom: 18 }}>
+      <div className="generated-column card" style={{ padding: 14 }}>
+        <div className="generated-section-title">Home club</div>
+        <label className="field-label">Search</label>
+        <div className="generated-inline-row">
+        <input
+          className="input"
+          value={homeSearchTerm}
+          onChange={(e) => setHomeSearchTerm(e.target.value)}
+          placeholder="e.g. Celtic"
+        />
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => handleClubSearch(homeSearchTerm, setHomeResults, setSearchingHome)}
+          disabled={searchingHome}
+        >
+          {searchingHome ? 'Searching…' : 'Search'}
+        </button>
+        </div>
+        {homeResults.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <label className="field-label">Results</label>
+          <select
+          className="select"
+          value={selectedHomeClub?.id || ''}
+          onChange={(e) => {
+            const sel = homeResults.find((r) => r.id === e.target.value);
+            setSelectedHomeClub(sel || null);
+          }}
+          >
+          <option value="">-- Select home club --</option>
+          {homeResults.map((r) => (
+            <option key={r.id} value={r.id}>
+            {r.name} {r.country ? `- ${r.country}` : ''}
+            </option>
+          ))}
+          </select>
+        </div>
+        )}
+        <div className="btn-row" style={{ marginTop: 10 }}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={applyClubToMeta}
+          disabled={!selectedHomeClub}
+        >
+          Apply home club
+        </button>
+        </div>
+      </div>
+
+      <div className="generated-column card" style={{ padding: 14 }}>
+        <div className="generated-section-title">Away club</div>
+        <label className="field-label">Search</label>
+        <div className="generated-inline-row">
+        <input
+          className="input"
+          value={awaySearchTerm}
+          onChange={(e) => setAwaySearchTerm(e.target.value)}
+          placeholder="e.g. Bohemians"
+        />
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={() => handleClubSearch(awaySearchTerm, setAwayResults, setSearchingAway)}
+          disabled={searchingAway}
+        >
+          {searchingAway ? 'Searching…' : 'Search'}
+        </button>
+        </div>
+        {awayResults.length > 0 && (
+        <div style={{ marginTop: 10 }}>
+          <label className="field-label">Results</label>
+          <select
+          className="select"
+          value={selectedAwayClub?.id || ''}
+          onChange={(e) => {
+            const sel = awayResults.find((r) => r.id === e.target.value);
+            setSelectedAwayClub(sel || null);
+          }}
+          >
+          <option value="">-- Select away club --</option>
+          {awayResults.map((r) => (
+            <option key={r.id} value={r.id}>
+            {r.name} {r.country ? `- ${r.country}` : ''}
+            </option>
+          ))}
+          </select>
+        </div>
+        )}
+        <div className="btn-row" style={{ marginTop: 10 }}>
+        <button
+          type="button"
+          className="btn btn-secondary"
+          onClick={applyClubToMeta}
+          disabled={!selectedAwayClub}
+        >
+          Apply away club
+        </button>
+        </div>
+      </div>
+      </div>
+    )}
+
+    <div className="grid-2">
+      <div className="card" style={{ padding: 14 }}>
+      <div className="generated-section-title">Core</div>
+      <label className="field-label">Title (Object Name)</label>
+      <input className="input" value={meta.objectName} onChange={handleChange('objectName')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Headline</label>
+      <input className="input" value={meta.headline} onChange={handleChange('headline')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Description / Caption</label>
+      <textarea
+        className="textarea"
+        style={{ minHeight: 120, maxHeight: 160 }}
+        value={meta.description}
+        onChange={handleChange('description')}
+      />
+      </div>
+
+      <div className="card" style={{ padding: 14 }}>
+      <div className="generated-section-title">Creator & rights</div>
+      <label className="field-label">Byline (Author)</label>
+      <input className="input" value={meta.byline} onChange={handleChange('byline')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Credit</label>
+      <input className="input" value={meta.credit} onChange={handleChange('credit')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Job ID</label>
+      <input className="input" value={meta.jobId} onChange={handleChange('jobId')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Copyright notice</label>
+      <input className="input" value={meta.copyright} onChange={handleChange('copyright')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Source</label>
+      <input className="input" value={meta.source} onChange={handleChange('source')} />
+      <div className="btn-row" style={{ marginTop: 10 }}>
+        <button type="button" className="btn btn-secondary" onClick={saveCreatorRights}>
+        Save creator/rights
+        </button>
+        <button type="button" className="btn btn-ghost" onClick={clearSavedCreatorRights}>
+        Clear saved
+        </button>
+      </div>
+      </div>
+    </div>
+
+    <div className="grid-2" style={{ marginTop: 16 }}>
+      <div className="card" style={{ padding: 14 }}>
+      <div className="generated-section-title">Location & date</div>
+      <label className="field-label">City</label>
+      <input className="input" value={meta.city} onChange={handleChange('city')} />
+      <label className="field-label" style={{ marginTop: 10 }}>State / Province</label>
+      <input className="input" value={meta.state} onChange={handleChange('state')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Country</label>
+      <input className="input" value={meta.country} onChange={handleChange('country')} />
+      <label className="field-label" style={{ marginTop: 10 }}>Date created</label>
+      <div className="generated-inline-row">
+        <input
+        className="input"
+        type="date"
+        value={meta.dateCreated}
+        onChange={(e) => {
+          handleChange('dateCreated')(e);
+          const val = e.target.value;
+          setCheckToday(Boolean(val && val === todayISO()));
+        }}
+        />
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+        <input
+          type="checkbox"
+          checked={checkToday}
+          onChange={(e) => {
+          const on = e.target.checked;
+          setCheckToday(on);
+          if (on) setMeta((prev) => ({ ...prev, dateCreated: todayISO() }));
+          else setMeta((prev) => ({ ...prev, dateCreated: '' }));
+          }}
+        />
+        <span>Fixture today</span>
+        </label>
+      </div>
+      </div>
+      <div className="card" style={{ padding: 14 }}>
+      <div className="generated-section-title">Keywords</div>
+      <label className="field-label">Keywords (comma separated)</label>
+      <textarea
+        className="textarea"
+        style={{ minHeight: 170, maxHeight: 210 }}
+        value={meta.keywords}
+        onChange={handleChange('keywords')}
+      />
+      </div>
+    </div>
+
+    <div className="btn-row">
+      <button type="button" className="btn" onClick={handleCopy}>
+      Copy JSON
+      </button>
+      <button
+      type="button"
+      className="btn btn-secondary"
+      onClick={() => {
+        let xmpToCopy = generateXMP(meta);
+        const insertionLines = [];
+        if (meta.objectName) {
+        const ev = escapeXml(meta.objectName);
+        insertionLines.push(`      <Iptc4xmpCore:Event>${ev}</Iptc4xmpCore:Event>`);
+        }
+        if (meta.jobId) {
+        const jid = escapeXml(meta.jobId);
+        insertionLines.push(`      <Iptc4xmpCore:JobID>${jid}</Iptc4xmpCore:JobID>`);
+        insertionLines.push(`      <Iptc4xmpCore:OriginalTransmissionReference>${jid}</Iptc4xmpCore:OriginalTransmissionReference>`);
+        }
+        if (insertionLines.length > 0) {
+        const insert = insertionLines.join('\n') + '\n    </rdf:Description>';
+        xmpToCopy = xmpToCopy.replace('</rdf:Description>', insert);
+        }
+        navigator.clipboard && navigator.clipboard.writeText(xmpToCopy);
+        alert('XMP copied to clipboard');
+      }}
+      >
+      Copy XMP
+      </button>
+      <button type="button" className="btn" onClick={handleDownload}>
+      Download XMP
+      </button>
+      <button
+      type="button"
+      className="btn btn-ghost"
+      onClick={() => {
+        setMeta({
+        objectName: '',
+        headline: '',
+        description: '',
+        byline: '',
+        credit: '',
+        copyright: '',
+        jobId: '',
+        keywords: '',
+        dateCreated: '',
+        city: '',
+        state: '',
+        country: '',
+        source: '',
+        });
+      }}
+      >
+      Clear
+      </button>
+    </div>
+
+    <div className="preview-block">
+      <div className="preview-heading">
+      <span>Preview (JSON)</span>
+      </div>
+      <pre className="preview-body">{asJSON()}</pre>
+    </div>
+    </div>
+  </div>
   );
 }

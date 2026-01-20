@@ -1,108 +1,121 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
 import ManualClubSearch from './pages/ManualClubSearch';
 import About from './pages/About';
 import PhotoMetadata from './pages/PhotoMetadata';
+import ThemeToggle from './components/ThemeToggle';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
+
+function NavLinks() {
+  const location = useLocation();
+  const current = location.pathname || '/';
+
+  const linkClass = (path) =>
+    'app-nav-link' + (current === path ? ' app-nav-link-active' : '');
+
+  return (
+    <ul className="app-nav-list">
+      <li>
+        <Link to="/" className={linkClass('/')}>Clubs</Link>
+      </li>
+      <li>
+        <Link to="/league" className={linkClass('/league')}>League</Link>
+      </li>
+      <li>
+        <Link to="/photo-meta" className={linkClass('/photo-meta')}>Metadata</Link>
+      </li>
+      <li>
+        <Link to="/about" className={linkClass('/about')}>About</Link>
+      </li>
+    </ul>
+  );
+}
 
 function App() {
   return (
     <Router>
-      <div className="App">
-        <header className="App-header">
-          <nav style={navStyle}>
-            <ul style={navListStyle}>
-              <li style={navItemStyle}>
-                <Link to="/" style={linkStyle}>Clubs</Link>
-              </li>
-              <li style={navItemStyle}>
-                <Link to="/league" style={linkStyle}>League</Link>
-              </li>
-              <li style={navItemStyle}>
-                <Link to="/photo-meta" style={linkStyle}>Metadata Generator</Link>
-              </li>
-              <li style={navItemStyle}>
-                <Link to="/about" style={linkStyle}>About</Link>
-              </li>
-            </ul>
-          </nav>
+      <div className="App app-shell">
+        <header className="app-header">
+          <div className="app-header-inner">
+            <div className="app-brand">
+              <div className="app-brand-mark" />
+              <div className="app-brand-text">
+                <div className="app-title">Lensflxre Tools</div>
+                <div className="app-subtitle">Sports photography helper suite</div>
+              </div>
+            </div>
+            <nav className="app-nav">
+              <NavLinks />
+              <div className="app-nav-spacer" />
+              <ThemeToggle />
+            </nav>
+          </div>
         </header>
-        <Routes>
-          <Route path="/" element={<ManualClubSearch />} />
-          <Route path="/league" element={<TeamCodeGenerator />} />
-          <Route path="/photo-meta" element={<PhotoMetadata />} />
-          <Route path="/about" element={<About />} />
-        </Routes>
-        <footer style={footerStyle}>
-          <p>Note, information is received via transfermarkt website. Information may not be 100% accurate.</p>
-          <p>© {new Date().getFullYear()} - Jamie McGuinness. All rights reserved.</p>
-          <div style={socialMediaInlineStyle}>
-            <a href="https://twitter.com/jxmiemcg" target="_blank" rel="noopener noreferrer" style={iconStyle}>
-              <FontAwesomeIcon icon={faTwitter} />
-            </a>
-            <a href="https://lensflxre.com" target="_blank" rel="noopener noreferrer" style={iconStyle}>
-              <FontAwesomeIcon icon={faChrome} />
-            </a>
-            <a href="https://instagram.com/lensflxre" target="_blank" rel="noopener noreferrer" style={iconStyle}>
-              <FontAwesomeIcon icon={faInstagram} />
-            </a>
-            <a href="https://github.com/flaree" target="_blank" rel="noopener noreferrer" style={iconStyle}>
-              <FontAwesomeIcon icon={faGithub} />
-            </a>
+
+        <main className="app-main">
+          <div className="app-content">
+            <Routes>
+              <Route path="/" element={<ManualClubSearch />} />
+              <Route path="/league" element={<TeamCodeGenerator />} />
+              <Route path="/photo-meta" element={<PhotoMetadata />} />
+              <Route path="/about" element={<About />} />
+            </Routes>
+          </div>
+        </main>
+
+        <footer className="app-footer">
+          <div className="app-footer-inner">
+            <div className="app-footer-text">
+              <div>
+                <span className="app-footer-strong">Transfermarkt-sourced data.</span>{' '}
+                Information may not be 100% accurate.
+              </div>
+              <div style={{ marginTop: 4 }}>
+                © {new Date().getFullYear()} Jamie McGuinness · All rights reserved.
+              </div>
+            </div>
+            <div className="app-social">
+              <a
+                href="https://twitter.com/jxmiemcg"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="app-social-link"
+              >
+                <FontAwesomeIcon icon={faTwitter} />
+              </a>
+              <a
+                href="https://lensflxre.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="app-social-link"
+              >
+                <FontAwesomeIcon icon={faChrome} />
+              </a>
+              <a
+                href="https://instagram.com/lensflxre"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="app-social-link"
+              >
+                <FontAwesomeIcon icon={faInstagram} />
+              </a>
+              <a
+                href="https://github.com/flaree"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="app-social-link"
+              >
+                <FontAwesomeIcon icon={faGithub} />
+              </a>
+            </div>
           </div>
         </footer>
       </div>
     </Router>
   );
 }
-
-const navStyle = {
-  padding: '10px 0',
-};
-
-const navListStyle = {
-  listStyle: 'none',
-  display: 'flex',
-  margin: 0,
-  padding: 0,
-};
-
-const navItemStyle = {
-  margin: '0 15px',
-};
-
-const linkStyle = {
-  color: 'white',
-  textDecoration: 'none',
-  fontSize: '16px',
-  padding: '8px 15px',
-  borderRadius: '5px',
-  transition: 'background-color 0.3s, transform 0.2s',
-};
-
-const footerStyle = {
-  textAlign: 'center',
-  padding: '10px 0',
-  backgroundColor: '#282c34',
-  color: 'white',
-  marginTop: '20px',
-};
-
-const socialMediaInlineStyle = {
-  display: 'flex',
-  justifyContent: 'center',
-  gap: '15px',
-  marginTop: '10px',
-};
-
-const iconStyle = {
-  color: 'white',
-  fontSize: '24px',
-  textDecoration: 'none',
-  transition: 'transform 0.2s',
-};
 
 export default App;

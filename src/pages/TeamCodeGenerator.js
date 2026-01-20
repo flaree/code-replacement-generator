@@ -139,184 +139,156 @@ function TeamCodeGenerator() {
 		}
 	};
 
-	const inputStyle = {
-		padding: '8px',
-		margin: '8px 0',
-		border: '1px solid #ccc',
-		borderRadius: '4px',
-		width: '100%',
-		boxSizing: 'border-box',
-	};
-
 	return (
-		<div style={{ padding: '20px', textAlign: 'center' }} className='generated-code-page'>
-			<form
-				onSubmit={(e) => {
-					e.preventDefault();
-					handleGenerate();
-				}}
-			>
-				<div>
-					<label>
-						Select League:
-						<select
-							value={selectedLeague}
-							onChange={(e) => {
-								setSelectedLeague(e.target.value);
-								setSelectedTeam1('');
-								setSelectedTeam2('');
-							}}
-							required
-							style={inputStyle}
-						>
-							<option value="" disabled>
-								-- Select a League --
-							</option>
-							{Object.keys(codes).map((league) => (
-								<option key={league} value={league}>
-									{league}
-								</option>
-							))}
-						</select>
-					</label>
-				</div>
-				{selectedLeague && teams.length > 0 && (
-					<>
-						<div>
-							<label>
-								Select Home Team:
-								<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-									<select
-										value={selectedTeam1}
-										onChange={(e) => {
-											setSelectedTeam1(e.target.value);
-											setDelimiter1(e.target.value[0]?.toLowerCase() || ''); // Default delimiter to the first letter
-										}}
-										required
-										style={inputStyle}
-									>
-										<option value="" disabled>
-											-- Select Home Team --
-										</option>
-										{teams.map((team) => (
-											<option key={team} value={team}>
-												{team}
-											</option>
-										))}
-									</select>
-									<div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
-										<label style={{ fontSize: '12px' }}>Delim:</label>
-										<input
-											type="text"
-											value={delimiter1}
-											onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())} // Limit input to one lowercase letter
-											style={{
-												width: '40px',
-												textAlign: 'center',
-												padding: '8px',
-												border: '1px solid #ccc',
-												borderRadius: '4px',
-											}}
-										/>
+									<div className='generated-code-page container-page'>
+										<div className="card generated-code-card">
+											<div className="card-header">
+												<div>
+													<div className="card-title">League code replacements</div>
+													<div className="card-subtitle">
+														Generate Photo Mechanic code replacements from a league fixture.
+													</div>
+												</div>
+												<span className="pill">Single-team friendly · Away optional</span>
+											</div>
+											<form
+												onSubmit={(e) => {
+													e.preventDefault();
+													handleGenerate();
+												}}
+											>
+												<div className="stack-md">
+													<div>
+														<label className="field-label" htmlFor="league-select">League</label>
+														<select
+															id="league-select"
+															className="select"
+															value={selectedLeague}
+															onChange={(e) => {
+																setSelectedLeague(e.target.value);
+																setSelectedTeam1('');
+																setSelectedTeam2('');
+															}}
+															required
+														>
+															<option value="" disabled>
+																-- Select a league --
+															</option>
+															{Object.keys(codes).map((league) => (
+																<option key={league} value={league}>
+																	{league}
+																</option>
+															))}
+														</select>
+													</div>
+													{selectedLeague && teams.length > 0 && (
+														<div className="generated-grid">
+															<div className="generated-column">
+																<div className="generated-section-title">Home team (required)</div>
+																<label className="field-label" htmlFor="home-team">Team</label>
+																<div className="generated-inline-row">
+																	<select
+																		id="home-team"
+																		className="select"
+																		value={selectedTeam1}
+																		onChange={(e) => {
+																			setSelectedTeam1(e.target.value);
+																			setDelimiter1(e.target.value[0]?.toLowerCase() || '');
+																		}}
+																		required
+																	>
+																		<option value="" disabled>
+																			-- Select home team --
+																		</option>
+																		{teams.map((team) => (
+																			<option key={team} value={team}>
+																				{team}
+																			</option>
+																		))}
+																	</select>
+																	<div className="generated-inline-row">
+																		<span className="muted" style={{ fontSize: 12 }}>Delim</span>
+																		<input
+																			type="text"
+																			className="input generated-delim-input"
+																			value={delimiter1}
+																			onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())}
+																		/>
+																	</div>
+																</div>
+															</div>
+															<div className="generated-column">
+																<div className="generated-section-title">Away team (optional)</div>
+																<label className="field-label" htmlFor="away-team">Team</label>
+																<div className="generated-inline-row">
+																	<select
+																		id="away-team"
+																		className="select"
+																		value={selectedTeam2}
+																		onChange={(e) => {
+																			setSelectedTeam2(e.target.value);
+																			setDelimiter2(e.target.value[0]?.toLowerCase() || '');
+																		}}
+																	>
+																		<option value="" disabled>
+																			-- Select away team --
+																		</option>
+																		{teams.map((team) => (
+																			<option key={team} value={team}>
+																				{team}
+																			</option>
+																		))}
+																	</select>
+																	<div className="generated-inline-row">
+																		<span className="muted" style={{ fontSize: 12 }}>Delim</span>
+																		<input
+																			type="text"
+																			className="input generated-delim-input"
+																			value={delimiter2}
+																			onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())}
+																		/>
+																	</div>
+																</div>
+															</div>
+														</div>
+													)}
+												</div>
+												<div className="btn-row" style={{ marginTop: 18 }}>
+													<button
+														type="submit"
+														className="btn"
+														disabled={loading || !selectedTeam1}
+													>
+														{loading ? 'Generating…' : 'Generate replacements'}
+													</button>
+												</div>
+											</form>
+											<div className="generated-extra-card">
+												<AdditionalOptions options={options} setOptions={setOptions} />
+											</div>
+											{generatedCode && (
+												<div className="preview-block" style={{ marginTop: 16 }}>
+													<div className="preview-heading">
+														<span>Generated code replacements</span>
+														<button
+															className="btn btn-secondary"
+															type="button"
+															onClick={() => {
+																const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
+																const link = document.createElement('a');
+																link.href = URL.createObjectURL(blob);
+																link.download = `${selectedTeam1 || 'team'}_code_replacements.txt`;
+																link.click();
+															}}
+														>
+															Download .txt
+														</button>
+													</div>
+													<pre className="preview-body">{generatedCode}</pre>
+												</div>
+											)}
+										</div>
 									</div>
-								</div>
-							</label>
-						</div>
-						<div>
-							<label>
-								Select Away Team (optional):
-								<div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-									<select
-										value={selectedTeam2}
-										onChange={(e) => {
-											setSelectedTeam2(e.target.value);
-											setDelimiter2(e.target.value[0]?.toLowerCase() || ''); // Default delimiter to the first letter
-										}}
-									// optional
-										style={inputStyle}
-									>
-										<option value="" disabled>
-											-- Select Away Team --
-										</option>
-										{teams.map((team) => (
-											<option key={team} value={team}>
-												{team}
-											</option>
-										))}
-									</select>
-									<div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '5px' }}>
-										<label style={{ fontSize: '12px' }}>Delim:</label>
-										<input
-											type="text"
-											value={delimiter2}
-											onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())} // Limit input to one lowercase letter
-											style={{
-												width: '40px',
-												textAlign: 'center',
-												padding: '8px',
-												border: '1px solid #ccc',
-												borderRadius: '4px',
-											}}
-										/>
-									</div>
-								</div>
-							</label>
-						</div>
-						
-			</>
-				)}
-				<AdditionalOptions
-				options={options}
-				setOptions={setOptions}
-				inputStyle={inputStyle}
-				/>
-			<button
-				type="submit"
-				disabled={!selectedLeague || !selectedTeam1 || loading} // Now allow single-team generation (away optional)
-				style={{
-					padding: '10px 20px',
-					backgroundColor: !selectedLeague || !selectedTeam1 || loading ? '#ccc' : '#007BFF',
-					color: 'white',
-					border: 'none',
-					borderRadius: '4px',
-					cursor: !selectedLeague || !selectedTeam1 || loading ? 'not-allowed' : 'pointer',
-				}}
-			>
-				{loading ? 'Generating...' : 'Generate Code Replacements'}
-			</button>
-		</form>
-			{ loading && <p style={{ color: 'white' }}>Loading, please wait...</p> } {/* Show loading indicator */ }
-	{
-		generatedCode && (
-			<div>
-				<h2>Generated Code:</h2>
-				<button
-					onClick={() => {
-						const blob = new Blob([generatedCode], { type: 'text/plain' });
-						const link = document.createElement('a');
-						link.href = URL.createObjectURL(blob);
-						link.download = `${options.selectedDate ? options.selectedDate.replace(/-/g, '') + '-' : ''}${selectedTeam1}${selectedTeam2 ? '-vs-' + selectedTeam2 : ''}.txt`;
-						link.click();
-					}}
-					style={{
-						padding: '10px 20px',
-						backgroundColor: '#28A745',
-						color: 'white',
-						border: 'none',
-						borderRadius: '4px',
-						cursor: 'pointer',
-						marginBottom: '10px',
-					}}
-				>
-					Download Code Replacements
-				</button>
-				<pre style={{ fontSize: '12px', color: 'black', background: '#f4f4f4', padding: '10px', textAlign: 'left' }}>
-					{generatedCode}
-				</pre>
-			</div>
-		)
-	}
-		</div >
 	);
 }
 

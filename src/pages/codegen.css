@@ -1,10 +1,79 @@
 .generated-code-page {
+	font-size: 14px;
+	color: var(--text-primary);
+}
+
+.generated-code-card {
+	max-width: 960px;
+	margin: 0 auto;
+}
+
+.generated-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
+	gap: 16px;
+	margin-top: 16px;
+}
+
+.generated-column {
 	display: flex;
 	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	font-size: calc(10px + 2vmin);
-	color: white;
-  }
+	gap: 10px;
+}
 
-  /* Add this to codegen.css */
+.generated-section-title {
+	font-size: 13px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: rgba(177, 188, 226, 0.9);
+}
+
+.generated-inline-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.generated-delim-input {
+	width: 52px;
+	text-align: center;
+}
+
+.generated-popup {
+	margin-bottom: 14px;
+	padding: 10px 12px;
+	border-radius: 12px;
+	background: radial-gradient(circle at top left, rgba(255, 218, 128, 0.92), rgba(255, 121, 109, 0.96));
+	color: #220814;
+	font-size: 13px;
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+}
+
+.generated-popup button {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	color: inherit;
+	font-size: 16px;
+}
+
+.generated-extra-card {
+	margin-top: 14px;
+}
+
+.generated-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 16px;
+}
+
+@media (max-width: 880px) {
+	.generated-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}

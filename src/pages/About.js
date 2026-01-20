@@ -1,62 +1,46 @@
 import React from 'react';
 
 function About() {
-  const aboutStyle = {
-    padding: '20px',
-    textAlign: 'center',
-    maxWidth: '800px',
-    margin: '0 auto',
-    lineHeight: '1.6',
-    color: '#333',
-  };
-
-  const headingStyle = {
-    fontSize: '24px',
-    marginBottom: '20px',
-    color: '#007BFF',
-  };
-
-  const paragraphStyle = {
-    marginBottom: '15px',
-    color: '#fff',
-  };
-
-  const buttonStyle = {
-    display: 'inline-block',
-    marginTop: '20px',
-    padding: '10px 20px',
-    backgroundColor: '#FF813F', // Buy Me a Coffee orange color
-    color: '#fff',
-    textDecoration: 'none',
-    borderRadius: '5px',
-    fontWeight: 'bold',
-    fontSize: '16px',
-  };
-
   return (
-    <div style={aboutStyle}>
-      <h1 style={headingStyle}>About This App</h1>
-      <p style={paragraphStyle}>
-        This page is a one-stop place to help with the tedious tasks of sports photography, such as generating photomechanic code replacements and team-based metadata generators (still a work in progress).
-      </p>
-      <p style={paragraphStyle}>
-        There's no design polish, just practical tools and simple workflows meant to save you time so you can focus on shooting instead of repetitive tasks.
-      </p>
-      <p style={paragraphStyle}>
-        As information is sourced from transfermarkt website, this means there is no women's data available. I hope to make a women's version in the future.
-      </p>
-      <p style={paragraphStyle}>
-        This site is served free of charge, and without ads however my backend service is paid for by myself. If you find it useful, please consider supporting its development by buying me a coffee.
-      </p>
-
-      <a
-        href="https://www.buymeacoffee.com/cyqi5my0sl"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={buttonStyle}
-      >
-        Buy Me a Coffee
-      </a>
+    <div className="container-page">
+      <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
+        <div className="card-header">
+          <div>
+            <div className="card-title">About these tools</div>
+            <div className="card-subtitle">
+              A small suite of helpers for sports photographers.
+            </div>
+          </div>
+        </div>
+        <div className="stack-md">
+          <p className="muted">
+            This app brings together a few utilities I use in my own football coverage: generating Photo Mechanic code
+            replacements, building team-based metadata, and experimenting with smarter IPTC and XMP workflows.
+          </p>
+          <p className="muted">
+            Data comes from Transfermarkt, which unfortunately means there&apos;s currently no coverage for women&apos;s
+            competitions. I&apos;d love to support that in the future as the data becomes available.
+          </p>
+          <p className="muted">
+            Everything here is free and ad‑free, but the backend services are paid for out of pocket. If the tools save
+            you time on a matchday or editing session, supporting the project is hugely appreciated.
+          </p>
+          <div style={{ marginTop: 8 }}>
+            <a
+              href="https://www.buymeacoffee.com/cyqi5my0sl"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn"
+              style={{
+                background: 'linear-gradient(135deg, #ff9b3f, #ff6b3f)',
+                boxShadow: '0 14px 30px rgba(255, 132, 63, 0.55)',
+              }}
+            >
+              Buy me a coffee
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
