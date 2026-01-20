@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
@@ -9,7 +9,7 @@ import ThemeToggle from './components/ThemeToggle';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 
-function NavLinks() {
+function NavLinks({ onClick }) {
   const location = useLocation();
   const current = location.pathname || '/';
 
@@ -19,22 +19,27 @@ function NavLinks() {
   return (
     <ul className="app-nav-list">
       <li>
-        <Link to="/" className={linkClass('/')}>Clubs</Link>
+        <Link to="/" className={linkClass('/')} onClick={onClick}>Clubs</Link>
       </li>
       <li>
-        <Link to="/league" className={linkClass('/league')}>League</Link>
+        <Link to="/league" className={linkClass('/league')} onClick={onClick}>League</Link>
       </li>
       <li>
-        <Link to="/photo-meta" className={linkClass('/photo-meta')}>Metadata</Link>
+        <Link to="/photo-meta" className={linkClass('/photo-meta')} onClick={onClick}>Metadata</Link>
       </li>
       <li>
-        <Link to="/about" className={linkClass('/about')}>About</Link>
+        <Link to="/about" className={linkClass('/about')} onClick={onClick}>About</Link>
       </li>
     </ul>
   );
 }
 
 function App() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
   return (
     <Router>
       <div className="App app-shell">
@@ -49,11 +54,27 @@ function App() {
             </div>
             <nav className="app-nav">
               <NavLinks />
-              <div className="app-nav-spacer" />
-              <ThemeToggle />
             </nav>
+            <button 
+              className="mobile-menu-toggle" 
+              onClick={toggleMobileMenu}
+              aria-label="Toggle menu"
+            >
+              <span className="hamburger-line"></span>
+              <span className="hamburger-line"></span>
+              <span className="hamburger-line"></span>
+            </button>
           </div>
         </header>
+
+        {mobileMenuOpen && (
+          <>
+            <div className="mobile-menu-overlay" onClick={closeMobileMenu}></div>
+            <nav className="mobile-menu">
+              <NavLinks onClick={closeMobileMenu} />
+            </nav>
+          </>
+        )}
 
         <main className="app-main">
           <div className="app-content">
@@ -77,39 +98,42 @@ function App() {
                 © {new Date().getFullYear()} Jamie McGuinness · All rights reserved.
               </div>
             </div>
-            <div className="app-social">
-              <a
-                href="https://twitter.com/jxmiemcg"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="app-social-link"
-              >
-                <FontAwesomeIcon icon={faTwitter} />
-              </a>
-              <a
-                href="https://lensflxre.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="app-social-link"
-              >
-                <FontAwesomeIcon icon={faChrome} />
-              </a>
-              <a
-                href="https://instagram.com/lensflxre"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="app-social-link"
-              >
-                <FontAwesomeIcon icon={faInstagram} />
-              </a>
-              <a
-                href="https://github.com/flaree"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="app-social-link"
-              >
-                <FontAwesomeIcon icon={faGithub} />
-              </a>
+            <div className="app-footer-actions">
+              {/* <ThemeToggle /> */}
+              <div className="app-social">
+                <a
+                  href="https://twitter.com/jxmiemcg"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="app-social-link"
+                >
+                  <FontAwesomeIcon icon={faTwitter} />
+                </a>
+                <a
+                  href="https://lensflxre.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="app-social-link"
+                >
+                  <FontAwesomeIcon icon={faChrome} />
+                </a>
+                <a
+                  href="https://instagram.com/lensflxre"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="app-social-link"
+                >
+                  <FontAwesomeIcon icon={faInstagram} />
+                </a>
+                <a
+                  href="https://github.com/flaree"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="app-social-link"
+                >
+                  <FontAwesomeIcon icon={faGithub} />
+                </a>
+              </div>
             </div>
           </div>
         </footer>
