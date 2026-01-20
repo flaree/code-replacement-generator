@@ -5,7 +5,7 @@ import TeamCodeGenerator from './pages/TeamCodeGenerator';
 import ManualClubSearch from './pages/ManualClubSearch';
 import About from './pages/About';
 import PhotoMetadata from './pages/PhotoMetadata';
-import ThemeToggle from './components/ThemeToggle';
+// import ThemeToggle from './components/ThemeToggle';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 
