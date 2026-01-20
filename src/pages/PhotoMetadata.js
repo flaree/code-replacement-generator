@@ -155,13 +155,6 @@ export default function PhotoMetadata() {
     setCheckToday(Boolean(meta.dateCreated && meta.dateCreated === today));
   }, [meta.dateCreated]);
 
-  // Auto-apply club metadata when selections change
-  useEffect(() => {
-    if (selectedHomeClub || selectedAwayClub) {
-      applyClubToMeta();
-    }
-  }, [selectedHomeClub, selectedAwayClub, applyClubToMeta]);
-
   const saveCreatorRights = () => {
     const payload = {
       byline: meta.byline || '',
@@ -221,6 +214,13 @@ export default function PhotoMetadata() {
 	  keywords: [prev.keywords, homeName, awayName, stadium, country].filter(Boolean).join(', '),
     }));
   }, [selectedHomeClub, selectedAwayClub, BASE_URL]);
+
+  // Auto-apply club metadata when selections change
+  useEffect(() => {
+    if (selectedHomeClub || selectedAwayClub) {
+      applyClubToMeta();
+    }
+  }, [selectedHomeClub, selectedAwayClub, applyClubToMeta]);
 
   return (
   <div className="generated-code-page container-page">
