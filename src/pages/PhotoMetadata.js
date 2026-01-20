@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './codegen.css';
 
 export default function PhotoMetadata() {
@@ -155,6 +155,13 @@ export default function PhotoMetadata() {
     setCheckToday(Boolean(meta.dateCreated && meta.dateCreated === today));
   }, [meta.dateCreated]);
 
+  // Auto-apply club metadata when selections change
+  useEffect(() => {
+    if (selectedHomeClub || selectedAwayClub) {
+      applyClubToMeta();
+    }
+  }, [selectedHomeClub, selectedAwayClub, applyClubToMeta]);
+
   const saveCreatorRights = () => {
     const payload = {
       byline: meta.byline || '',
@@ -180,7 +187,7 @@ export default function PhotoMetadata() {
     alert('Saved Creator & Rights cleared');
   };
 
-  const applyClubToMeta = async () => {
+  const applyClubToMeta = useCallback(async () => {
     // Build headline/title/description from selected home/away clubs using profile data when available
     if (!selectedHomeClub && !selectedAwayClub) return;
 
@@ -204,7 +211,7 @@ export default function PhotoMetadata() {
     const country = (homeProfile && (homeProfile.country || homeProfile.location || selectedHomeClub?.country)) || '';
 
     const title = homeName && awayName ? `${homeName} vs ${awayName}` : (homeName || awayName || 'Match');
-    const description = `during the {COMPETITION} game between ${homeName || 'Home'} and ${awayName || 'Away'}${stadium ? ' at ' + stadium : ''}${country ? ', ' + country : ''}`;
+    const description = `during the {COMPETITION} game between ${homeName || 'Home Team'} and ${awayName || 'Away Team'}${stadium ? ' at ' + stadium : ''}${country ? ', ' + country : ''}`;
 
     setMeta((prev) => ({
       ...prev,
@@ -213,7 +220,7 @@ export default function PhotoMetadata() {
       description: description,
 	  keywords: [prev.keywords, homeName, awayName, stadium, country].filter(Boolean).join(', '),
     }));
-  };
+  }, [selectedHomeClub, selectedAwayClub, BASE_URL]);
 
   return (
   <div className="generated-code-page container-page">
@@ -253,6 +260,11 @@ export default function PhotoMetadata() {
           className="input"
           value={homeSearchTerm}
           onChange={(e) => setHomeSearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && homeSearchTerm && !searchingHome) {
+              handleClubSearch(homeSearchTerm, setHomeResults, setSearchingHome);
+            }
+          }}
           placeholder="e.g. Celtic"
         />
         <button
@@ -284,16 +296,6 @@ export default function PhotoMetadata() {
           </select>
         </div>
         )}
-        <div className="btn-row" style={{ marginTop: 10 }}>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={applyClubToMeta}
-          disabled={!selectedHomeClub}
-        >
-          Apply home club
-        </button>
-        </div>
       </div>
 
       <div className="generated-column card" style={{ padding: 14 }}>
@@ -304,6 +306,11 @@ export default function PhotoMetadata() {
           className="input"
           value={awaySearchTerm}
           onChange={(e) => setAwaySearchTerm(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && awaySearchTerm && !searchingAway) {
+              handleClubSearch(awaySearchTerm, setAwayResults, setSearchingAway);
+            }
+          }}
           placeholder="e.g. Bohemians"
         />
         <button
@@ -335,16 +342,6 @@ export default function PhotoMetadata() {
           </select>
         </div>
         )}
-        <div className="btn-row" style={{ marginTop: 10 }}>
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={applyClubToMeta}
-          disabled={!selectedAwayClub}
-        >
-          Apply away club
-        </button>
-        </div>
       </div>
       </div>
     )}
