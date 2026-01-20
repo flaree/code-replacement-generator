@@ -16,6 +16,7 @@ export default function PhotoMetadata() {
     state: '',
     country: '',
     source: '',
+    stadium: '',
   });
 
   const handleChange = (field) => (e) => setMeta({ ...meta, [field]: e.target.value });
@@ -52,40 +53,28 @@ export default function PhotoMetadata() {
     const desc = escapeXml(m.description);
     const byline = escapeXml(m.byline);
     const credit = escapeXml(m.credit);
-    // const jobId = escapeXml(m.jobId);
+    const jobId = escapeXml(m.jobId);
     const copyright = escapeXml(m.copyright);
     const dateCreated = escapeXml(m.dateCreated);
     const city = escapeXml(m.city);
-    // const state = escapeXml(m.state);
+    const state = escapeXml(m.state);
     const country = escapeXml(m.country);
     const source = escapeXml(m.source);
+    const stadium = escapeXml(m.stadium);
+    const event = headline || title;
 
     const keywordNodes = keywords.map(k => `            <rdf:li>${escapeXml(k)}</rdf:li>`).join('\n');
 
     // eslint-disable-next-line no-useless-escape
-    return `<?xpacket begin=\"\uFEFF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\">\n  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n           xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n           xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\">\n    <rdf:Description rdf:about=\"\">\n      <dc:title>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${title}</rdf:li>\n        </rdf:Alt>\n      </dc:title>\n      <dc:creator>\n        <rdf:Seq>\n          <rdf:li>${byline}</rdf:li>\n        </rdf:Seq>\n      </dc:creator>\n      <Iptc4xmpCore:Location>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${city}</rdf:li>\n        </rdf:Alt>\n      </Iptc4xmpCore:Location>\n      <Iptc4xmpCore:CountryCode>${country}</Iptc4xmpCore:CountryCode>\n      <dc:description>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${desc}</rdf:li>\n        </rdf:Alt>\n      </dc:description>\n      <dc:subject>\n        <rdf:Bag>\n${keywordNodes}\n        </rdf:Bag>\n      </dc:subject>\n      <Iptc4xmpCore:DateCreated>${dateCreated}</Iptc4xmpCore:DateCreated>\n      <Iptc4xmpCore:Credit>${credit}</Iptc4xmpCore:Credit>\n      <Iptc4xmpCore:CopyrightNotice>${copyright}</Iptc4xmpCore:CopyrightNotice>\n      <Iptc4xmpCore:Source>${source}</Iptc4xmpCore:Source>\n      <Iptc4xmpCore:Headline>${headline}</Iptc4xmpCore:Headline>\n    </rdf:Description>\n  </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end=\"w\"?>`;
+    return `<?xpacket begin=\"\uFEFF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\">\n  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n           xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n           xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\"\n           xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\"\n           xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\"\n           xmlns:Iptc4xmpExt=\"http://iptc.org/std/Iptc4xmpExt/2008-02-29/\">\n    <rdf:Description rdf:about=\"\"\n     Iptc4xmpCore:Location=\"${stadium}\">\n      <dc:title>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${title}</rdf:li>\n        </rdf:Alt>\n      </dc:title>\n      <dc:creator>\n        <rdf:Seq>\n          <rdf:li>${byline}</rdf:li>\n        </rdf:Seq>\n      </dc:creator>\n      <dc:rights>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${copyright}</rdf:li>\n        </rdf:Alt>\n      </dc:rights>\n      <photoshop:City>${city}</photoshop:City>\n      <photoshop:State>${state}</photoshop:State>\n      <photoshop:Country>${country}</photoshop:Country>\n      <photoshop:Credit>${credit}</photoshop:Credit>\n      <photoshop:Source>${source}</photoshop:Source>\n      <photoshop:DateCreated>${dateCreated}</photoshop:DateCreated>\n      <photoshop:Headline>${headline}</photoshop:Headline>\n      <photoshop:TransmissionReference>${jobId}</photoshop:TransmissionReference>\n      <dc:description>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${desc}</rdf:li>\n        </rdf:Alt>\n      </dc:description>\n      <dc:subject>\n        <rdf:Bag>\n${keywordNodes}\n        </rdf:Bag>\n      </dc:subject>\n      <Iptc4xmpCore:DateCreated>${dateCreated}</Iptc4xmpCore:DateCreated>\n      <Iptc4xmpCore:Credit>${credit}</Iptc4xmpCore:Credit>\n      <Iptc4xmpCore:CopyrightNotice>${copyright}</Iptc4xmpCore:CopyrightNotice>\n      <Iptc4xmpCore:Source>${source}</Iptc4xmpCore:Source>\n      <Iptc4xmpCore:Headline>${headline}</Iptc4xmpCore:Headline>\n      <Iptc4xmpCore:JobID>${jobId}</Iptc4xmpCore:JobID>\n      <Iptc4xmpCore:OriginalTransmissionReference>${jobId}</Iptc4xmpCore:OriginalTransmissionReference>\n      <Iptc4xmpExt:Event>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${event}</rdf:li>\n        </rdf:Alt>\n      </Iptc4xmpExt:Event>\n    </rdf:Description>\n  </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end=\"w\"?>`;
   };
 
   const handleDownload = () => {
-    let xmp = generateXMP(meta);
-    const insertionLines = [];
-    if (meta.objectName) {
-      const ev = escapeXml(meta.objectName);
-      insertionLines.push(`      <Iptc4xmpCore:Event>${ev}</Iptc4xmpCore:Event>`);
-    }
-    if (meta.jobId) {
-      const jid = escapeXml(meta.jobId);
-      insertionLines.push(`      <Iptc4xmpCore:JobID>${jid}</Iptc4xmpCore:JobID>`);
-      insertionLines.push(`      <Iptc4xmpCore:OriginalTransmissionReference>${jid}</Iptc4xmpCore:OriginalTransmissionReference>`);
-    }
-    if (insertionLines.length > 0) {
-      const insert = insertionLines.join('\n') + '\n    </rdf:Description>';
-      xmp = xmp.replace('</rdf:Description>', insert);
-    }
+    const xmp = generateXMP(meta);
     const blob = new Blob([xmp], { type: 'application/xml' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `${meta.objectName || 'photo-metadata'}.xmp`;
+    link.download = `${meta.dateCreated ? meta.dateCreated + '-' : ''}${meta.objectName || 'photo-metadata'}.xmp`;
     link.click();
   };
   const BASE_URL =
@@ -201,17 +190,36 @@ export default function PhotoMetadata() {
     const awayName = selectedAwayClub?.name || '';
 
     const stadium = (homeProfile && (homeProfile.stadiumName)) || '';
-    const country = (homeProfile && (homeProfile.country || homeProfile.location || selectedHomeClub?.country)) || '';
+    const country = (homeProfile && (homeProfile.addressLine3)) || '';
 
     const title = homeName && awayName ? `${homeName} vs ${awayName}` : (homeName || awayName || 'Match');
-    const description = `during the {COMPETITION} game between ${homeName || 'Home Team'} and ${awayName || 'Away Team'}${stadium ? ' at ' + stadium : ''}${country ? ', ' + country : ''}`;
-
+    const description = `during the {COMPETITION} match between ${homeName || 'Home Team'} and ${awayName || 'Away Team'}${stadium ? ' at ' + stadium : ''}${country ? ', ' + country : ''}.`;
+    
+    // Convert YYYY-MM-DD to DD/MM/YYYY for headline
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      const [year, month, day] = dateStr.split('-');
+      return `${day}/${month}/${year}`;
+    };
+    
     setMeta((prev) => ({
       ...prev,
       objectName: title,
-      headline: title,
+      headline: `${formatDate(prev.dateCreated)} - ${homeName || 'Home Team'} -v- ${awayName || 'Away Team'}`,
       description: description,
-	  keywords: [prev.keywords, homeName, awayName, stadium, country].filter(Boolean).join(', '),
+      country: country || prev.country,
+      stadium: stadium || prev.stadium,
+	  keywords: (() => {
+        const existingKeywords = prev.keywords ? prev.keywords.split(',').map(k => k.trim()) : [];
+        const newKeywords = [homeName, awayName, stadium, country].filter(Boolean);
+        const allKeywords = [...existingKeywords];
+        newKeywords.forEach(kw => {
+          if (!allKeywords.some(existing => existing.toLowerCase() === kw.toLowerCase())) {
+            allKeywords.push(kw);
+          }
+        });
+        return allKeywords.join(', ');
+      })(),
     }));
   }, [selectedHomeClub, selectedAwayClub, BASE_URL]);
 
@@ -221,6 +229,24 @@ export default function PhotoMetadata() {
       applyClubToMeta();
     }
   }, [selectedHomeClub, selectedAwayClub, applyClubToMeta]);
+
+  useEffect(() => {
+    if ((selectedHomeClub || selectedAwayClub) && meta.dateCreated) {
+      const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const [year, month, day] = dateStr.split('-');
+        return `${day}/${month}/${year}`;
+      };
+      
+      const homeName = selectedHomeClub?.name || '';
+      const awayName = selectedAwayClub?.name || '';
+      
+      setMeta((prev) => ({
+        ...prev,
+        headline: `${formatDate(prev.dateCreated)} - ${homeName || 'Home Team'} -v- ${awayName || 'Away Team'}`,
+      }));
+    }
+  }, [meta.dateCreated, selectedHomeClub, selectedAwayClub]);
 
   return (
   <div className="generated-code-page container-page">
@@ -370,7 +396,7 @@ export default function PhotoMetadata() {
       <input className="input" value={meta.credit} onChange={handleChange('credit')} />
       <label className="field-label" style={{ marginTop: 10 }}>Job ID</label>
       <input className="input" value={meta.jobId} onChange={handleChange('jobId')} />
-      <label className="field-label" style={{ marginTop: 10 }}>Copyright notice</label>
+      <label className="field-label" style={{ marginTop: 10 }}>Copyright Author</label>
       <input className="input" value={meta.copyright} onChange={handleChange('copyright')} />
       <label className="field-label" style={{ marginTop: 10 }}>Source</label>
       <input className="input" value={meta.source} onChange={handleChange('source')} />
@@ -388,13 +414,15 @@ export default function PhotoMetadata() {
     <div className="grid-2" style={{ marginTop: 16 }}>
       <div className="card" style={{ padding: 14 }}>
       <div className="generated-section-title">Location & date</div>
-      <label className="field-label">City</label>
+      <label className="field-label">Stadium</label>
+      <input className="input" value={meta.stadium} onChange={handleChange('stadium')} />
+      <label className="field-label" style={{ marginTop: 10 }}>City</label>
       <input className="input" value={meta.city} onChange={handleChange('city')} />
       <label className="field-label" style={{ marginTop: 10 }}>State / Province</label>
       <input className="input" value={meta.state} onChange={handleChange('state')} />
       <label className="field-label" style={{ marginTop: 10 }}>Country</label>
       <input className="input" value={meta.country} onChange={handleChange('country')} />
-      <label className="field-label" style={{ marginTop: 10 }}>Date created</label>
+      <label className="field-label" style={{ marginTop: 10 }}>Date</label>
       <div className="generated-inline-row" style={{ alignItems: 'center' }}>
         <input
         className="input"
@@ -441,21 +469,7 @@ export default function PhotoMetadata() {
       type="button"
       className="btn btn-secondary"
       onClick={() => {
-        let xmpToCopy = generateXMP(meta);
-        const insertionLines = [];
-        if (meta.objectName) {
-        const ev = escapeXml(meta.objectName);
-        insertionLines.push(`      <Iptc4xmpCore:Event>${ev}</Iptc4xmpCore:Event>`);
-        }
-        if (meta.jobId) {
-        const jid = escapeXml(meta.jobId);
-        insertionLines.push(`      <Iptc4xmpCore:JobID>${jid}</Iptc4xmpCore:JobID>`);
-        insertionLines.push(`      <Iptc4xmpCore:OriginalTransmissionReference>${jid}</Iptc4xmpCore:OriginalTransmissionReference>`);
-        }
-        if (insertionLines.length > 0) {
-        const insert = insertionLines.join('\n') + '\n    </rdf:Description>';
-        xmpToCopy = xmpToCopy.replace('</rdf:Description>', insert);
-        }
+        const xmpToCopy = generateXMP(meta);
         navigator.clipboard && navigator.clipboard.writeText(xmpToCopy);
         alert('XMP copied to clipboard');
       }}
@@ -483,6 +497,7 @@ export default function PhotoMetadata() {
         state: '',
         country: '',
         source: '',
+        stadium: '',
         });
       }}
       >
