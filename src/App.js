@@ -38,7 +38,7 @@ function App() {
         </Routes>
         <footer style={footerStyle}>
           <p>Note, information is received via transfermarkt website. Information may not be 100% accurate.</p>
-          <p>© 2025 Jamie McGuinness. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} - Jamie McGuinness. All rights reserved.</p>
           <div style={socialMediaInlineStyle}>
             <a href="https://twitter.com/jxmiemcg" target="_blank" rel="noopener noreferrer" style={iconStyle}>
               <FontAwesomeIcon icon={faTwitter} />

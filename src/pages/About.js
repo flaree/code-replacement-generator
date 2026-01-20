@@ -37,17 +37,20 @@ function About() {
     <div style={aboutStyle}>
       <h1 style={headingStyle}>About This App</h1>
       <p style={paragraphStyle}>
-        Note that this app is still a work in progress. UI is not my strong suit so please excuse the basic design and the small formatting issues etc.
+        This page is a one-stop place to help with the tedious tasks of sports photography, such as generating photomechanic code replacements and team-based metadata generators (still a work in progress).
       </p>
       <p style={paragraphStyle}>
-        This app was created to simplify the process of generating photomechanic code replacements for football matches. By selecting teams from various leagues, users can quickly obtain the necessary codes for their workflows.
+        There's no design polish, just practical tools and simple workflows meant to save you time so you can focus on shooting instead of repetitive tasks.
       </p>
-      <p style={paragraphStyle}>It was a quick project with no thought/planning, just the info needed to make generating of the code replacements simple and easy.</p>
-      <p style={paragraphStyle}>As information is sourced from transfermarkt website, this means there is no womens data available. I hope to make a womens version in the future.</p>
-      <p style={paragraphStyle}>After some requests i've added the below Buy Me a Coffee button, under no way should you feel obliged to do so. I made this project to solve some of the issues I occur while shooting matches and just want to share the tools I create.</p>
+      <p style={paragraphStyle}>
+        As information is sourced from transfermarkt website, this means there is no women's data available. I hope to make a women's version in the future.
+      </p>
+      <p style={paragraphStyle}>
+        This site is served free of charge, and without ads however my backend service is paid for by myself. If you find it useful, please consider supporting its development by buying me a coffee.
+      </p>
 
       <a
-        href="https://www.buymeacoffee.com/cyqi5my0sl" 
+        href="https://www.buymeacoffee.com/cyqi5my0sl"
         target="_blank"
         rel="noopener noreferrer"
         style={buttonStyle}
