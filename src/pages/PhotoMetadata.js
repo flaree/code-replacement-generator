@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './codegen.css';
 
 export default function PhotoMetadata() {
@@ -107,7 +107,7 @@ export default function PhotoMetadata() {
       : 'https://api.lensflxre.com';
 
   // Club search states (hidden behind dropdown)
-  const [showClubSearch, setShowClubSearch] = useState(false);
+  const [showClubSearch, setShowClubSearch] = useState(true);
   const [homeSearchTerm, setHomeSearchTerm] = useState('');
   const [awaySearchTerm, setAwaySearchTerm] = useState('');
   const [homeResults, setHomeResults] = useState([]);
@@ -134,6 +134,50 @@ export default function PhotoMetadata() {
     }
   };
 
+  // Persisted Creator & Rights (byline, credit, copyright, source)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('photo_meta_creator_rights');
+      if (saved) {
+        const obj = JSON.parse(saved);
+        setMeta(prev => ({
+          ...prev,
+          byline: obj.byline || '',
+          credit: obj.credit || '',
+          copyright: obj.copyright || '',
+          source: obj.source || '',
+        }));
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, []);
+
+  const saveCreatorRights = () => {
+    const payload = {
+      byline: meta.byline || '',
+      credit: meta.credit || '',
+      copyright: meta.copyright || '',
+      source: meta.source || '',
+    };
+    try {
+      localStorage.setItem('photo_meta_creator_rights', JSON.stringify(payload));
+      alert('Creator & Rights saved');
+    } catch (e) {
+      alert('Failed to save Creator & Rights');
+    }
+  };
+
+  const clearSavedCreatorRights = () => {
+    try {
+      localStorage.removeItem('photo_meta_creator_rights');
+    } catch (e) {
+      // ignore
+    }
+    setMeta(prev => ({ ...prev, byline: '', credit: '', copyright: '', source: '' }));
+    alert('Saved Creator & Rights cleared');
+  };
+
   const applyClubToMeta = async () => {
     // Build headline/title/description from selected home/away clubs using profile data when available
     if (!selectedHomeClub && !selectedAwayClub) return;
@@ -150,14 +194,12 @@ export default function PhotoMetadata() {
     };
 
     const homeProfile = selectedHomeClub ? await fetchProfile(selectedHomeClub) : null;
-    const awayProfile = selectedAwayClub ? await fetchProfile(selectedAwayClub) : null;
 
     const homeName = selectedHomeClub?.name || (homeProfile && homeProfile.name) || '';
-    const awayName = selectedAwayClub?.name || (awayProfile && awayProfile.name) || '';
+    const awayName = selectedAwayClub?.name || '';
 
-    // Attempt to find league/competition and stadium/country from profiles
-    const stadium = (homeProfile && (homeProfile.stadium || homeProfile.venue || homeProfile.homeStadium)) || (awayProfile && (awayProfile.stadium || awayProfile.venue)) || '';
-    const country = (homeProfile && (homeProfile.country || homeProfile.location || selectedHomeClub?.country)) || (awayProfile && (awayProfile.country || awayProfile.location || selectedAwayClub?.country)) || '';
+    const stadium = (homeProfile && (homeProfile.stadiumName)) || '';
+    const country = (homeProfile && (homeProfile.country || homeProfile.location || selectedHomeClub?.country)) || '';
 
     const title = homeName && awayName ? `${homeName} vs ${awayName}` : (homeName || awayName || 'Match');
     const description = `during the {COMPETITION} game between ${homeName || 'Home'} and ${awayName || 'Away'}${stadium ? ' at ' + stadium : ''}${country ? ', ' + country : ''}`;
@@ -167,6 +209,7 @@ export default function PhotoMetadata() {
       objectName: title,
       headline: title,
       description: description,
+	  keywords: [prev.keywords, homeName, awayName, stadium, country].filter(Boolean).join(', '),
     }));
   };
 
@@ -242,7 +285,7 @@ export default function PhotoMetadata() {
             <input style={styles.input} value={meta.headline} onChange={handleChange('headline')} />
           </label>
           <label style={styles.label}>Description / Caption
-            <textarea style={styles.textarea} value={meta.description} onChange={handleChange('description')} rows={4} />
+            <textarea style={{ ...styles.textarea, minHeight: '120px', maxHeight:'140px', resize: 'vertical' }}  value={meta.description} onChange={handleChange('description')}/>
           </label>
         </div>
 
@@ -263,6 +306,10 @@ export default function PhotoMetadata() {
           <label style={styles.label}>Source
             <input style={styles.input} value={meta.source} onChange={handleChange('source')} />
           </label>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+            <button onClick={saveCreatorRights} style={{ padding: '8px 12px' }}>Save Creator/Rights</button>
+            <button onClick={clearSavedCreatorRights} style={{ padding: '8px 12px' }}>Clear Saved</button>
+          </div>
         </div>
 
         <div style={styles.groupBox}>
@@ -284,7 +331,7 @@ export default function PhotoMetadata() {
         <div style={styles.groupBox}>
           <div style={styles.groupTitle}>Keywords</div>
           <label style={styles.label}>Keywords (comma separated)
-            <input style={styles.input} value={meta.keywords} onChange={handleChange('keywords')} />
+            <textarea style={{ ...styles.textarea, minHeight: '180px', maxHeight:'200px', resize: 'vertical' }} value={meta.keywords} onChange={handleChange('keywords')} />
           </label>
         </div>
       </div>
@@ -315,7 +362,7 @@ export default function PhotoMetadata() {
       </div>
 
       <h3 style={{ marginTop: '18px' }}>Preview (JSON)</h3>
-      <pre style={styles.preview}>{asJSON()}</pre>
+      <pre style={{ ...styles.preview, whiteSpace: 'pre-wrap', wordBreak: 'break-word', overflowWrap: 'break-word' }}>{asJSON()}</pre>
     </div>
   );
 }
