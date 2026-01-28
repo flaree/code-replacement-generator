@@ -3,11 +3,9 @@ import React, { useState } from "react";
 import "./codegen.css";
 import AdditionalOptions from "../components/AdditionalOptions";
 import { generateCode } from "../utils/codeGenerator";
+import { searchClubs, fetchClubProfile, fetchClubPlayers } from "../services/api";
+import toast, { Toaster } from 'react-hot-toast';
 
-const BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? "https://api.lensflxre.com"
-    : "https://api.lensflxre.com";
 function ManualClubSearch() {
   const [teamSearch1, setTeamSearch1] = useState("");
   const [teamSearch2, setTeamSearch2] = useState("");
@@ -52,12 +50,11 @@ function ManualClubSearch() {
       resetSelection();
       setResults([]);
 
-      const response = await fetch(`${BASE_URL}/clubs/search/${searchTerm}`);
-      const data = await response.json();
+      const data = await searchClubs(searchTerm);
       setResults(data.results.map(team => ({ id: team.id, name: team.name, country: team.country })));
     } catch (error) {
       console.error("Error searching for teams:", error);
-      alert("Failed to search for teams. Please try again.");
+      toast.error("Failed to search for teams. Please try again.");
     } finally {
       setSearching(false);
     }
@@ -69,26 +66,17 @@ function ManualClubSearch() {
       setGeneratedCode("");
       let clubData = null;
       try {
-        const clubInfo = await fetch(
-          `${BASE_URL}/clubs/${selectedTeam1.id}/profile`
-        );
-        clubData = await clubInfo.json();
+        clubData = await fetchClubProfile(selectedTeam1.id);
       } catch (error) {
         console.error("Error fetching club data:", error);
         clubData = null;
       }
-      const response1 = await fetch(
-        `${BASE_URL}/clubs/${selectedTeam1.id}/players`
-      );
-      const squad1 = await response1.json();
+      const squad1 = await fetchClubPlayers(selectedTeam1.id);
 
       // If Team 2 is selected, fetch players; otherwise use empty list
       let squad2 = { players: [] };
       if (selectedTeam2) {
-        const response2 = await fetch(
-          `${BASE_URL}/clubs/${selectedTeam2.id}/players`
-        );
-        squad2 = await response2.json();
+        squad2 = await fetchClubPlayers(selectedTeam2.id);
       }
 
       const squad1Filtered = squad1.players.map((player) => ({
@@ -123,9 +111,10 @@ function ManualClubSearch() {
       });
 
       setGeneratedCode(finalCodes);
+      toast.success("Code generated successfully!");
     } catch (error) {
       console.error("Error generating code:", error);
-      alert("Failed to generate code. Please try again.");
+      toast.error("Failed to generate code. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -133,6 +122,7 @@ function ManualClubSearch() {
 
   return (
     <div className="generated-code-page container-page">
+      <Toaster position="top-right" />
       <div className="card generated-code-card">
         {showPopup && (
           <div className="generated-popup">

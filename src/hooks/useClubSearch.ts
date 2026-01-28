@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { searchClubs, Club } from '../services/api';
+import { debounce } from '../utils/debounce';
 
 interface UseClubSearchReturn {
   searchTerm: string;
@@ -14,7 +15,7 @@ interface UseClubSearchReturn {
 }
 
 /**
- * Custom hook for club search functionality
+ * Custom hook for club search functionality with debouncing
  * @returns Hook state and handlers
  */
 export const useClubSearch = (): UseClubSearchReturn => {
@@ -24,17 +25,17 @@ export const useClubSearch = (): UseClubSearchReturn => {
   const [searching, setSearching] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
+  const performSearch = async (term: string) => {
+    if (!term.trim()) {
+      setResults([]);
       return;
     }
 
     try {
       setSearching(true);
       setError(null);
-      setResults([]);
       
-      const data = await searchClubs(searchTerm);
+      const data = await searchClubs(term);
       setResults(data.results.map(team => ({
         id: team.id,
         name: team.name,
@@ -48,6 +49,18 @@ export const useClubSearch = (): UseClubSearchReturn => {
     } finally {
       setSearching(false);
     }
+  };
+
+  // Debounced search function
+  const debouncedSearch = useRef(debounce(performSearch, 500)).current;
+
+  // Auto-search when searchTerm changes
+  useEffect(() => {
+    debouncedSearch(searchTerm);
+  }, [searchTerm, debouncedSearch]);
+
+  const handleSearch = async () => {
+    await performSearch(searchTerm);
   };
 
   const selectClub = (club: Club | null): void => {

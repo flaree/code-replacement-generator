@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import './codegen.css';
 import AdditionalOptions from '../components/AdditionalOptions';
 import { generateCode } from "../utils/codeGenerator";
+import { fetchLeagueClubs, fetchClubProfile, fetchClubPlayers } from "../services/api";
+import toast, { Toaster } from 'react-hot-toast';
 
 
 const codes = {
@@ -23,8 +25,6 @@ const codes = {
 	"Major League Soccer": 'MLS1',
 	"Dutch Eredivisie": 'NL1',
 };
-
-const BASE_URL = process.env.NODE_ENV === 'development' ? 'https://api.lensflxre.com' : 'https://api.lensflxre.com';
 
 export default function TeamCodeGenerator() {
 	const [selectedLeague, setSelectedLeague] = useState('');
@@ -65,8 +65,7 @@ export default function TeamCodeGenerator() {
 			const fetchTeams = async () => {
 				try {
 					setTeams([]); // Clear previous teams
-					const response = await fetch(`${BASE_URL}/competitions/${codes[selectedLeague]}/clubs`);
-					const data = await response.json();
+					const data = await fetchLeagueClubs(codes[selectedLeague]);
 
 					const teamList = data.clubs.map((club) => club.name);
 					setTeams(teamList);
@@ -77,7 +76,7 @@ export default function TeamCodeGenerator() {
 					setTeamMap(teamMapping);
 				} catch (error) {
 					console.error("Error fetching teams:", error);
-					alert("Failed to fetch teams. Please try again.");
+					toast.error("Failed to fetch teams. Please try again.");
 				}
 			};
 			fetchTeams();
@@ -89,16 +88,13 @@ export default function TeamCodeGenerator() {
 	const handleGenerate = async () => {
 		try {
 			setLoading(true); // Set loading to true when generation starts
-			const clubInfo = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam1]}/profile`);
-			const clubData = await clubInfo.json();
+			const clubData = await fetchClubProfile(teamMap[selectedTeam1]);
 
-			const response1 = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam1]}/players`);
-			const squad1 = await response1.json();
+			const squad1 = await fetchClubPlayers(teamMap[selectedTeam1]);
 
 			let squad2 = { players: [] };
 			if (selectedTeam2) {
-				const response2 = await fetch(`${BASE_URL}/clubs/${teamMap[selectedTeam2]}/players`);
-				squad2 = await response2.json();
+				squad2 = await fetchClubPlayers(teamMap[selectedTeam2]);
 			}
 
 			const squad1Filtered = squad1.players.map((player) => ({
@@ -132,9 +128,10 @@ export default function TeamCodeGenerator() {
 					ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
 				  });
 			setGeneratedCode(finalCodes);
+			toast.success("Code generated successfully!");
 		} catch (error) {
 			console.error("Error fetching squad data:", error);
-			alert("Failed to fetch squad/club data. Please try again.");
+			toast.error("Failed to fetch squad/club data. Please try again.");
 		} finally {
 			setLoading(false); // Set loading to false when generation is complete
 		}
@@ -142,6 +139,7 @@ export default function TeamCodeGenerator() {
 
 	return (
 									<div className='generated-code-page container-page'>
+										<Toaster position="top-right" />
 										<div className="card generated-code-card">
 											<div className="card-header">
 												<div>
