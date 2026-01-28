@@ -5,6 +5,8 @@ import AdditionalOptions from "../components/AdditionalOptions";
 import { generateCode } from "../utils/codeGenerator";
 import { searchClubs, fetchClubProfile, fetchClubPlayers } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
+import CopyButton from "../components/CopyButton";
+import Tooltip from "../components/Tooltip";
 
 function ManualClubSearch() {
   const [teamSearch1, setTeamSearch1] = useState("");
@@ -200,7 +202,9 @@ function ManualClubSearch() {
                 ))}
               </select>
               <div className="generated-inline-row">
-                <span className="muted" style={{ fontSize: 12 }}>Delim</span>
+                <Tooltip content="Single letter prefix for codes (e.g., 'c' for Celtic)">
+                  <span className="muted" style={{ fontSize: 12, cursor: 'help' }}>Delim ⓘ</span>
+                </Tooltip>
                 <input
                   type="text"
                   className="input generated-delim-input"
@@ -267,7 +271,9 @@ function ManualClubSearch() {
                     ))}
                   </select>
                   <div className="generated-inline-row">
-                    <span className="muted" style={{ fontSize: 12 }}>Delim</span>
+                    <Tooltip content="Single letter prefix for codes (e.g., 'b' for Bohemians)">
+                      <span className="muted" style={{ fontSize: 12, cursor: 'help' }}>Delim ⓘ</span>
+                    </Tooltip>
                     <input
                       type="text"
                       className="input generated-delim-input"
@@ -290,26 +296,33 @@ function ManualClubSearch() {
             onClick={handleGenerate}
             disabled={loading || !selectedTeam1}
           >
-            {loading ? 'Generating…' : 'Generate code'}
+            {loading ? 'Generating code replacements...' : 'Generate code replacements'}
           </button>
         </div>
         {generatedCode && (
-          <div className="preview-block" style={{ marginTop: 16 }}>
+          <div className="preview-block success-fade-in" style={{ marginTop: 16 }}>
             <div className="preview-heading">
               <span>Generated code replacements</span>
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={() => {
-                  const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
-                  const link = document.createElement('a');
-                  link.href = URL.createObjectURL(blob);
-                  link.download = `${selectedTeam1 ? selectedTeam1.name : 'team'}_code_replacements.txt`;
-                  link.click();
-                }}
-              >
-                Download .txt
-              </button>
+              <div className="preview-actions">
+                <CopyButton 
+                  text={generatedCode}
+                  label="Copy All"
+                />
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    const teamName = selectedTeam1 ? selectedTeam1.name : 'team';
+                    const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `${teamName}_code_replacements.txt`;
+                    link.click();
+                  }}
+                >
+                  Download .txt
+                </button>
+              </div>
             </div>
             <pre className="preview-body">{generatedCode}</pre>
           </div>

@@ -1,13 +1,12 @@
 import React from 'react';
-import { CodeOptions } from '../constants/config';
+import PropTypes from 'prop-types';
 import Tooltip from './Tooltip';
 
-interface AdditionalOptionsProps {
-  options: CodeOptions;
-  setOptions: React.Dispatch<React.SetStateAction<CodeOptions>>;
-}
-
-function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): React.ReactElement {
+/**
+ * AdditionalOptions Component
+ * Provides advanced configuration options for code generation
+ */
+function AdditionalOptions({ options, setOptions }) {
   const {
     showInfo,
     shouldShorten,
@@ -21,8 +20,7 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
     shouldChangeGoalkeeperStyle,
     includeNoNumberPlayers,
   } = options;
-  
-  const handleOptionChange = <K extends keyof CodeOptions>(key: K, value: CodeOptions[K]): void => {
+  const handleOptionChange = (key, value) => {
     setOptions((prevOptions) => ({
       ...prevOptions,
       [key]: value,
@@ -153,15 +151,14 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                   onKeyDown={(e) => {
                     if (e.key === 'Tab') {
                       e.preventDefault();
-                      const target = e.target as HTMLTextAreaElement;
-                      const start = target.selectionStart;
-                      const end = target.selectionEnd;
+                      const start = e.target.selectionStart;
+                      const end = e.target.selectionEnd;
                       handleOptionChange(
                         'additionalCodes',
                         additionalCodes.substring(0, start) + '\t' + additionalCodes.substring(end)
                       );
                       setTimeout(() => {
-                        target.selectionStart = target.selectionEnd = start + 1;
+                        e.target.selectionStart = e.target.selectionEnd = start + 1;
                       }, 0);
                     }
                   }}
@@ -173,7 +170,6 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                   className="select"
                   value={sortOption}
                   onChange={(e) => handleOptionChange('sortOption', e.target.value)}
-                  aria-label="Sort players by"
                 >
                   <option value="number">Number</option>
                   <option value="position">Position</option>
@@ -186,5 +182,22 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
     </>
   );
 }
+
+AdditionalOptions.propTypes = {
+  options: PropTypes.shape({
+    showInfo: PropTypes.bool,
+    shouldShorten: PropTypes.bool,
+    selectedDate: PropTypes.string,
+    referee: PropTypes.string,
+    competition: PropTypes.string,
+    additionalCodes: PropTypes.string,
+    sortOption: PropTypes.string,
+    formats: PropTypes.arrayOf(PropTypes.string),
+    selectedFormat: PropTypes.string,
+    shouldChangeGoalkeeperStyle: PropTypes.bool,
+    includeNoNumberPlayers: PropTypes.bool,
+  }).isRequired,
+  setOptions: PropTypes.func.isRequired,
+};
 
 export default AdditionalOptions;

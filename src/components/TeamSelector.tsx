@@ -13,10 +13,6 @@ interface TeamSelectorProps {
   placeholder?: string;
 }
 
-/**
- * TeamSelector Component
- * Reusable component for team selection with delimiter input
- */
 function TeamSelector({ 
   label, 
   teams, 

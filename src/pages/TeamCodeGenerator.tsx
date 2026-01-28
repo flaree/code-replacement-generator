@@ -5,6 +5,7 @@ import AdditionalOptions from '../components/AdditionalOptions';
 import { generateCode } from "../utils/codeGenerator";
 import { fetchLeagueClubs, fetchClubProfile, fetchClubPlayers } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
+import CopyButton from "../components/CopyButton";
 
 
 const codes = {
@@ -258,7 +259,7 @@ export default function TeamCodeGenerator() {
 														className="btn"
 														disabled={loading || !selectedTeam1}
 													>
-														{loading ? 'Generating…' : 'Generate replacements'}
+														{loading ? 'Generating code replacements...' : 'Generate code replacements'}
 													</button>
 												</div>
 											</form>
@@ -266,22 +267,29 @@ export default function TeamCodeGenerator() {
 												<AdditionalOptions options={options} setOptions={setOptions} />
 											</div>
 											{generatedCode && (
-												<div className="preview-block" style={{ marginTop: 16 }}>
+												<div className="preview-block success-fade-in" style={{ marginTop: 16 }}>
 													<div className="preview-heading">
 														<span>Generated code replacements</span>
-														<button
-															className="btn btn-secondary"
-															type="button"
-															onClick={() => {
-																const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
-																const link = document.createElement('a');
-																link.href = URL.createObjectURL(blob);
-																link.download = `${selectedTeam1 || 'team'}_code_replacements.txt`;
-																link.click();
-															}}
-														>
-															Download .txt
-														</button>
+														<div className="preview-actions">
+															<CopyButton 
+																text={generatedCode}
+																label="Copy All"
+															/>
+															<button
+																className="btn btn-secondary"
+																type="button"
+																onClick={() => {
+																	const teamName = selectedTeam1 || 'team';
+																	const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
+																	const link = document.createElement('a');
+																	link.href = URL.createObjectURL(blob);
+																	link.download = `${teamName}_code_replacements.txt`;
+																	link.click();
+																}}
+															>
+																Download .txt
+															</button>
+														</div>
 													</div>
 													<pre className="preview-body">{generatedCode}</pre>
 												</div>

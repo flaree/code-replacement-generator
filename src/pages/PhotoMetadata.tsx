@@ -3,6 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './codegen.css';
 import { escapeXml, copyToClipboard, downloadTextFile, getTodayISO } from '../utils/helpers';
 import { searchClubs, fetchClubProfile } from '../services/api';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function PhotoMetadata() {
   const [meta, setMeta] = useState({
@@ -29,9 +30,9 @@ export default function PhotoMetadata() {
   const handleCopy = async () => {
     const success = await copyToClipboard(asJSON());
     if (success) {
-      alert('Metadata JSON copied to clipboard');
+      toast.success('Metadata JSON copied to clipboard');
     } else {
-      alert('Copy failed');
+      toast.error('Copy failed');
     }
   };
 
@@ -91,7 +92,7 @@ export default function PhotoMetadata() {
     } catch (e) {
       console.error('Club search failed', e);
       setResults([]);
-      alert('Club search failed');
+      toast.error('Club search failed');
     } finally {
       setSearching(false);
     }
@@ -131,9 +132,9 @@ export default function PhotoMetadata() {
     };
     try {
       localStorage.setItem('photo_meta_creator_rights', JSON.stringify(payload));
-      alert('Creator & Rights saved');
+      toast.success('Creator & Rights saved');
     } catch (e) {
-      alert('Failed to save Creator & Rights');
+      toast.error('Failed to save Creator & Rights');
     }
   };
 
@@ -144,7 +145,7 @@ export default function PhotoMetadata() {
       // ignore
     }
     setMeta(prev => ({ ...prev, byline: '', credit: '', copyright: '', source: '' }));
-    alert('Saved Creator & Rights cleared');
+    toast.success('Saved Creator & Rights cleared');
   };
 
   const applyClubToMeta = useCallback(async () => {
@@ -223,6 +224,7 @@ export default function PhotoMetadata() {
 
   return (
   <div className="generated-code-page container-page">
+    <Toaster position="top-right" />
     <div className="card generated-code-card">
     <div className="card-header">
       <div>
@@ -447,7 +449,7 @@ export default function PhotoMetadata() {
       onClick={() => {
         const xmpToCopy = generateXMP(meta);
         navigator.clipboard && navigator.clipboard.writeText(xmpToCopy);
-        alert('XMP copied to clipboard');
+        toast.success('XMP copied to clipboard');
       }}
       >
       Copy XMP

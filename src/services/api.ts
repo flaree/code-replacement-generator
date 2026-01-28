@@ -1,15 +1,7 @@
 import { API_BASE_URL } from '../constants/config';
 
-/**
- * API Service for interacting with the Lensflxre backend
- */
-
-// Request timeout in milliseconds (30 seconds)
 const REQUEST_TIMEOUT = 30000;
 
-/**
- * Fetch with timeout and AbortController
- */
 const fetchWithTimeout = async (url: string, timeout = REQUEST_TIMEOUT): Promise<Response> => {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -60,11 +52,6 @@ export interface SearchResponse {
   results: Club[];
 }
 
-/**
- * Fetch league clubs by competition code
- * @param competitionCode - The competition code (e.g., 'GB1')
- * @returns Response containing clubs array
- */
 export const fetchLeagueClubs = async (competitionCode: string): Promise<LeagueClubsResponse> => {
   const response = await fetchWithTimeout(`${API_BASE_URL}/competitions/${competitionCode}/clubs`);
   if (!response.ok) {

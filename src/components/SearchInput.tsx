@@ -10,10 +10,6 @@ interface SearchInputProps {
   isSearching?: boolean;
 }
 
-/**
- * SearchInput Component
- * Reusable search input with button
- */
 function SearchInput({ 
   value, 
   onChange, 

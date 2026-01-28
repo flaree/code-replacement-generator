@@ -34,11 +34,6 @@ export interface GenerateCodeParams {
   ignoreNoNumberPlayers?: boolean;
 }
 
-/**
- * Generates code replacement text for Photo Mechanic
- * @param params - Generation parameters
- * @returns Generated code replacement text
- */
 export const generateCode = ({
   squad1,
   squad2,
@@ -57,14 +52,6 @@ export const generateCode = ({
   shouldChangeGoalkeeperStyle,
   ignoreNoNumberPlayers,
 }: GenerateCodeParams): string => {
-  /**
-   * Format a player's name according to the selected template
-   * @param player - Player data
-   * @param team - Team name
-   * @param delimiter - Team delimiter
-   * @param shouldChangeGoalkeeperStyle - Use goalkeeper-specific format
-   * @returns Formatted player string
-   */
   const formatPlayer = (
     player: Player, 
     team: string, 

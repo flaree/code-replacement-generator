@@ -1,10 +1,6 @@
 import React from 'react';
 import { useTheme } from '../hooks/useTheme';
 
-/**
- * ThemeToggle Component
- * Allows users to switch between light and dark themes
- */
 export default function ThemeToggle(): React.ReactElement {
   const { isLight, toggleTheme } = useTheme();
 

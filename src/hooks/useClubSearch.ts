@@ -14,10 +14,6 @@ interface UseClubSearchReturn {
   reset: () => void;
 }
 
-/**
- * Custom hook for club search functionality with debouncing
- * @returns Hook state and handlers
- */
 export const useClubSearch = (): UseClubSearchReturn => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [results, setResults] = useState<Club[]>([]);

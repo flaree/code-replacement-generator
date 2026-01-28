@@ -1,8 +1,3 @@
-/**
- * Application-wide configuration constants
- */
-
-// API Configuration
 export const API_BASE_URL: string = process.env.NODE_ENV === 'development' 
   ? 'https://api.lensflxre.com' 
   : 'https://api.lensflxre.com';
