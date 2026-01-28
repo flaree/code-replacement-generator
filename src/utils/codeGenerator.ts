@@ -3,26 +3,41 @@
  * Generates Photo Mechanic code replacement files from squad data
  */
 
+export interface Player {
+  number?: string | number;
+  name: string;
+  position: string;
+}
+
+export interface ClubData {
+  stadiumName?: string;
+  name?: string;
+  addressLine3?: string;
+}
+
+export interface GenerateCodeParams {
+  squad1: Player[];
+  squad2: Player[];
+  selectedTeam1: string;
+  selectedTeam2: string;
+  delimiter1: string;
+  delimiter2: string;
+  selectedFormat: string;
+  sortOption: string;
+  showInfo?: boolean;
+  referee?: string;
+  competition?: string;
+  additionalCodes?: string;
+  shouldShorten: boolean;
+  clubData?: ClubData | null;
+  shouldChangeGoalkeeperStyle: boolean;
+  ignoreNoNumberPlayers?: boolean;
+}
+
 /**
  * Generates code replacement text for Photo Mechanic
- * @param {Object} params - Generation parameters
- * @param {Array} params.squad1 - Home team squad array
- * @param {Array} params.squad2 - Away team squad array
- * @param {string} params.selectedTeam1 - Home team name
- * @param {string} params.selectedTeam2 - Away team name
- * @param {string} params.delimiter1 - Home team delimiter character
- * @param {string} params.delimiter2 - Away team delimiter character
- * @param {string} params.selectedFormat - Player name format template
- * @param {string} params.sortOption - Sort option ('position' or 'number')
- * @param {boolean} params.showInfo - Whether to include additional match info
- * @param {string} params.referee - Referee name
- * @param {string} params.competition - Competition name
- * @param {string} params.additionalCodes - Custom code replacements
- * @param {boolean} params.shouldShorten - Replace "Football Club" with "FC"
- * @param {Object} params.clubData - Club profile data
- * @param {boolean} params.shouldChangeGoalkeeperStyle - Use different format for goalkeepers
- * @param {boolean} params.ignoreNoNumberPlayers - Filter out players without numbers
- * @returns {string} Generated code replacement text
+ * @param params - Generation parameters
+ * @returns Generated code replacement text
  */
 export const generateCode = ({
   squad1,
@@ -41,37 +56,42 @@ export const generateCode = ({
   clubData,
   shouldChangeGoalkeeperStyle,
   ignoreNoNumberPlayers,
-}) => {
+}: GenerateCodeParams): string => {
   /**
    * Format a player's name according to the selected template
-   * @param {Object} player - Player data
-   * @param {string} team - Team name
-   * @param {string} delimiter - Team delimiter
-   * @param {boolean} shouldChangeGoalkeeperStyle - Use goalkeeper-specific format
-   * @returns {string} Formatted player string
+   * @param player - Player data
+   * @param team - Team name
+   * @param delimiter - Team delimiter
+   * @param shouldChangeGoalkeeperStyle - Use goalkeeper-specific format
+   * @returns Formatted player string
    */
-  const formatPlayer = (player, team, delimiter, shouldChangeGoalkeeperStyle) => {
+  const formatPlayer = (
+    player: Player, 
+    team: string, 
+    delimiter: string, 
+    shouldChangeGoalkeeperStyle: boolean
+  ): string => {
     if (shouldChangeGoalkeeperStyle && player.position === "Goalkeeper") {
       const goalkeeperFormat = "{team}'s goalkeeper {playerName}";
       return goalkeeperFormat
         .replace("{playerName}", player.name || "-")
         .replace("{team}", team || "-")
         .replace("{delimiter}", delimiter || "-")
-        .replace("{shirtNumber}", player.number || "-");
+        .replace("{shirtNumber}", String(player.number || "-"));
     }
     return selectedFormat
       .replace("{playerName}", player.name || "-")
       .replace("{team}", team || "-")
       .replace("{delimiter}", delimiter || "-")
-      .replace("{shirtNumber}", player.number || "-");
+      .replace("{shirtNumber}", String(player.number || "-"));
   };
 
   /**
    * Sort players by number or position
-   * @param {Array} players - Array of player objects
-   * @returns {Array} Sorted players array
+   * @param players - Array of player objects
+   * @returns Sorted players array
    */
-  const sortPlayers = (players) => {
+  const sortPlayers = (players: Player[]): Player[] => {
     if (sortOption === "number") {
       return players.sort((a, b) => {
         if (
@@ -96,10 +116,10 @@ export const generateCode = ({
 
   /**
    * Filter out players without shirt numbers if ignoreNoNumberPlayers is true
-   * @param {Array} players - Array of player objects
-   * @returns {Array} Filtered players array
+   * @param players - Array of player objects
+   * @returns Filtered players array
    */
-  const filterPlayers = (players) => {
+  const filterPlayers = (players: Player[]): Player[] => {
     if (ignoreNoNumberPlayers) {
       return players.filter(
         (player) => player.number !== undefined && player.number !== "-" && player.number !== null

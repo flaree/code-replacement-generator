@@ -1,3 +1,4 @@
+// @ts-nocheck - TODO: Add proper TypeScript types
 import React, { useState, useEffect, useCallback } from 'react';
 import './codegen.css';
 import { escapeXml, copyToClipboard, downloadTextFile, getTodayISO } from '../utils/helpers';

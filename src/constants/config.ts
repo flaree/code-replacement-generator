@@ -3,12 +3,12 @@
  */
 
 // API Configuration
-export const API_BASE_URL = process.env.NODE_ENV === 'development' 
+export const API_BASE_URL: string = process.env.NODE_ENV === 'development' 
   ? 'https://api.lensflxre.com' 
   : 'https://api.lensflxre.com';
 
 // League Codes
-export const LEAGUE_CODES = {
+export const LEAGUE_CODES: Record<string, string> = {
   "League of Ireland Premier Division": 'IR1',
   "League of Ireland First Division": 'IR2',
   "Northern Ireland Football League Premiership": 'NIR1',
@@ -28,7 +28,7 @@ export const LEAGUE_CODES = {
 };
 
 // Player Name Formats
-export const PLAYER_NAME_FORMATS = [
+export const PLAYER_NAME_FORMATS: string[] = [
   "{playerName} of {team}",
   "{team} player {playerName}",
   "{playerName} ({team})",
@@ -39,8 +39,23 @@ export const PLAYER_NAME_FORMATS = [
   "{playerName} - {team} ({shirtNumber})",
 ];
 
+// Types for Code Generation Options
+export interface CodeOptions {
+  showInfo: boolean;
+  shouldShorten: boolean;
+  selectedDate: string;
+  referee: string;
+  competition: string;
+  additionalCodes: string;
+  sortOption: string;
+  formats: string[];
+  selectedFormat: string;
+  shouldChangeGoalkeeperStyle: boolean;
+  includeNoNumberPlayers: boolean;
+}
+
 // Default Code Generation Options
-export const DEFAULT_CODE_OPTIONS = {
+export const DEFAULT_CODE_OPTIONS: CodeOptions = {
   showInfo: false,
   shouldShorten: true,
   selectedDate: '',
@@ -56,17 +71,21 @@ export const DEFAULT_CODE_OPTIONS = {
 
 // Sort Options
 export const SORT_OPTIONS = {
-  POSITION: 'position',
-  NUMBER: 'number',
+  POSITION: 'position' as const,
+  NUMBER: 'number' as const,
 };
+
+export type SortOption = typeof SORT_OPTIONS[keyof typeof SORT_OPTIONS];
 
 // Theme Configuration
 export const THEMES = {
-  LIGHT: 'light',
-  DARK: 'dark',
+  LIGHT: 'light' as const,
+  DARK: 'dark' as const,
 };
 
-export const DEFAULT_THEME = THEMES.DARK;
+export type Theme = typeof THEMES[keyof typeof THEMES];
+
+export const DEFAULT_THEME: Theme = THEMES.DARK;
 
 // Local Storage Keys
 export const STORAGE_KEYS = {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-function About() {
+function About(): React.ReactElement {
   return (
     <div className="container-page">
       <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>

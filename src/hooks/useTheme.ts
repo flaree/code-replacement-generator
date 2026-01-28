@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { STORAGE_KEYS, DEFAULT_THEME, THEMES } from '../constants/config';
+import { STORAGE_KEYS, DEFAULT_THEME, THEMES, Theme } from '../constants/config';
 
 /**
  * Get initial theme from localStorage or default
- * @returns {string} Theme value
+ * @returns Theme value
  */
-const getInitialTheme = () => {
+const getInitialTheme = (): Theme => {
   if (typeof window === 'undefined') {
     return DEFAULT_THEME;
   }
@@ -22,12 +22,18 @@ const getInitialTheme = () => {
   return DEFAULT_THEME;
 };
 
+interface UseThemeReturn {
+  theme: Theme;
+  isLight: boolean;
+  toggleTheme: () => void;
+}
+
 /**
  * Custom hook for theme management
- * @returns {Object} Theme state and toggle function
+ * @returns Theme state and toggle function
  */
-export const useTheme = () => {
-  const [theme, setTheme] = useState(getInitialTheme);
+export const useTheme = (): UseThemeReturn => {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
   useEffect(() => {
     try {
@@ -41,11 +47,11 @@ export const useTheme = () => {
     }
   }, [theme]);
 
-  const toggleTheme = () => {
+  const toggleTheme = (): void => {
     setTheme(prev => prev === THEMES.LIGHT ? THEMES.DARK : THEMES.LIGHT);
   };
 
-  const isLight = theme === THEMES.LIGHT;
+  const isLight: boolean = theme === THEMES.LIGHT;
 
   return { theme, isLight, toggleTheme };
 };

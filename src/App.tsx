@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
@@ -11,11 +10,15 @@ import ErrorBoundary from './components/ErrorBoundary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 
-function NavLinks({ onClick }) {
+interface NavLinksProps {
+  onClick?: () => void;
+}
+
+function NavLinks({ onClick }: NavLinksProps): React.ReactElement {
   const location = useLocation();
   const current = location.pathname || '/';
 
-  const linkClass = (path) =>
+  const linkClass = (path: string): string =>
     'app-nav-link' + (current === path ? ' app-nav-link-active' : '');
 
   return (
@@ -36,15 +39,11 @@ function NavLinks({ onClick }) {
   );
 }
 
-NavLinks.propTypes = {
-  onClick: PropTypes.func,
-};
+function App(): React.ReactElement {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
 
-function App() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-  const closeMobileMenu = () => setMobileMenuOpen(false);
+  const toggleMobileMenu = (): void => setMobileMenuOpen(!mobileMenuOpen);
+  const closeMobileMenu = (): void => setMobileMenuOpen(false);
 
   return (
     <ErrorBoundary>

@@ -4,11 +4,15 @@
 
 /**
  * Download a text file to the user's device
- * @param {string} content - The file content
- * @param {string} filename - The filename to save as
- * @param {string} mimeType - The MIME type (default: text/plain)
+ * @param content - The file content
+ * @param filename - The filename to save as
+ * @param mimeType - The MIME type (default: text/plain)
  */
-export const downloadTextFile = (content, filename, mimeType = 'text/plain;charset=utf-8') => {
+export const downloadTextFile = (
+  content: string, 
+  filename: string, 
+  mimeType: string = 'text/plain;charset=utf-8'
+): void => {
   const blob = new Blob([content], { type: mimeType });
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
@@ -19,9 +23,9 @@ export const downloadTextFile = (content, filename, mimeType = 'text/plain;chars
 
 /**
  * Get today's date in ISO format (YYYY-MM-DD)
- * @returns {string} Today's date
+ * @returns Today's date
  */
-export const getTodayISO = () => {
+export const getTodayISO = (): string => {
   const d = new Date();
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -31,10 +35,10 @@ export const getTodayISO = () => {
 
 /**
  * Format date from YYYY-MM-DD to DD/MM/YYYY
- * @param {string} dateStr - Date string in YYYY-MM-DD format
- * @returns {string} Formatted date string
+ * @param dateStr - Date string in YYYY-MM-DD format
+ * @returns Formatted date string
  */
-export const formatDateDDMMYYYY = (dateStr) => {
+export const formatDateDDMMYYYY = (dateStr: string): string => {
   if (!dateStr) {
     return '';
   }
@@ -44,11 +48,11 @@ export const formatDateDDMMYYYY = (dateStr) => {
 
 /**
  * Safely parse JSON from localStorage
- * @param {string} key - The localStorage key
- * @param {*} defaultValue - Default value if parsing fails
- * @returns {*} Parsed value or default
+ * @param key - The localStorage key
+ * @param defaultValue - Default value if parsing fails
+ * @returns Parsed value or default
  */
-export const getFromLocalStorage = (key, defaultValue = null) => {
+export const getFromLocalStorage = <T = any>(key: string, defaultValue: T | null = null): T | null => {
   try {
     const item = window.localStorage.getItem(key);
     return item ? JSON.parse(item) : defaultValue;
@@ -60,11 +64,11 @@ export const getFromLocalStorage = (key, defaultValue = null) => {
 
 /**
  * Safely save to localStorage
- * @param {string} key - The localStorage key
- * @param {*} value - Value to save (will be JSON stringified)
- * @returns {boolean} Success status
+ * @param key - The localStorage key
+ * @param value - Value to save (will be JSON stringified)
+ * @returns Success status
  */
-export const saveToLocalStorage = (key, value) => {
+export const saveToLocalStorage = (key: string, value: any): boolean => {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
     return true;
@@ -76,10 +80,10 @@ export const saveToLocalStorage = (key, value) => {
 
 /**
  * Copy text to clipboard
- * @param {string} text - Text to copy
- * @returns {Promise<boolean>} Success status
+ * @param text - Text to copy
+ * @returns Success status
  */
-export const copyToClipboard = async (text) => {
+export const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
     await navigator.clipboard.writeText(text);
     return true;
@@ -91,10 +95,10 @@ export const copyToClipboard = async (text) => {
 
 /**
  * Escape XML special characters
- * @param {string|number} str - String to escape
- * @returns {string} Escaped string
+ * @param str - String to escape
+ * @returns Escaped string
  */
-export const escapeXml = (str) => {
+export const escapeXml = (str: string | number): string => {
   if (!str && str !== 0) {
     return '';
   }
@@ -108,9 +112,9 @@ export const escapeXml = (str) => {
 
 /**
  * Get first character of a string in lowercase
- * @param {string} str - Input string
- * @returns {string} First character in lowercase or empty string
+ * @param str - Input string
+ * @returns First character in lowercase or empty string
  */
-export const getFirstCharLowercase = (str) => {
+export const getFirstCharLowercase = (str: string): string => {
   return str && str.length > 0 ? str[0].toLowerCase() : '';
 };

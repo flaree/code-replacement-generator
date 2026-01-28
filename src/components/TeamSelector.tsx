@@ -1,5 +1,17 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+
+type Team = string | { id: string; name: string; country?: string };
+
+interface TeamSelectorProps {
+  label: string;
+  teams: Team[];
+  selectedTeam: string;
+  onTeamChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  delimiter: string;
+  onDelimiterChange: (value: string) => void;
+  required?: boolean;
+  placeholder?: string;
+}
 
 /**
  * TeamSelector Component
@@ -14,7 +26,7 @@ function TeamSelector({
   onDelimiterChange,
   required = false,
   placeholder = "-- Select a team --"
-}) {
+}: TeamSelectorProps): React.ReactElement {
   return (
     <div className="generated-column">
       <div className="generated-section-title">{label}</div>
@@ -48,25 +60,5 @@ function TeamSelector({
     </div>
   );
 }
-
-TeamSelector.propTypes = {
-  label: PropTypes.string.isRequired,
-  teams: PropTypes.arrayOf(
-    PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
-        name: PropTypes.string.isRequired,
-        country: PropTypes.string,
-      })
-    ])
-  ).isRequired,
-  selectedTeam: PropTypes.string.isRequired,
-  onTeamChange: PropTypes.func.isRequired,
-  delimiter: PropTypes.string.isRequired,
-  onDelimiterChange: PropTypes.func.isRequired,
-  required: PropTypes.bool,
-  placeholder: PropTypes.string,
-};
 
 export default TeamSelector;

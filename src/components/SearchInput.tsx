@@ -1,5 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+
+interface SearchInputProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onSearch: () => void;
+  placeholder?: string;
+  label?: string;
+  disabled?: boolean;
+  isSearching?: boolean;
+}
 
 /**
  * SearchInput Component
@@ -13,8 +22,8 @@ function SearchInput({
   label,
   disabled = false,
   isSearching = false 
-}) {
-  const handleKeyDown = (e) => {
+}: SearchInputProps): React.ReactElement {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter') {
       onSearch();
     }
@@ -45,15 +54,5 @@ function SearchInput({
     </div>
   );
 }
-
-SearchInput.propTypes = {
-  value: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  onSearch: PropTypes.func.isRequired,
-  placeholder: PropTypes.string,
-  label: PropTypes.string,
-  disabled: PropTypes.bool,
-  isSearching: PropTypes.bool,
-};
 
 export default SearchInput;

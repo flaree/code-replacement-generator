@@ -1,3 +1,4 @@
+// @ts-nocheck - TODO: Add proper TypeScript types
 import React, { useState, useEffect } from 'react';
 import './codegen.css';
 import AdditionalOptions from '../components/AdditionalOptions';
