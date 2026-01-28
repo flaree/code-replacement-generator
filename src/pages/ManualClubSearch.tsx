@@ -186,6 +186,8 @@ function ManualClubSearch() {
               <select
                 className="select"
                 value={selectedTeam1?.id || ''}
+                title="Select Team 1"
+                aria-label="Select Team 1"
                 onChange={(e) => {
                   const selected = teamResults1.find((team) => team.id === e.target.value);
                   setSelectedTeam1(selected || null);
@@ -210,6 +212,8 @@ function ManualClubSearch() {
                   className="input generated-delim-input"
                   value={delimiter1}
                   onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())}
+                  title="Team 1 delimiter"
+                  placeholder="c"
                 />
               </div>
             </div>
@@ -255,6 +259,8 @@ function ManualClubSearch() {
                   <select
                     className="select"
                     value={selectedTeam2?.id || ''}
+                    title="Select Team 2"
+                    aria-label="Select Team 2"
                     onChange={(e) => {
                       const selected = teamResults2.find((team) => team.id === e.target.value);
                       setSelectedTeam2(selected || null);
@@ -279,6 +285,8 @@ function ManualClubSearch() {
                       className="input generated-delim-input"
                       value={delimiter2}
                       onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())}
+                      title="Team 2 delimiter"
+                      placeholder="b"
                     />
                   </div>
                 </div>

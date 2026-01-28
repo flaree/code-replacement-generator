@@ -283,6 +283,8 @@ export default function PhotoMetadata() {
           <select
           className="select"
           value={selectedHomeClub?.id || ''}
+          title="Select home club"
+          aria-label="Select home club"
           onChange={(e) => {
             const sel = homeResults.find((r) => r.id === e.target.value);
             setSelectedHomeClub(sel || null);
@@ -329,6 +331,8 @@ export default function PhotoMetadata() {
           <select
           className="select"
           value={selectedAwayClub?.id || ''}
+          title="Select away club"
+          aria-label="Select away club"
           onChange={(e) => {
             const sel = awayResults.find((r) => r.id === e.target.value);
             setSelectedAwayClub(sel || null);
@@ -351,30 +355,32 @@ export default function PhotoMetadata() {
       <div className="card" style={{ padding: 14 }}>
       <div className="generated-section-title">Core</div>
       <label className="field-label">Title (Object Name)</label>
-      <input className="input" value={meta.objectName} onChange={handleChange('objectName')} />
+      <input className="input" value={meta.objectName} onChange={handleChange('objectName')} title="Title" placeholder="Photo title" />
       <label className="field-label" style={{ marginTop: 10 }}>Headline</label>
-      <input className="input" value={meta.headline} onChange={handleChange('headline')} />
+      <input className="input" value={meta.headline} onChange={handleChange('headline')} title="Headline" placeholder="Photo headline" />
       <label className="field-label" style={{ marginTop: 10 }}>Description / Caption</label>
       <textarea
         className="textarea"
         style={{ minHeight: 120, maxHeight: 160 }}
         value={meta.description}
         onChange={handleChange('description')}
+        title="Description"
+        placeholder="Photo description or caption"
       />
       </div>
 
       <div className="card" style={{ padding: 14 }}>
       <div className="generated-section-title">Creator & rights</div>
       <label className="field-label">Byline (Author)</label>
-      <input className="input" value={meta.byline} onChange={handleChange('byline')} />
+      <input className="input" value={meta.byline} onChange={handleChange('byline')} title="Byline" placeholder="Author name" />
       <label className="field-label" style={{ marginTop: 10 }}>Credit</label>
-      <input className="input" value={meta.credit} onChange={handleChange('credit')} />
+      <input className="input" value={meta.credit} onChange={handleChange('credit')} title="Credit" placeholder="Photo credit" />
       <label className="field-label" style={{ marginTop: 10 }}>Job ID</label>
-      <input className="input" value={meta.jobId} onChange={handleChange('jobId')} />
+      <input className="input" value={meta.jobId} onChange={handleChange('jobId')} title="Job ID" placeholder="Job identifier" />
       <label className="field-label" style={{ marginTop: 10 }}>Copyright Author</label>
-      <input className="input" value={meta.copyright} onChange={handleChange('copyright')} />
+      <input className="input" value={meta.copyright} onChange={handleChange('copyright')} title="Copyright" placeholder="Copyright holder" />
       <label className="field-label" style={{ marginTop: 10 }}>Source</label>
-      <input className="input" value={meta.source} onChange={handleChange('source')} />
+      <input className="input" value={meta.source} onChange={handleChange('source')} title="Source" placeholder="Photo source" />
       <div className="btn-row" style={{ marginTop: 10 }}>
         <button type="button" className="btn btn-secondary" onClick={saveCreatorRights}>
         Save creator/rights
@@ -390,19 +396,20 @@ export default function PhotoMetadata() {
       <div className="card" style={{ padding: 14 }}>
       <div className="generated-section-title">Location & date</div>
       <label className="field-label">Stadium</label>
-      <input className="input" value={meta.stadium} onChange={handleChange('stadium')} />
+      <input className="input" value={meta.stadium} onChange={handleChange('stadium')} title="Stadium" placeholder="Stadium name" />
       <label className="field-label" style={{ marginTop: 10 }}>City</label>
-      <input className="input" value={meta.city} onChange={handleChange('city')} />
+      <input className="input" value={meta.city} onChange={handleChange('city')} title="City" placeholder="City name" />
       <label className="field-label" style={{ marginTop: 10 }}>State / Province</label>
-      <input className="input" value={meta.state} onChange={handleChange('state')} />
+      <input className="input" value={meta.state} onChange={handleChange('state')} title="State" placeholder="State or province" />
       <label className="field-label" style={{ marginTop: 10 }}>Country</label>
-      <input className="input" value={meta.country} onChange={handleChange('country')} />
+      <input className="input" value={meta.country} onChange={handleChange('country')} title="Country" placeholder="Country name" />
       <label className="field-label" style={{ marginTop: 10 }}>Date</label>
       <div className="generated-inline-row" style={{ alignItems: 'center' }}>
         <input
         className="input"
         type="date"
         value={meta.dateCreated}
+        title="Date created"
         onChange={(e) => {
           handleChange('dateCreated')(e);
           const val = e.target.value;
@@ -435,6 +442,8 @@ export default function PhotoMetadata() {
         style={{ minHeight: 170, maxHeight: 210 }}
         value={meta.keywords}
         onChange={handleChange('keywords')}
+        title="Keywords"
+        placeholder="keyword1, keyword2, keyword3"
       />
       </div>
     </div>

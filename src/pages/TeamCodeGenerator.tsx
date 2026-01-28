@@ -213,6 +213,8 @@ export default function TeamCodeGenerator() {
 																			className="input generated-delim-input"
 																			value={delimiter1}
 																			onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())}
+																			title="Team 1 delimiter"
+																			placeholder="c"
 																		/>
 																	</div>
 																</div>
@@ -246,6 +248,8 @@ export default function TeamCodeGenerator() {
 																			className="input generated-delim-input"
 																			value={delimiter2}
 																			onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())}
+																			title="Team 2 delimiter"
+																			placeholder="b"
 																		/>
 																	</div>
 																</div>

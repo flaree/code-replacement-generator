@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { CodeOptions } from '../constants/config';
 import Tooltip from './Tooltip';
+import toast from 'react-hot-toast';
 
 interface AdditionalOptionsProps {
   options: CodeOptions;
@@ -22,6 +23,8 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
     includeNoNumberPlayers,
   } = options;
   
+  const [hasSavedOptions, setHasSavedOptions] = useState(false);
+  
   const handleOptionChange = <K extends keyof CodeOptions>(key: K, value: CodeOptions[K]): void => {
     setOptions((prevOptions) => ({
       ...prevOptions,
@@ -29,11 +32,70 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
     }));
   };
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('code_generator_additional_options');
+      if (saved) {
+        const savedOptions = JSON.parse(saved);
+        setOptions((prevOptions) => ({
+          ...prevOptions,
+          showInfo: true,
+          shouldShorten: savedOptions.shouldShorten ?? prevOptions.shouldShorten,
+          selectedDate: savedOptions.selectedDate ?? prevOptions.selectedDate,
+          referee: savedOptions.referee ?? prevOptions.referee,
+          competition: savedOptions.competition ?? prevOptions.competition,
+          additionalCodes: savedOptions.additionalCodes ?? prevOptions.additionalCodes,
+          sortOption: savedOptions.sortOption ?? prevOptions.sortOption,
+          selectedFormat: savedOptions.selectedFormat ?? prevOptions.selectedFormat,
+          shouldChangeGoalkeeperStyle: savedOptions.shouldChangeGoalkeeperStyle ?? prevOptions.shouldChangeGoalkeeperStyle,
+          includeNoNumberPlayers: savedOptions.includeNoNumberPlayers ?? prevOptions.includeNoNumberPlayers,
+        }));
+        setHasSavedOptions(true);
+      }
+    } catch (e) {
+      // ignore
+    }
+  }, [setOptions]);
+
+  const saveAdditionalOptions = () => {
+    const payload = {
+      shouldShorten,
+      selectedDate,
+      referee,
+      competition,
+      additionalCodes,
+      sortOption,
+      selectedFormat,
+      shouldChangeGoalkeeperStyle,
+      includeNoNumberPlayers,
+    };
+    try {
+      localStorage.setItem('code_generator_additional_options', JSON.stringify(payload));
+      setHasSavedOptions(true);
+      toast.success('Additional options saved');
+    } catch (e) {
+      toast.error('Failed to save options');
+    }
+  };
+
+  const clearSavedOptions = () => {
+    try {
+      localStorage.removeItem('code_generator_additional_options');
+      setHasSavedOptions(false);
+      toast.success('Saved options cleared');
+    } catch (e) {
+      // ignore
+    }
+  };
+
   return (
     <>
       <div>
         <label className="field-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           Additional options
+          {hasSavedOptions && (
+            <span style={{ fontSize: 12, color: 'var(--success-color, #10b981)' }}>✓ Saved</span>
+          )}
           <input
             type="checkbox"
             checked={showInfo}
@@ -85,6 +147,7 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                   className="input"
                   value={selectedDate}
                   onChange={(e) => handleOptionChange('selectedDate', e.target.value)}
+                  title="Fixture date"
                 />
               </div>
               <div>
@@ -98,6 +161,8 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                   className="select"
                   value={selectedFormat}
                   onChange={(e) => handleOptionChange('selectedFormat', e.target.value)}
+                  title="Format"
+                  aria-label="Format selection"
                 >
                   {formats.map((format) => (
                     <option key={format} value={format}>
@@ -126,6 +191,8 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                   className="input"
                   value={referee}
                   onChange={(e) => handleOptionChange('referee', e.target.value)}
+                  placeholder="Referee name"
+                  title="Referee"
                 />
               </div>
               <div>
@@ -180,6 +247,14 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                 </select>
               </div>
             </div>
+          </div>
+          <div className="btn-row" style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border-color, #e5e7eb)' }}>
+            <button type="button" className="btn btn-secondary" onClick={saveAdditionalOptions}>
+              Save options
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={clearSavedOptions}>
+              Clear saved
+            </button>
           </div>
         </div>
       )}
