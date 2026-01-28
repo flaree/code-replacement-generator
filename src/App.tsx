@@ -112,6 +112,7 @@ function App(): React.ReactElement {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="app-social-link"
+                  aria-label="Twitter"
                 >
                   <FontAwesomeIcon icon={faTwitter} />
                 </a>
@@ -120,6 +121,7 @@ function App(): React.ReactElement {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="app-social-link"
+                  aria-label="Website"
                 >
                   <FontAwesomeIcon icon={faChrome} />
                 </a>
@@ -128,6 +130,7 @@ function App(): React.ReactElement {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="app-social-link"
+                  aria-label="Instagram"
                 >
                   <FontAwesomeIcon icon={faInstagram} />
                 </a>
@@ -136,6 +139,7 @@ function App(): React.ReactElement {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="app-social-link"
+                  aria-label="GitHub"
                 >
                   <FontAwesomeIcon icon={faGithub} />
                 </a>

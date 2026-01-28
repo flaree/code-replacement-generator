@@ -6,9 +6,9 @@ interface TeamSelectorProps {
   label: string;
   teams: Team[];
   selectedTeam: string;
-  onTeamChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onTeamChange: (_e: React.ChangeEvent<HTMLSelectElement>) => void;
   delimiter: string;
-  onDelimiterChange: (value: string) => void;
+  onDelimiterChange: (_value: string) => void;
   required?: boolean;
   placeholder?: string;
 }
@@ -37,6 +37,7 @@ function TeamSelector({
           value={selectedTeam}
           onChange={onTeamChange}
           required={required}
+          aria-label={label}
         >
           <option value="" disabled>
             {placeholder}
@@ -54,6 +55,8 @@ function TeamSelector({
             className="input generated-delim-input"
             value={delimiter}
             onChange={(e) => onDelimiterChange(e.target.value.slice(0, 1).toLowerCase())}
+            title="Delimiter character"
+            aria-label="Delimiter"
           />
         </div>
       </div>

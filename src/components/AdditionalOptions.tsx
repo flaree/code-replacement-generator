@@ -166,6 +166,7 @@ function AdditionalOptions({ options, setOptions }: AdditionalOptionsProps): Rea
                   className="select"
                   value={sortOption}
                   onChange={(e) => handleOptionChange('sortOption', e.target.value)}
+                  aria-label="Sort players by"
                 >
                   <option value="number">Number</option>
                   <option value="position">Position</option>
