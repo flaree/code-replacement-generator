@@ -1,5 +1,10 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 
+/**
+ * AdditionalOptions Component
+ * Provides advanced configuration options for code generation
+ */
 function AdditionalOptions({ options, setOptions }) {
   const {
     showInfo,
@@ -86,8 +91,8 @@ function AdditionalOptions({ options, setOptions }) {
                   value={selectedFormat}
                   onChange={(e) => handleOptionChange('selectedFormat', e.target.value)}
                 >
-                  {formats.map((format, index) => (
-                    <option key={index} value={format}>
+                  {formats.map((format) => (
+                    <option key={format} value={format}>
                       {format}
                     </option>
                   ))}
@@ -166,5 +171,22 @@ function AdditionalOptions({ options, setOptions }) {
     </>
   );
 }
+
+AdditionalOptions.propTypes = {
+  options: PropTypes.shape({
+    showInfo: PropTypes.bool,
+    shouldShorten: PropTypes.bool,
+    selectedDate: PropTypes.string,
+    referee: PropTypes.string,
+    competition: PropTypes.string,
+    additionalCodes: PropTypes.string,
+    sortOption: PropTypes.string,
+    formats: PropTypes.arrayOf(PropTypes.string),
+    selectedFormat: PropTypes.string,
+    shouldChangeGoalkeeperStyle: PropTypes.bool,
+    includeNoNumberPlayers: PropTypes.bool,
+  }).isRequired,
+  setOptions: PropTypes.func.isRequired,
+};
 
 export default AdditionalOptions;

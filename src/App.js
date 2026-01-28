@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
@@ -6,6 +7,7 @@ import ManualClubSearch from './pages/ManualClubSearch';
 import About from './pages/About';
 import PhotoMetadata from './pages/PhotoMetadata';
 import ThemeToggle from './components/ThemeToggle';
+import ErrorBoundary from './components/ErrorBoundary';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 
@@ -34,6 +36,10 @@ function NavLinks({ onClick }) {
   );
 }
 
+NavLinks.propTypes = {
+  onClick: PropTypes.func,
+};
+
 function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -41,8 +47,9 @@ function App() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <Router>
-      <div className="App app-shell">
+    <ErrorBoundary>
+      <Router>
+        <div className="App app-shell">
         <header className="app-header">
           <div className="app-header-inner">
             <div className="app-brand">
@@ -139,6 +146,7 @@ function App() {
         </footer>
       </div>
     </Router>
+    </ErrorBoundary>
   );
 }
 

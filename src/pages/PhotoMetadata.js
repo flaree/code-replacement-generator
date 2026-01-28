@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './codegen.css';
+import { escapeXml, copyToClipboard, downloadTextFile, getTodayISO } from '../utils/helpers';
+import { searchClubs, fetchClubProfile } from '../services/api';
 
 export default function PhotoMetadata() {
   const [meta, setMeta] = useState({
@@ -24,22 +26,12 @@ export default function PhotoMetadata() {
   const asJSON = () => JSON.stringify({ ...meta, keywords: meta.keywords.split(',').map(k => k.trim()).filter(Boolean) }, null, 2);
 
   const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(asJSON());
+    const success = await copyToClipboard(asJSON());
+    if (success) {
       alert('Metadata JSON copied to clipboard');
-    } catch (e) {
+    } else {
       alert('Copy failed');
     }
-  };
-
-  const escapeXml = (str) => {
-    if (!str && str !== 0) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
   };
 
   const generateXMP = (m) => {
@@ -71,16 +63,8 @@ export default function PhotoMetadata() {
 
   const handleDownload = () => {
     const xmp = generateXMP(meta);
-    const blob = new Blob([xmp], { type: 'application/xml' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `${meta.dateCreated ? meta.dateCreated + '-' : ''}${meta.objectName || 'photo-metadata'}.xmp`;
-    link.click();
+    downloadTextFile(xmp, `${meta.dateCreated ? meta.dateCreated + '-' : ''}${meta.objectName || 'photo-metadata'}.xmp`, 'application/xml');
   };
-  const BASE_URL =
-    process.env.NODE_ENV === 'development'
-      ? 'https://api.lensflxre.com'
-      : 'https://api.lensflxre.com';
 
   // Club search states (hidden behind dropdown)
   const [showClubSearch, setShowClubSearch] = useState(true);
@@ -94,21 +78,14 @@ export default function PhotoMetadata() {
   const [selectedAwayClub, setSelectedAwayClub] = useState(null);
   const [checkToday, setCheckToday] = useState(false);
 
-  const todayISO = () => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
   const handleClubSearch = async (term, setResults, setSearching) => {
-    if (!term) return;
+    if (!term) {
+      return;
+    }
     try {
       setSearching(true);
       setResults([]);
-      const res = await fetch(`${BASE_URL}/clubs/search/${encodeURIComponent(term)}`);
-      const data = await res.json();
+      const data = await searchClubs(term);
       setResults(data.results.map((t) => ({ id: t.id, name: t.name, country: t.country })));
     } catch (e) {
       console.error('Club search failed', e);
@@ -140,7 +117,7 @@ export default function PhotoMetadata() {
 
   // keep checkToday in sync with dateCreated
   useEffect(() => {
-    const today = todayISO();
+    const today = getTodayISO();
     setCheckToday(Boolean(meta.dateCreated && meta.dateCreated === today));
   }, [meta.dateCreated]);
 
@@ -171,20 +148,11 @@ export default function PhotoMetadata() {
 
   const applyClubToMeta = useCallback(async () => {
     // Build headline/title/description from selected home/away clubs using profile data when available
-    if (!selectedHomeClub && !selectedAwayClub) return;
+    if (!selectedHomeClub && !selectedAwayClub) {
+      return;
+    }
 
-    const fetchProfile = async (club) => {
-      if (!club) return null;
-      try {
-        const res = await fetch(`${BASE_URL}/clubs/${club.id}/profile`);
-        return await res.json();
-      } catch (e) {
-        console.warn('Failed to fetch club profile for', club.name);
-        return null;
-      }
-    };
-
-    const homeProfile = selectedHomeClub ? await fetchProfile(selectedHomeClub) : null;
+    const homeProfile = selectedHomeClub ? await fetchClubProfile(selectedHomeClub.id).catch(() => null) : null;
 
     const homeName = selectedHomeClub?.name || (homeProfile && homeProfile.name) || '';
     const awayName = selectedAwayClub?.name || '';
@@ -197,7 +165,9 @@ export default function PhotoMetadata() {
     
     // Convert YYYY-MM-DD to DD/MM/YYYY for headline
     const formatDate = (dateStr) => {
-      if (!dateStr) return '';
+      if (!dateStr) {
+        return '';
+      }
       const [year, month, day] = dateStr.split('-');
       return `${day}/${month}/${year}`;
     };
@@ -221,7 +191,7 @@ export default function PhotoMetadata() {
         return allKeywords.join(', ');
       })(),
     }));
-  }, [selectedHomeClub, selectedAwayClub, BASE_URL]);
+  }, [selectedHomeClub, selectedAwayClub]);
 
   // Auto-apply club metadata when selections change
   useEffect(() => {
@@ -233,7 +203,9 @@ export default function PhotoMetadata() {
   useEffect(() => {
     if ((selectedHomeClub || selectedAwayClub) && meta.dateCreated) {
       const formatDate = (dateStr) => {
-        if (!dateStr) return '';
+        if (!dateStr) {
+          return '';
+        }
         const [year, month, day] = dateStr.split('-');
         return `${day}/${month}/${year}`;
       };
@@ -431,7 +403,7 @@ export default function PhotoMetadata() {
         onChange={(e) => {
           handleChange('dateCreated')(e);
           const val = e.target.value;
-          setCheckToday(Boolean(val && val === todayISO()));
+          setCheckToday(Boolean(val && val === getTodayISO()));
         }}
         />
         <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}>
@@ -441,8 +413,11 @@ export default function PhotoMetadata() {
           onChange={(e) => {
           const on = e.target.checked;
           setCheckToday(on);
-          if (on) setMeta((prev) => ({ ...prev, dateCreated: todayISO() }));
-          else setMeta((prev) => ({ ...prev, dateCreated: '' }));
+          if (on) {
+            setMeta((prev) => ({ ...prev, dateCreated: getTodayISO() }));
+          } else {
+            setMeta((prev) => ({ ...prev, dateCreated: '' }));
+          }
           }}
         />
         Fixture today
