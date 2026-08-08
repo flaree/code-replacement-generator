@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import './codegen.css';
 import AdditionalOptions from '../components/AdditionalOptions';
 import { generateCode } from "../utils/codeGenerator";
-import { fetchLeagueClubs, fetchClubProfile, fetchClubPlayers } from "../services/api";
+import { fetchLeagueClubs, fetchClubProfile, fetchClubPlayers, describeApiError } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
 import CopyButton from "../components/CopyButton";
+import CacheStatusBadge from "../components/CacheStatusBadge";
 
 
 const codes = {
@@ -79,7 +80,7 @@ export default function TeamCodeGenerator() {
 					setTeamMap(teamMapping);
 				} catch (error) {
 					console.error("Error fetching teams:", error);
-					toast.error("Failed to fetch teams. Please try again.");
+					toast.error(describeApiError(error, "Failed to fetch teams. Please try again."));
 				}
 			};
 			fetchTeams();
@@ -142,7 +143,7 @@ export default function TeamCodeGenerator() {
 			toast.success("Code generated successfully!");
 		} catch (error) {
 			console.error("Error fetching squad data:", error);
-			toast.error("Failed to fetch squad/club data. Please try again.");
+			toast.error(describeApiError(error, "Failed to fetch squad/club data. Please try again."));
 		} finally {
 			setLoading(false); // Set loading to false when generation is complete
 		}
@@ -159,7 +160,10 @@ export default function TeamCodeGenerator() {
 														Generate Photo Mechanic code replacements from a league fixture.
 													</div>
 												</div>
-												<span className="pill">Single-team friendly · Away optional</span>
+												<div className="card-header-meta">
+													<CacheStatusBadge />
+													<span className="pill">Single-team friendly · Away optional</span>
+												</div>
 											</div>
 											<form
 												onSubmit={(e) => {

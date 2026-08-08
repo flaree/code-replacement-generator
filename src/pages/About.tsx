@@ -22,6 +22,13 @@ function About(): React.ReactElement {
             competitions. I&apos;d love to support that in the future as the data becomes available.
           </p>
           <p className="muted">
+            Transfermarkt limits how often it can be scraped, so squad and club data is cached on the server. A badge at
+            the top of each tool shows where the data came from: <strong>Live</strong> means it was just fetched,{' '}
+            <strong>Cached</strong> means it was reused and shows how old it is, and <strong>Stale</strong> means
+            Transfermarkt blocked the request and older data was used instead. If you see Stale, double-check shirt
+            numbers against the team sheet before relying on the codes.
+          </p>
+          <p className="muted">
             Everything here is free and ad‑free, but the backend services are paid for out of pocket. If the tools save
             you time on a matchday or editing session, supporting the project is hugely appreciated.
           </p>

@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import "./codegen.css";
 import AdditionalOptions from "../components/AdditionalOptions";
 import { generateCode } from "../utils/codeGenerator";
-import { searchClubs, fetchClubProfile, fetchClubPlayers } from "../services/api";
+import { searchClubs, fetchClubProfile, fetchClubPlayers, describeApiError } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
 import CopyButton from "../components/CopyButton";
+import CacheStatusBadge from "../components/CacheStatusBadge";
 import Tooltip from "../components/Tooltip";
 
 function ManualClubSearch() {
@@ -58,7 +59,7 @@ function ManualClubSearch() {
       setResults(data.results.map(team => ({ id: team.id, name: team.name, country: team.country })));
     } catch (error) {
       console.error("Error searching for teams:", error);
-      toast.error("Failed to search for teams. Please try again.");
+      toast.error(describeApiError(error, "Failed to search for teams. Please try again."));
     } finally {
       setSearching(false);
     }
@@ -126,7 +127,7 @@ function ManualClubSearch() {
       toast.success("Code generated successfully!");
     } catch (error) {
       console.error("Error generating code:", error);
-      toast.error("Failed to generate code. Please try again.");
+      toast.error(describeApiError(error, "Failed to generate code. Please try again."));
     } finally {
       setLoading(false);
     }
@@ -154,7 +155,10 @@ function ManualClubSearch() {
               Search individual clubs and generate Photo Mechanic code replacements.
             </div>
           </div>
-          <span className="pill">Home required · Away optional</span>
+          <div className="card-header-meta">
+            <CacheStatusBadge />
+            <span className="pill">Home required · Away optional</span>
+          </div>
         </div>
         <div className="generated-grid">
           <div className="generated-column">

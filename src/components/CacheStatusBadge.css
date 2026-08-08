@@ -1,0 +1,33 @@
+.cache-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: nowrap;
+  cursor: help;
+  border: 1px solid var(--border-subtle);
+  background: var(--accent-soft);
+  color: var(--text-muted);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.cache-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+}
+
+.cache-badge-live {
+  color: var(--accent);
+}
+
+.cache-badge-stale {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: transparent;
+}

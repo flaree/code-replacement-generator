@@ -3,8 +3,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import './codegen.css';
 import { escapeXml, copyToClipboard, downloadTextFile, getTodayISO } from '../utils/helpers';
-import { searchClubs, fetchClubProfile } from '../services/api';
+import { searchClubs, fetchClubProfile, describeApiError } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
+import CacheStatusBadge from '../components/CacheStatusBadge';
 
 const COMMON_COMPETITIONS = [
   'LOI Premier Division', 'LOI First Division', 'Scottish Premiership', 'Scottish Championship', 'Scottish Cup', 'League Cup',
@@ -202,7 +203,7 @@ export default function PhotoMetadata() {
     } catch (e) {
       console.error('Club search failed', e);
       setResults([]);
-      toast.error('Club search failed');
+      toast.error(describeApiError(e, 'Club search failed'));
     } finally {
       setSearching(false);
     }
@@ -432,7 +433,10 @@ export default function PhotoMetadata() {
         Build IPTC fields for Photo Mechanic and export as XMP.
       </div>
       </div>
-      <span className="pill">Club-aware · Job ID · Fixture today</span>
+      <div className="card-header-meta">
+        <CacheStatusBadge />
+        <span className="pill">Club-aware · Job ID · Fixture today</span>
+      </div>
     </div>
 
     <div className="stack-md" style={{ marginBottom: 10 }}>

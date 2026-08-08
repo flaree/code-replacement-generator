@@ -3,27 +3,151 @@ import { API_BASE_URL } from '../constants/config';
 const REQUEST_TIMEOUT = 30000;
 
 // ---------------------------------------------------------------------------
-// Simple in-memory TTL cache (5 minutes)
+// Cache metadata reported by the API
+// ---------------------------------------------------------------------------
+
+/**
+ * Where a response came from, as reported by the API's `X-Cache` header.
+ *
+ * - `MISS`    - scraped from Transfermarkt just now
+ * - `HIT`     - served from the API's cache, still within its TTL
+ * - `STALE`   - the scrape was blocked, so expired data was served instead
+ * - `UNKNOWN` - no `X-Cache` header on the response
+ */
+export type CacheStatus = 'MISS' | 'HIT' | 'STALE' | 'UNKNOWN';
+
+export interface CacheInfo {
+  status: CacheStatus;
+  /** How old the underlying data is, in seconds. Null when the API reported no age. */
+  ageSeconds: number | null;
+  /** When this response was observed, as a ms timestamp. */
+  observedAt: number;
+}
+
+const readCacheInfo = (response: Response): CacheInfo => {
+  const marker = response.headers.get('X-Cache');
+  const status: CacheStatus =
+    marker === 'HIT' || marker === 'MISS' || marker === 'STALE' ? marker : 'UNKNOWN';
+
+  // Age is only sent for HIT and STALE, and Number(null) is 0, so check the raw value first.
+  const rawAge = response.headers.get('Age');
+  const age = rawAge === null ? NaN : Number(rawAge);
+
+  return {
+    status,
+    ageSeconds: Number.isFinite(age) ? age : null,
+    observedAt: Date.now(),
+  };
+};
+
+type CacheInfoListener = (_info: CacheInfo | null) => void;
+
+const listeners = new Set<CacheInfoListener>();
+let currentInfo: CacheInfo | null = null;
+let lastResponseAt = 0;
+
+// The full-league generator fires dozens of requests back to back. A single STALE response in that
+// burst is the thing worth telling the user about, so it outranks the HIT/MISS responses either
+// side of it instead of being immediately overwritten.
+const BURST_WINDOW_MS = 2500;
+const SEVERITY: Record<CacheStatus, number> = { UNKNOWN: 0, MISS: 1, HIT: 1, STALE: 2 };
+
+const publishCacheInfo = (info: CacheInfo): void => {
+  const withinBurst = currentInfo !== null && info.observedAt - lastResponseAt < BURST_WINDOW_MS;
+  lastResponseAt = info.observedAt;
+
+  if (withinBurst && currentInfo !== null && SEVERITY[currentInfo.status] > SEVERITY[info.status]) {
+    return;
+  }
+
+  currentInfo = info;
+  listeners.forEach((listener) => listener(info));
+};
+
+/** The cache status of the most recent API response, or null before the first one. */
+export const getCacheInfo = (): CacheInfo | null => currentInfo;
+
+/** Subscribe to cache status changes. Returns an unsubscribe function. */
+export const subscribeToCacheInfo = (listener: CacheInfoListener): (() => void) => {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Errors
+// ---------------------------------------------------------------------------
+
+/**
+ * Thrown when the API answers 503, meaning Transfermarkt blocked the scrape and the API had no
+ * cached copy to fall back on. Retrying immediately tends to prolong the block.
+ */
+export class ApiUnavailableError extends Error {
+  readonly retryAfterSeconds: number | null;
+
+  constructor(retryAfterSeconds: number | null) {
+    const wait = retryAfterSeconds === null
+      ? 'Please try again shortly.'
+      : `Please try again in about ${retryAfterSeconds} seconds.`;
+    super(`Transfermarkt is blocking requests right now. ${wait}`);
+    this.name = 'ApiUnavailableError';
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
+
+/**
+ * Turn an error from this module into a message suitable for showing to the user.
+ *
+ * @param error - The caught error
+ * @param fallback - Message to use for errors with nothing better to say
+ */
+export const describeApiError = (error: unknown, fallback: string): string => {
+  if (error instanceof ApiUnavailableError) {
+    return error.message;
+  }
+  if (error instanceof Error && error.message.includes('timeout')) {
+    return error.message;
+  }
+  return fallback;
+};
+
+// ---------------------------------------------------------------------------
+// Local in-memory TTL cache (5 minutes)
 // ---------------------------------------------------------------------------
 const CACHE_TTL = 5 * 60 * 1000;
 
 interface CacheEntry<T> {
   data: T;
   expiry: number;
+  cache: CacheInfo;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const apiCache = new Map<string, CacheEntry<any>>();
 
+/**
+ * Re-date a stored cache status for a local replay.
+ *
+ * The payload is however old the API said it was, plus however long we have held it. Serving it
+ * again is a cache hit by definition, but a payload the API marked STALE stays STALE.
+ */
+const replayCacheInfo = (info: CacheInfo): CacheInfo => ({
+  status: info.status === 'STALE' ? 'STALE' : 'HIT',
+  ageSeconds: (info.ageSeconds ?? 0) + Math.round((Date.now() - info.observedAt) / 1000),
+  observedAt: Date.now(),
+});
+
 function getCached<T>(key: string): T | null {
   const entry = apiCache.get(key) as CacheEntry<T> | undefined;
   if (!entry) { return null; }
   if (Date.now() > entry.expiry) { apiCache.delete(key); return null; }
+  publishCacheInfo(replayCacheInfo(entry.cache));
   return entry.data;
 }
 
-function setCached<T>(key: string, data: T): void {
-  apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+function setCached<T>(key: string, data: T, cache: CacheInfo): void {
+  apiCache.set(key, { data, expiry: Date.now() + CACHE_TTL, cache });
 }
 
 const fetchWithTimeout = async (url: string, timeout = REQUEST_TIMEOUT): Promise<Response> => {
@@ -41,6 +165,35 @@ const fetchWithTimeout = async (url: string, timeout = REQUEST_TIMEOUT): Promise
     }
     throw error;
   }
+};
+
+/**
+ * Fetch JSON from the API, recording where the response came from.
+ *
+ * @param path - Path below the API base URL
+ * @param failureMessage - Message for the error thrown on a non-OK response
+ * @returns The parsed body and the response's cache metadata
+ */
+const requestJson = async <T>(
+  path: string,
+  failureMessage: string
+): Promise<{ data: T; cache: CacheInfo }> => {
+  const response = await fetchWithTimeout(`${API_BASE_URL}${path}`);
+
+  if (response.status === 503) {
+    const rawRetry = response.headers.get('Retry-After');
+    const retryAfter = rawRetry === null ? NaN : Number(rawRetry);
+    throw new ApiUnavailableError(Number.isFinite(retryAfter) ? retryAfter : null);
+  }
+
+  if (!response.ok) {
+    throw new Error(failureMessage);
+  }
+
+  const cache = readCacheInfo(response);
+  publishCacheInfo(cache);
+
+  return { data: await response.json(), cache };
 };
 
 // Type definitions for API responses
@@ -81,12 +234,11 @@ export const fetchLeagueClubs = async (competitionCode: string): Promise<LeagueC
   const key = `league:${competitionCode}`;
   const cached = getCached<LeagueClubsResponse>(key);
   if (cached) { return cached; }
-  const response = await fetchWithTimeout(`${API_BASE_URL}/competitions/${competitionCode}/clubs`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch clubs for competition ${competitionCode}`);
-  }
-  const data = await response.json();
-  setCached(key, data);
+  const { data, cache } = await requestJson<LeagueClubsResponse>(
+    `/competitions/${competitionCode}/clubs`,
+    `Failed to fetch clubs for competition ${competitionCode}`
+  );
+  setCached(key, data, cache);
   return data;
 };
 
@@ -99,12 +251,11 @@ export const fetchClubProfile = async (clubId: string): Promise<ClubProfile> => 
   const key = `profile:${clubId}`;
   const cached = getCached<ClubProfile>(key);
   if (cached) { return cached; }
-  const response = await fetchWithTimeout(`${API_BASE_URL}/clubs/${clubId}/profile`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch profile for club ${clubId}`);
-  }
-  const data = await response.json();
-  setCached(key, data);
+  const { data, cache } = await requestJson<ClubProfile>(
+    `/clubs/${clubId}/profile`,
+    `Failed to fetch profile for club ${clubId}`
+  );
+  setCached(key, data, cache);
   return data;
 };
 
@@ -117,12 +268,11 @@ export const fetchClubPlayers = async (clubId: string): Promise<PlayersResponse>
   const key = `players:${clubId}`;
   const cached = getCached<PlayersResponse>(key);
   if (cached) { return cached; }
-  const response = await fetchWithTimeout(`${API_BASE_URL}/clubs/${clubId}/players`);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch players for club ${clubId}`);
-  }
-  const data = await response.json();
-  setCached(key, data);
+  const { data, cache } = await requestJson<PlayersResponse>(
+    `/clubs/${clubId}/players`,
+    `Failed to fetch players for club ${clubId}`
+  );
+  setCached(key, data, cache);
   return data;
 };
 
@@ -132,11 +282,11 @@ export const fetchClubPlayers = async (clubId: string): Promise<PlayersResponse>
  * @returns Response containing search results
  */
 export const searchClubs = async (searchTerm: string): Promise<SearchResponse> => {
-  const response = await fetchWithTimeout(`${API_BASE_URL}/clubs/search/${encodeURIComponent(searchTerm)}`);
-  if (!response.ok) {
-    throw new Error(`Failed to search for clubs with term "${searchTerm}"`);
-  }
-  return response.json();
+  const { data } = await requestJson<SearchResponse>(
+    `/clubs/search/${encodeURIComponent(searchTerm)}`,
+    `Failed to search for clubs with term "${searchTerm}"`
+  );
+  return data;
 };
 
 /**
@@ -149,6 +299,6 @@ export const fetchFullSquadData = async (clubId: string): Promise<{ profile: Clu
     fetchClubProfile(clubId).catch(() => null),
     fetchClubPlayers(clubId)
   ]);
-  
+
   return { profile, players };
 };

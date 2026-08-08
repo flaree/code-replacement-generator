@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import './codegen.css';
 import AdditionalOptions from '../components/AdditionalOptions';
 import { generateCode } from "../utils/codeGenerator";
-import { fetchLeagueClubs, fetchClubPlayers, fetchClubProfile } from "../services/api";
+import { fetchLeagueClubs, fetchClubPlayers, fetchClubProfile, getCacheInfo, describeApiError } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
 import CopyButton from "../components/CopyButton";
+import CacheStatusBadge from "../components/CacheStatusBadge";
 
 const codes = {
 	"League of Ireland Premier Division": 'IR1',
@@ -25,6 +26,20 @@ const codes = {
 	"Major League Soccer": 'MLS1',
 	"Dutch Eredivisie": 'NL1',
 };
+
+/**
+ * Wait before the next request, unless the last response came out of the API's cache.
+ *
+ * The throttling in this page exists to stop Transfermarkt blocking us mid-league. A response the
+ * API served from its own cache (`X-Cache: HIT`) never reached Transfermarkt, so there is nothing
+ * to throttle after one and a fully cached league can be built at full speed.
+ *
+ * @param scrapedDelay - Milliseconds to wait when the last response required a scrape
+ */
+const pauseUnlessCached = (scrapedDelay: number): Promise<void> =>
+	new Promise(resolve => {
+		setTimeout(resolve, getCacheInfo()?.status === 'HIT' ? 0 : scrapedDelay);
+	});
 
 /**
  * Generate unique delimiters for all teams
@@ -125,7 +140,7 @@ export default function LeagueCodeGenerator() {
 					setSelectedTeams(new Set(teamList));
 				} catch (error) {
 					console.error("Error fetching teams:", error);
-					toast.error("Failed to fetch teams. Please try again.");
+					toast.error(describeApiError(error, "Failed to fetch teams. Please try again."));
 				}
 			};
 			fetchTeams();
@@ -168,7 +183,7 @@ export default function LeagueCodeGenerator() {
 				try {
 					// Add delay between requests to avoid rate limiting (except for first request)
 					if (i > 0) {
-						await new Promise(resolve => setTimeout(resolve, 2000));
+						await pauseUnlessCached(2000);
 					}
 
 					// Fetch profile first
@@ -181,7 +196,7 @@ export default function LeagueCodeGenerator() {
 					}
 
 					// Add 500ms delay between profile and players
-					await new Promise(resolve => setTimeout(resolve, 500));
+					await pauseUnlessCached(500);
 
 					// Fetch players
 					let squadData = null;
@@ -287,7 +302,10 @@ export default function LeagueCodeGenerator() {
 							Generate Photo Mechanic code replacements for all teams in an entire league.
 						</div>
 					</div>
-					<span className="pill">All teams · Auto delimiters</span>
+					<div className="card-header-meta">
+						<CacheStatusBadge />
+						<span className="pill">All teams · Auto delimiters</span>
+					</div>
 				</div>
 				<form
 					onSubmit={(e) => {
