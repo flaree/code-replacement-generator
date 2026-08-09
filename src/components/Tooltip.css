@@ -6,17 +6,18 @@
 
 .tooltip {
   position: absolute;
-  background-color: #333;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
+  background-color: var(--panel-3);
+  color: var(--text);
+  border: 1px solid var(--rule-strong);
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  font-size: 12.5px;
   line-height: 1.4;
   white-space: nowrap;
   max-width: 400px;
   white-space: normal;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
   animation: tooltipFadeIn 0.2s ease;
 }
 
@@ -48,7 +49,8 @@
   position: absolute;
   width: 8px;
   height: 8px;
-  background-color: #333;
+  background-color: var(--panel-3);
+  border: 1px solid var(--rule-strong);
   transform: rotate(45deg);
 }
 
@@ -87,14 +89,6 @@
   }
 }
 
-/* Dark mode */
-[data-theme='dark'] .tooltip {
-  background-color: #555;
-}
-
-[data-theme='dark'] .tooltip-arrow {
-  background-color: #555;
-}
 
 /* Mobile: larger touch target for help icons */
 @media (max-width: 768px) {

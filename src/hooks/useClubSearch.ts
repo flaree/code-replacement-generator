@@ -1,16 +1,16 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { searchClubs, Club } from '../services/api';
 import { debounce } from '../utils/debounce';
 
 interface UseClubSearchReturn {
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
+  setSearchTerm: (_term: string) => void;
   results: Club[];
   selectedClub: Club | null;
   searching: boolean;
   error: string | null;
   handleSearch: () => Promise<void>;
-  selectClub: (club: Club | null) => void;
+  selectClub: (_club: Club | null) => void;
   reset: () => void;
 }
 

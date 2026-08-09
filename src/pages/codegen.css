@@ -1,32 +1,627 @@
+/* ===========================================================================
+   The workspace: team sheet on the left, the file you are producing on the
+   right. The file is not a result you reveal at the end — it is half the
+   screen the whole time, and it fills in as squads land.
+   =========================================================================== */
+
+.workspace {
+	display: grid;
+	grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+	gap: 16px;
+	align-items: start;
+}
+
+@media (max-width: 1080px) {
+	.workspace {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.workspace-setup {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	position: sticky;
+	top: 68px;
+}
+
+@media (max-width: 1080px) {
+	.workspace-setup {
+		position: static;
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Team slots. Home and away are told apart by a kit stripe, not by position
+   on the page — the same stripe reappears beside every line that team owns.
+   --------------------------------------------------------------------------- */
+
+.slot {
+	position: relative;
+	padding: 12px 14px 14px 16px;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
+	background: var(--panel-2);
+}
+
+.slot::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: -1px;
+	bottom: -1px;
+	width: 3px;
+	border-radius: var(--radius) 0 0 var(--radius);
+	background: var(--kit, var(--rule-strong));
+}
+
+.slot-home {
+	--kit: var(--home);
+	--kit-wash: var(--home-wash);
+}
+
+.slot-away {
+	--kit: var(--away);
+	--kit-wash: var(--away-wash);
+}
+
+.slot-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 9px;
+}
+
+.slot-role {
+	font-family: var(--font-display);
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--kit);
+	line-height: 1;
+}
+
+.slot-optional {
+	font-size: 11px;
+	color: var(--text-faint);
+}
+
+/* Once a team is chosen the slot collapses to a single settled row. */
+.slot-picked {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 38px;
+}
+
+.slot-picked-name {
+	flex: 1;
+	min-width: 0;
+	font-size: 15px;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.slot-picked-country {
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--text-faint);
+}
+
+.slot-status {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+	font-size: 12px;
+	color: var(--text-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   Prefix. This is the thing you actually type in Photo Mechanic, so it is set
+   in the same face the file is, and shown as a key rather than a text field.
+   --------------------------------------------------------------------------- */
+
+.prefix {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.prefix-input {
+	width: 42px;
+	min-height: 34px;
+	padding: 4px;
+	text-align: center;
+	font-family: var(--font-mono);
+	font-size: 15px;
+	font-weight: 600;
+	text-transform: lowercase;
+	color: var(--kit);
+	background: var(--field);
+	border: 1px solid var(--kit);
+	border-radius: var(--radius);
+}
+
+.prefix-input:hover {
+	border-color: var(--kit);
+}
+
+.prefix-example {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	color: var(--text-faint);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.prefix-example b {
+	color: var(--kit);
+	font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------------
+   Team picker — one combobox, not a search button plus a dropdown.
+   --------------------------------------------------------------------------- */
+
+.picker {
+	position: relative;
+}
+
+.picker-input-wrap {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.picker-input-wrap .input {
+	padding-right: 34px;
+}
+
+.picker-spinner {
+	position: absolute;
+	right: 10px;
+	width: 13px;
+	height: 13px;
+	border: 2px solid var(--rule-strong);
+	border-top-color: var(--kit, var(--text));
+	border-radius: 50%;
+	animation: picker-spin 620ms linear infinite;
+}
+
+@keyframes picker-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.picker-list {
+	position: absolute;
+	z-index: 20;
+	left: 0;
+	right: 0;
+	top: calc(100% + 4px);
+	max-height: 244px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 3px;
+	list-style: none;
+	background: var(--panel);
+	border: 1px solid var(--rule-strong);
+	border-radius: var(--radius);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+}
+
+.picker-option {
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+	width: 100%;
+	padding: 8px 10px;
+	border: 0;
+	border-radius: 3px;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+	font-size: 13.5px;
+	text-align: left;
+	cursor: pointer;
+}
+
+.picker-option[aria-selected='true'] {
+	background: var(--kit-wash, var(--panel-2));
+	box-shadow: inset 2px 0 0 var(--kit, var(--rule-strong));
+}
+
+.picker-option-name {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.picker-option-country {
+	flex: none;
+	font-family: var(--font-mono);
+	font-size: 10.5px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--text-faint);
+}
+
+.picker-empty {
+	padding: 10px;
+	font-size: 13px;
+	color: var(--text-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   The ledger. A code replacement file is `code<TAB>description`, so the tab
+   stop is drawn as a rule and the codes sit in their own column. What you see
+   here is the shape of the file you are about to download.
+   --------------------------------------------------------------------------- */
+
+.ledger {
+	display: flex;
+	flex-direction: column;
+	min-height: 420px;
+}
+
+.ledger-count {
+	font-family: var(--font-mono);
+	font-size: 11px;
+	letter-spacing: 0.06em;
+	color: var(--text-faint);
+	font-variant-numeric: tabular-nums;
+}
+
+.ledger-body {
+	flex: 1;
+	overflow: auto;
+	max-height: calc(100vh - 260px);
+	min-height: 320px;
+	padding: 12px 0;
+	background: var(--field);
+}
+
+@media (max-width: 1080px) {
+	.ledger-body {
+		max-height: 60vh;
+	}
+}
+
+/* Captions are not truncated — the pane scrolls sideways instead, because a
+   half-shown caption is the one thing you cannot check against a team sheet.
+   The code column stays pinned while it does. */
+.ledger-line {
+	display: grid;
+	grid-template-columns: 3px 78px auto;
+	align-items: baseline;
+	width: max-content;
+	min-width: 100%;
+	font-family: var(--font-mono);
+	font-size: 12.5px;
+	line-height: 1.75;
+}
+
+.ledger-line-kit {
+	position: sticky;
+	left: 0;
+	z-index: 1;
+	align-self: stretch;
+	background: var(--kit, var(--field));
+}
+
+.ledger-line-code {
+	position: sticky;
+	left: 3px;
+	z-index: 1;
+	padding-left: 11px;
+	padding-right: 10px;
+	border-right: 1px solid var(--rule);
+	background: var(--field);
+	color: var(--kit, var(--text-dim));
+	font-weight: 600;
+	white-space: nowrap;
+	align-self: stretch;
+}
+
+.ledger-line-text {
+	padding-left: 11px;
+	padding-right: 16px;
+	color: var(--text);
+	white-space: pre;
+}
+
+/* A blank line in the file is structure, so it keeps its height and its rule. */
+.ledger-line-blank .ledger-line-code {
+	color: transparent;
+}
+
+.ledger-line-blank {
+	height: 22px;
+}
+
+/* Header block: stadium, team names, managers — the lines that aren't players */
+.ledger-line-meta .ledger-line-text {
+	color: var(--text-dim);
+}
+
+.ledger-group {
+	animation: ledger-in 260ms cubic-bezier(0.2, 0, 0.2, 1) both;
+}
+
+@keyframes ledger-in {
+	from {
+		opacity: 0;
+		transform: translateY(-3px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+/* Empty state: an invitation, in the shape of the thing it will become. */
+.ledger-empty {
+	position: relative;
+	min-height: 320px;
+	height: 100%;
+	padding: 14px 0;
+}
+
+.ledger-ghost {
+	opacity: 0.5;
+}
+
+.ledger-ghost-bar {
+	display: inline-block;
+	height: 7px;
+	border-radius: 2px;
+	background: var(--rule);
+	vertical-align: middle;
+}
+
+/* The message sits over the ghost file, with the file fading out behind it. */
+.ledger-empty-message {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 24px;
+	text-align: center;
+	background: radial-gradient(
+		ellipse 62% 52% at 50% 50%,
+		var(--field) 0%,
+		var(--field) 46%,
+		transparent 100%
+	);
+}
+
+.ledger-empty-title {
+	font-family: var(--font-display);
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--text-dim);
+}
+
+.ledger-empty-text {
+	max-width: 34ch;
+	font-size: 13px;
+	color: var(--text-faint);
+}
+
+/* ---------------------------------------------------------------------------
+   Fixture details — a disclosure, not a checkbox that reveals a second card.
+   --------------------------------------------------------------------------- */
+
+.disclosure {
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
+	background: var(--panel);
+}
+
+.disclosure-summary {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	width: 100%;
+	padding: 11px 14px;
+	background: transparent;
+	border: 0;
+	border-radius: var(--radius);
+	color: var(--text);
+	font: inherit;
+	font-size: 13px;
+	font-weight: 500;
+	text-align: left;
+	cursor: pointer;
+}
+
+.disclosure-summary:hover {
+	background: var(--panel-2);
+}
+
+.disclosure-chevron {
+	flex: none;
+	width: 10px;
+	height: 10px;
+	border-right: 1.5px solid var(--text-faint);
+	border-bottom: 1.5px solid var(--text-faint);
+	transform: rotate(-45deg);
+	transition: transform var(--t-fast);
+	margin-left: -2px;
+}
+
+.disclosure-open .disclosure-chevron {
+	transform: rotate(45deg);
+}
+
+.disclosure-summary-label {
+	flex: 1;
+}
+
+.disclosure-panel {
+	padding: 4px 14px 14px;
+	border-top: 1px solid var(--rule);
+}
+
+/* ---------------------------------------------------------------------------
+   Caption format — show the sentence, not the template string.
+   --------------------------------------------------------------------------- */
+
+.format-list {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.format-option {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 8px 10px;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
+	background: var(--field);
+	cursor: pointer;
+}
+
+.format-option:hover {
+	border-color: var(--rule-strong);
+}
+
+.format-option-checked {
+	border-color: var(--text);
+	background: var(--panel-2);
+}
+
+.format-option input {
+	flex: none;
+	accent-color: var(--text);
+	cursor: pointer;
+}
+
+.format-option-sample {
+	font-family: var(--font-mono);
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Full league codes — the delimiter map
+   --------------------------------------------------------------------------- */
+
+.delimiter-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
+	gap: 6px;
+	max-height: 420px;
+	overflow-y: auto;
+}
+
+.delimiter-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 6px 10px;
+	background: var(--panel-2);
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
+}
+
+.delimiter-code {
+	flex: none;
+	width: 44px;
+	min-height: 28px;
+	padding: 2px 4px;
+	text-align: center;
+	background: var(--field);
+	border: 1px solid var(--field-border);
+	border-radius: 3px;
+	color: var(--text);
+	font-family: var(--font-mono);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.team-name {
+	flex: 1;
+	min-width: 0;
+	font-size: 13px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.loading-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	padding: 40px 20px;
+	text-align: center;
+	color: var(--text-faint);
+	font-size: 13px;
+}
+
+@media (max-width: 700px) {
+	.delimiter-grid {
+		grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+	}
+}
+
+/* ---------------------------------------------------------------------------
+   Carried over from the previous system, for the pages that still use it.
+   --------------------------------------------------------------------------- */
+
 .generated-code-page {
-	font-size: 14px;
-	color: var(--text-primary);
+	color: var(--text);
 }
 
 .generated-code-card {
-	max-width: 960px;
+	max-width: 900px;
 	margin: 0 auto;
 }
 
 .generated-grid {
 	display: grid;
-	grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.1fr);
-	gap: 16px;
-	margin-top: 16px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 14px;
+}
+
+@media (max-width: 800px) {
+	.generated-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
 .generated-column {
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 8px;
 }
 
 .generated-section-title {
-	font-size: 13px;
-	font-weight: 600;
+	font-family: var(--font-mono);
+	font-size: 10px;
+	font-weight: 500;
+	letter-spacing: 0.14em;
 	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: var(--text-muted);
+	color: var(--text-faint);
 }
 
 .generated-inline-row {
@@ -37,247 +632,73 @@
 }
 
 .generated-delim-input {
-	width: 52px;
+	width: 46px;
 	text-align: center;
-}
-
-.generated-popup {
-	margin-bottom: 14px;
-	padding: 10px 12px;
-	border-radius: 12px;
-	background: radial-gradient(circle at top left, rgba(255, 218, 128, 0.92), rgba(255, 121, 109, 0.96));
-	color: #220814;
-	font-size: 13px;
-	display: flex;
-	justify-content: space-between;
-	gap: 12px;
-}
-
-.generated-popup button {
-	border: none;
-	background: transparent;
-	cursor: pointer;
-	color: inherit;
-	font-size: 16px;
+	font-family: var(--font-mono);
 }
 
 .generated-extra-card {
 	margin-top: 14px;
 }
 
-.generated-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin-top: 16px;
-}
-
-/* Enhanced button styles */
-.btn-primary-action {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 10px;
-	min-height: 48px;
-	padding: 12px 28px;
-	font-size: 16px;
-	font-weight: 600;
-	transition: all 0.2s ease;
-}
-
-.btn-primary-action:hover:not(:disabled) {
-	transform: translateY(-2px);
-	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-}
-
-.btn-primary-action:active:not(:disabled) {
-	transform: translateY(0);
-}
-
-/* Help text */
-.help-text {
-	margin-top: 8px;
-	font-size: 13px;
-	color: var(--text-muted);
-	text-align: center;
-}
-
-/* Success animation */
-.success-fade-in {
-	animation: fadeInSlide 0.4s ease-out;
-}
-
-@keyframes fadeInSlide {
-	from {
-		opacity: 0;
-		transform: translateY(10px);
-	}
-	to {
-		opacity: 1;
-		transform: translateY(0);
-	}
-}
-
-/* Preview actions */
-.preview-actions {
-	display: flex;
-	gap: 12px;
-	align-items: center;
-}
-
-/* Better spacing and typography */
-.field-label {
-	font-weight: 600;
-	font-size: 14px;
-	margin-bottom: 6px;
-	line-height: 1.5;
-}
-
-.input, .select {
-	min-height: 44px;
-	padding: 10px 14px;
-	font-size: 15px;
-	line-height: 1.5;
-	transition: all 0.2s ease;
-}
-
-.input:focus, .select:focus {
-	outline: none;
-	border-color: var(--primary-color);
-	box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-}
-
-/* Mobile optimization */
-@media (max-width: 768px) {
-	.btn {
-		min-height: 48px;
-		font-size: 16px;
-		padding: 12px 20px;
-	}
-	
-	.input, .select {
-		min-height: 48px;
-		font-size: 16px;
-	}
-	
-	.generated-code-page {
-		font-size: 15px;
-	}
-}
-
-@media (max-width: 880px) {
-	.generated-grid {
-		grid-template-columns: minmax(0, 1fr);
-	}
-}
-/* League Code Generator Styles */
 .team-preview {
-	margin: 24px 0;
-	padding: 20px;
-	background: var(--card-bg);
-	border-radius: 12px;
-	border: 1px solid var(--border-color);
+	margin: 16px 0;
+	padding: 14px;
+	background: var(--panel-2);
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
 }
 
 .team-preview h3 {
-	margin: 0 0 16px 0;
+	margin: 0 0 12px;
+	font-family: var(--font-display);
 	font-size: 16px;
 	font-weight: 600;
-	color: var(--text-primary);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
 }
 
-.delimiter-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-	gap: 12px;
-	max-height: 400px;
-	overflow-y: auto;
-	padding: 4px;
-}
-
-.delimiter-item {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 8px 12px;
-	background: var(--bg-secondary);
-	border-radius: 8px;
-	border: 1px solid var(--border-color);
-	transition: all 0.2s ease;
-}
-
-.delimiter-item:hover {
-	border-color: var(--primary-color);
-	transform: translateX(2px);
-}
-
-.delimiter-code {
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	min-width: 36px;
-	height: 28px;
-	padding: 0 8px;
-	background: var(--primary-color);
-	color: white;
-	font-family: 'Monaco', 'Courier New', monospace;
-	font-size: 12px;
-	font-weight: 700;
-	border-radius: 6px;
-	letter-spacing: 0.5px;
-}
-
-.team-name {
-	flex: 1;
-	font-size: 13px;
-	color: var(--text-primary);
+/* The result block on pages that still generate on demand. */
+.preview-block {
+	margin-top: 16px;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
 	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
-.loading-container {
+.preview-heading {
 	display: flex;
-	flex-direction: column;
+	flex-wrap: wrap;
 	align-items: center;
-	justify-content: center;
-	gap: 16px;
-	padding: 40px 20px;
-	text-align: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--rule);
+	background: var(--panel-2);
+	font-size: 13px;
+	font-weight: 500;
 }
 
-.loading-container p {
-	color: var(--text-muted);
-	font-size: 14px;
+.preview-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.preview-body {
+	max-height: 420px;
+	overflow: auto;
 	margin: 0;
+	padding: 12px;
+	background: var(--field);
+	font-family: var(--font-mono);
+	font-size: 12.5px;
+	line-height: 1.7;
+	color: var(--text);
+	white-space: pre-wrap;
+	word-break: break-word;
 }
 
-@media (max-width: 768px) {
-	.delimiter-grid {
-		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-		gap: 8px;
-	}
-	
-	.delimiter-item {
-		padding: 6px 10px;
-	}
-	
-	.delimiter-code {
-		min-width: 32px;
-		height: 24px;
-		font-size: 11px;
-	}
-	
-	.team-name {
-		font-size: 12px;
-	}
-}
-
-/* Editable delimiter code input */
-.delimiter-code:focus {
-	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
-}
-
-.delimiter-code:hover {
-	opacity: 0.9;
+.success-fade-in {
+	animation: ledger-in 260ms cubic-bezier(0.2, 0, 0.2, 1) both;
 }

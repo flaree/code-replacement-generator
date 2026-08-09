@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
 import LeagueCodeGenerator from './pages/LeagueCodeGenerator';
@@ -8,86 +10,123 @@ import About from './pages/About';
 import PhotoMetadata from './pages/PhotoMetadata';
 import ThemeToggle from './components/ThemeToggle';
 import ErrorBoundary from './components/ErrorBoundary';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
+
+/**
+ * The old labels — Clubs, League, Full League Codes — described the data
+ * source. These describe what you get and how you find the teams, which is the
+ * only difference that matters when you are choosing between them.
+ */
+const NAV_ITEMS = [
+  { to: '/', label: 'Club search' },
+  { to: '/league', label: 'League fixture' },
+  { to: '/league-codes', label: 'Full league' },
+  { to: '/metadata', label: 'Metadata' },
+  { to: '/about', label: 'About' },
+];
 
 interface NavLinksProps {
-  onClick?: () => void;
+  onNavigate?: () => void;
 }
 
-function NavLinks({ onClick }: NavLinksProps): React.ReactElement {
-  const location = useLocation();
-  const current = location.pathname || '/';
-
-  const linkClass = (path: string): string =>
-    'app-nav-link' + (current === path ? ' app-nav-link-active' : '');
+function NavLinks({ onNavigate }: NavLinksProps): React.ReactElement {
+  const { pathname } = useLocation();
 
   return (
     <ul className="app-nav-list">
-      <li>
-        <Link to="/" className={linkClass('/')} onClick={onClick}>Clubs</Link>
-      </li>
-      <li>
-        <Link to="/league" className={linkClass('/league')} onClick={onClick}>League</Link>
-      </li>
-      <li>
-        <Link to="/league-codes" className={linkClass('/league-codes')} onClick={onClick}>Full League Codes</Link>
-      </li>
-      <li>
-        <Link to="/metadata" className={linkClass('/metadata')} onClick={onClick}>Metadata</Link>
-      </li>
-      <li>
-        <Link to="/about" className={linkClass('/about')} onClick={onClick}>About</Link>
-      </li>
+      {NAV_ITEMS.map(({ to, label }) => {
+        const active = pathname === to;
+        return (
+          <li key={to}>
+            <Link
+              to={to}
+              className={`app-nav-link${active ? ' app-nav-link-active' : ''}`}
+              aria-current={active ? 'page' : undefined}
+              onClick={onNavigate}
+            >
+              {label}
+            </Link>
+          </li>
+        );
+      })}
     </ul>
   );
 }
 
-function App(): React.ReactElement {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+function MobileMenu({ onClose }: { onClose: () => void }): React.ReactElement {
+  const menuRef = useRef<HTMLElement>(null);
 
-  const toggleMobileMenu = (): void => setMobileMenuOpen(!mobileMenuOpen);
-  const closeMobileMenu = (): void => setMobileMenuOpen(false);
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    menuRef.current?.querySelector<HTMLElement>('a, button')?.focus();
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      opener?.focus();
+    };
+  }, [onClose]);
+
+  return (
+    <>
+      <div className="mobile-menu-overlay" onClick={onClose} />
+      <nav className="mobile-menu" ref={menuRef} aria-label="Main">
+        <div className="mobile-menu-head">
+          <span className="eyebrow">Menu</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
+            Close
+          </button>
+        </div>
+        <NavLinks onNavigate={onClose} />
+      </nav>
+    </>
+  );
+}
+
+function App(): React.ReactElement {
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <ErrorBoundary>
       <Router>
-        <div className="App app-shell">
-        <header className="app-header">
-          <div className="app-header-inner">
-            <div className="app-brand">
-              <div className="app-brand-mark" />
-              <div className="app-brand-text">
-                <div className="app-title">Lensflxre Tools</div>
-                <div className="app-subtitle">Sports photography helper suite</div>
-              </div>
+        <div className="app-shell">
+          <a className="skip-link" href="#main">
+            Skip to content
+          </a>
+
+          <header className="app-header">
+            <div className="app-header-inner">
+              <Link to="/" className="app-brand">
+                <span className="app-brand-name">Lensflxre</span>
+                <span className="app-brand-tag">Code replacements</span>
+              </Link>
+
+              <nav className="app-nav" aria-label="Main">
+                <NavLinks />
+              </nav>
+
+              <button
+                type="button"
+                className="mobile-menu-toggle"
+                aria-expanded={menuOpen}
+                aria-label="Open menu"
+                onClick={() => setMenuOpen(true)}
+              >
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.6">
+                  <path d="M2 4.5h14M2 9h14M2 13.5h14" strokeLinecap="round" />
+                </svg>
+              </button>
             </div>
-            <nav className="app-nav">
-              <NavLinks />
-            </nav>
-            <button 
-              className="mobile-menu-toggle" 
-              onClick={toggleMobileMenu}
-              aria-label="Toggle menu"
-            >
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-            </button>
-          </div>
-        </header>
+          </header>
 
-        {mobileMenuOpen && (
-          <>
-            <div className="mobile-menu-overlay" onClick={closeMobileMenu}></div>
-            <nav className="mobile-menu">
-              <NavLinks onClick={closeMobileMenu} />
-            </nav>
-          </>
-        )}
+          {menuOpen && <MobileMenu onClose={() => setMenuOpen(false)} />}
 
-        <main className="app-main">
-          <div className="app-content">
+          <main className="app-main" id="main">
             <Routes>
               <Route path="/" element={<ManualClubSearch />} />
               <Route path="/league" element={<TeamCodeGenerator />} />
@@ -95,65 +134,62 @@ function App(): React.ReactElement {
               <Route path="/metadata" element={<PhotoMetadata />} />
               <Route path="/about" element={<About />} />
             </Routes>
-          </div>
-        </main>
+          </main>
 
-        <footer className="app-footer">
-          <div className="app-footer-inner">
-            <div className="app-footer-text">
-              <div>
-                <span className="app-footer-strong">Transfermarkt-sourced data.</span>{' '}
-                Information may not be 100% accurate.
+          <footer className="app-footer">
+            <div className="app-footer-inner">
+              <div className="app-footer-text">
+                <div>
+                  <strong>Squad data from Transfermarkt.</strong> Check shirt numbers against the
+                  team sheet before you file.
+                </div>
+                <div>© {new Date().getFullYear()} Jamie McGuinness</div>
               </div>
-              <div style={{ marginTop: 4 }}>
-                © {new Date().getFullYear()} Jamie McGuinness · All rights reserved.
+              <div className="app-footer-actions">
+                <ThemeToggle />
+                <div className="app-social">
+                  <a
+                    href="https://twitter.com/jxmiemcg"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="app-social-link"
+                    aria-label="Twitter"
+                  >
+                    <FontAwesomeIcon icon={faTwitter} />
+                  </a>
+                  <a
+                    href="https://lensflxre.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="app-social-link"
+                    aria-label="Website"
+                  >
+                    <FontAwesomeIcon icon={faChrome} />
+                  </a>
+                  <a
+                    href="https://instagram.com/lensflxre"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="app-social-link"
+                    aria-label="Instagram"
+                  >
+                    <FontAwesomeIcon icon={faInstagram} />
+                  </a>
+                  <a
+                    href="https://github.com/flaree"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="app-social-link"
+                    aria-label="GitHub"
+                  >
+                    <FontAwesomeIcon icon={faGithub} />
+                  </a>
+                </div>
               </div>
             </div>
-            <div className="app-footer-actions">
-              <ThemeToggle />
-              <div className="app-social">
-                <a
-                  href="https://twitter.com/jxmiemcg"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="app-social-link"
-                  aria-label="Twitter"
-                >
-                  <FontAwesomeIcon icon={faTwitter} />
-                </a>
-                <a
-                  href="https://lensflxre.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="app-social-link"
-                  aria-label="Website"
-                >
-                  <FontAwesomeIcon icon={faChrome} />
-                </a>
-                <a
-                  href="https://instagram.com/lensflxre"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="app-social-link"
-                  aria-label="Instagram"
-                >
-                  <FontAwesomeIcon icon={faInstagram} />
-                </a>
-                <a
-                  href="https://github.com/flaree"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="app-social-link"
-                  aria-label="GitHub"
-                >
-                  <FontAwesomeIcon icon={faGithub} />
-                </a>
-              </div>
-            </div>
-          </div>
-        </footer>
-      </div>
-    </Router>
+          </footer>
+        </div>
+      </Router>
     </ErrorBoundary>
   );
 }

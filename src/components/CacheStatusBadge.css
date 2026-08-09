@@ -2,32 +2,38 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  line-height: 1.6;
+  padding: 3px 7px;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
   cursor: help;
-  border: 1px solid var(--border-subtle);
-  background: var(--accent-soft);
-  color: var(--text-muted);
-  transition: background var(--transition-fast), color var(--transition-fast);
 }
 
 .cache-badge-dot {
-  width: 6px;
-  height: 6px;
+  flex: none;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: currentColor;
-  flex: none;
 }
 
 .cache-badge-live {
-  color: var(--accent);
+  border-color: var(--ok);
+  background: var(--ok-wash);
+  color: var(--ok);
 }
 
+/* Stale means the squad on screen may predate a transfer, so it gets the one
+   colour reserved for warnings. */
 .cache-badge-stale {
-  color: var(--danger);
-  border-color: var(--danger);
-  background: transparent;
+  border-color: var(--signal);
+  background: var(--signal-wash);
+  color: var(--signal);
 }

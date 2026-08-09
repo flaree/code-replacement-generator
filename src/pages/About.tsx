@@ -3,102 +3,80 @@ import React from 'react';
 function About(): React.ReactElement {
   return (
     <div className="container-page">
-      <div className="card" style={{ maxWidth: 840, margin: '0 auto' }}>
-        <div className="card-header">
-          <div>
-            <div className="card-title">About these tools</div>
-            <div className="card-subtitle">
-              A small suite of helpers for sports photographers.
-            </div>
-          </div>
+      <section className="panel">
+        <div className="panel-head">
+          <h1 className="panel-title">About these tools</h1>
+          <span className="eyebrow">Built on a touchline</span>
         </div>
-        <div className="stack-md">
+
+        <div className="panel-body stack">
           <p className="muted">
-            This app brings together a few utilities I use in my own football coverage: generating Photo Mechanic code
-            replacements, building team-based metadata, and experimenting with smarter IPTC and XMP workflows.
+            A few utilities from my own football coverage: Photo Mechanic code replacements,
+            team-based metadata, and some experiments with IPTC and XMP workflows.
           </p>
+
           <p className="muted">
-            Data comes from Transfermarkt, which unfortunately means there&apos;s currently no coverage for women&apos;s
-            competitions. I&apos;d love to support that in the future as the data becomes available.
+            Squad data comes from Transfermarkt, which means there is no coverage of women&rsquo;s
+            competitions yet. I&rsquo;d like to add it as the data becomes available.
           </p>
+
+          <div>
+            <h2 className="field-label" style={{ marginBottom: 6 }}>
+              Where the data came from
+            </h2>
+            <p className="muted">
+              Transfermarkt limits how often it can be scraped, so squad and club data is cached
+              on the server. A badge on each tool says which you got:{' '}
+              <span className="tag tag-ok">Live</span> was fetched just now,{' '}
+              <span className="tag">Cached</span> was reused and shows its age, and{' '}
+              <span className="tag tag-signal">Stale</span> means Transfermarkt blocked the request
+              and older data was used instead. On Stale, check shirt numbers against the team sheet
+              before you rely on the codes.
+            </p>
+          </div>
+
           <p className="muted">
-            Transfermarkt limits how often it can be scraped, so squad and club data is cached on the server. A badge at
-            the top of each tool shows where the data came from: <strong>Live</strong> means it was just fetched,{' '}
-            <strong>Cached</strong> means it was reused and shows how old it is, and <strong>Stale</strong> means
-            Transfermarkt blocked the request and older data was used instead. If you see Stale, double-check shirt
-            numbers against the team sheet before relying on the codes.
+            Everything here is free and ad-free, and the backend is paid for out of pocket. If it
+            saves you time on a matchday, a coffee is very welcome.
           </p>
-          <p className="muted">
-            Everything here is free and ad‑free, but the backend services are paid for out of pocket. If the tools save
-            you time on a matchday or editing session, supporting the project is hugely appreciated.
-          </p>
-          <div style={{ marginTop: 8 }}>
+
+          <div>
             <a
               href="https://www.buymeacoffee.com/cyqi5my0sl"
               target="_blank"
               rel="noopener noreferrer"
               className="btn"
-              style={{
-                background: 'linear-gradient(135deg, #ff9b3f, #ff6b3f)',
-                boxShadow: '0 14px 30px rgba(255, 132, 63, 0.55)',
-              }}
+              style={{ background: '#ff813f', color: '#1a1b1e' }}
             >
               Buy me a coffee
             </a>
           </div>
-          <div style={{ marginTop: 24, paddingTop: 24, borderTop: '1px solid var(--border-color, #e0e0e0)' }}>
-            <h3 style={{ marginBottom: 12, fontSize: 18, fontWeight: 600 }}>Contact</h3>
-            <p style={{ marginBottom: 12 }}>
-              <strong style={{ display: 'inline-block', width: 90, color: 'var(--text-primary, #333)' }}>Instagram:</strong>
-              <a 
-                href="https://instagram.com/lensflxre" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{
-                  color: '#E1306C',
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-              >
+        </div>
+
+        <div className="panel-foot" style={{ display: 'block' }}>
+          <h2 className="eyebrow" style={{ display: 'block', marginBottom: 8 }}>
+            Contact
+          </h2>
+          <div className="stack-sm">
+            <div>
+              <span className="muted" style={{ display: 'inline-block', minWidth: 84 }}>
+                Instagram
+              </span>
+              <a href="https://instagram.com/lensflxre" target="_blank" rel="noopener noreferrer">
                 @lensflxre
               </a>
-            </p>
-            <p style={{ marginBottom: 0 }}>
-              <strong style={{ display: 'inline-block', width: 90, color: 'var(--text-primary, #333)' }}>Email:</strong>
-              <a 
-                href="mailto:jamie@jamiemcg.ie"
-                style={{
-                  color: 'var(--primary-color, #4a9eff)',
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-              >
-                jamie@jamiemcg.ie
-              </a>
-              {' or '}
-              <a 
-                href="mailto:jamie@lensflxre.com"
-                style={{
-                  color: 'var(--primary-color, #4a9eff)',
-                  fontWeight: 500,
-                  textDecoration: 'none',
-                  transition: 'opacity 0.2s',
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = '0.7'}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
-              >
-                jamie@lensflxre.com
-              </a>
-            </p>
+            </div>
+            <div>
+              <span className="muted" style={{ display: 'inline-block', minWidth: 84 }}>
+                Email
+              </span>
+              <a href="mailto:jamie@jamiemcg.ie">jamie@jamiemcg.ie</a>
+              <span className="muted"> or </span>
+              <a href="mailto:jamie@lensflxre.com">jamie@lensflxre.com</a>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { copyToClipboard } from '../utils/helpers';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import './CopyButton.css';
+import { copyToClipboard } from '../utils/helpers';
 
 interface CopyButtonProps {
   text: string;
@@ -10,52 +9,60 @@ interface CopyButtonProps {
   className?: string;
 }
 
-export default function CopyButton({ 
-  text, 
-  label = 'Copy', 
+export default function CopyButton({
+  text,
+  label = 'Copy',
   successMessage,
-  className = '' 
+  className = 'btn',
 }: CopyButtonProps): React.ReactElement {
   const [copied, setCopied] = useState(false);
 
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   const handleCopy = async () => {
-    const success = await copyToClipboard(text);
-    
-    if (success) {
+    if (await copyToClipboard(text)) {
       setCopied(true);
-      const lines = text.split('\n').length;
-      const message = successMessage || `Copied ${lines} lines to clipboard!`;
-      toast.success(message);
-      
-      setTimeout(() => setCopied(false), 2000);
+      const lines = text.split('\n').filter((line) => line.includes('\t')).length;
+      toast.success(successMessage ?? `${lines} codes copied. Paste into Photo Mechanic.`);
     } else {
-      toast.error('Failed to copy to clipboard');
+      toast.error('Your browser blocked the clipboard. Use Download .txt instead.');
     }
   };
 
   return (
     <button
+      type="button"
+      className={className}
       onClick={handleCopy}
-      className={`copy-button ${copied ? 'copy-button-success' : ''} ${className}`}
-      disabled={!text || text.length === 0}
-      aria-label={copied ? 'Copied!' : label}
+      disabled={!text}
     >
-      {copied ? (
-        <>
-          <svg className="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <polyline points="20 6 9 17 4 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          Copied!
-        </>
-      ) : (
-        <>
-          <svg className="copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          {label}
-        </>
-      )}
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {copied ? (
+          <polyline points="20 6 9 17 4 12" />
+        ) : (
+          <>
+            <rect x="9" y="9" width="13" height="13" rx="2" />
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+          </>
+        )}
+      </svg>
+      {copied ? 'Copied' : label}
     </button>
   );
 }

@@ -1,7 +1,7 @@
 // @ts-nocheck - TODO: Add proper TypeScript types
 import React, { useState, useEffect } from 'react';
 import './codegen.css';
-import AdditionalOptions from '../components/AdditionalOptions';
+import FixtureDetails from '../components/FixtureDetails';
 import { generateCode } from "../utils/codeGenerator";
 import { fetchLeagueClubs, fetchClubPlayers, fetchClubProfile, getCacheInfo, describeApiError } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
@@ -325,7 +325,7 @@ export default function LeagueCodeGenerator() {
 								required
 							>
 								<option value="" disabled>
-									-- Select a league --
+									Choose a league
 								</option>
 								{Object.keys(codes).map((league) => (
 									<option key={league} value={league}>
@@ -437,7 +437,7 @@ export default function LeagueCodeGenerator() {
 							className="btn"
 							disabled={loading || !selectedLeague}
 						>
-							{loading ? 'Generating code replacements...' : 'Generate code replacements'}
+							{loading ? 'Building the file…' : 'Build code replacements'}
 						</button>
 					</div>
 					{loading && (
@@ -492,7 +492,7 @@ export default function LeagueCodeGenerator() {
 					)}
 				</form>
 				<div className="generated-extra-card">
-					<AdditionalOptions options={options} setOptions={setOptions} />
+					<FixtureDetails options={options} setOptions={setOptions} />
 				</div>
 				{errors.length > 0 && (
 					<div style={{ 

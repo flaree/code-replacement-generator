@@ -1,353 +1,226 @@
-// @ts-nocheck - TODO: Add proper TypeScript types
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './codegen.css';
-import AdditionalOptions from '../components/AdditionalOptions';
-import { generateCode } from "../utils/codeGenerator";
-import { fetchLeagueClubs, fetchClubProfile, fetchClubPlayers, describeApiError } from "../services/api";
 import toast, { Toaster } from 'react-hot-toast';
-import CopyButton from "../components/CopyButton";
-import CacheStatusBadge from "../components/CacheStatusBadge";
+import './codegen.css';
+import FixtureDetails from '../components/FixtureDetails';
+import MatchTeamSlot from '../components/MatchTeamSlot';
+import CodeLedger from '../components/CodeLedger';
+import { useMatchFile } from '../hooks/useMatchFile';
+import { Club, describeApiError, fetchLeagueClubs } from '../services/api';
+import { CodeOptions, DEFAULT_CODE_OPTIONS, LEAGUE_CODES } from '../constants/config';
 
+/**
+ * Build a code replacement file for a fixture in a supported league.
+ *
+ * Same workspace as the club search, but the two teams come out of one league
+ * rather than being searched for individually.
+ */
+export default function TeamCodeGenerator(): React.ReactElement {
+  const [options, setOptions] = useState<CodeOptions>(DEFAULT_CODE_OPTIONS);
+  const [league, setLeague] = useState('');
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [loadingClubs, setLoadingClubs] = useState(false);
+  const navigate = useNavigate();
 
-const codes = {
-	"League of Ireland Premier Division": 'IR1',
-	"League of Ireland First Division": 'IR2',
-	"Northern Ireland Football League Premiership": 'NIR1',
-	"Scottish Premiership": 'SC1',
-	"English Premier League": 'GB1',
-	"English Championship": 'GB2',
-	"English League One": 'GB3',
-	"English League Two": 'GB4',
-	"Spanish La Liga": 'ES1',
-	"Italian Serie A": 'IT1',
-	"German Bundesliga": 'L1',
-	"French Ligue 1": 'FR1',
-	"Liga Portugal": 'PO1',
-	"Brazilian Serie A": 'BRA1',
-	"Major League Soccer": 'MLS1',
-	"Dutch Eredivisie": 'NL1',
-};
+  const {
+    home,
+    away,
+    homePrefix,
+    awayPrefix,
+    setHomePrefix,
+    setAwayPrefix,
+    selectHome,
+    selectAway,
+    clearAway,
+    code,
+    generation,
+    prefixClash,
+    busy,
+  } = useMatchFile(options);
 
-export default function TeamCodeGenerator() {
-	const [selectedLeague, setSelectedLeague] = useState('');
-	const [teams, setTeams] = useState([]);
-	const [teamMap, setTeamMap] = useState({});
-	const [selectedTeam1, setSelectedTeam1] = useState('');
-	const [selectedTeam2, setSelectedTeam2] = useState('');
-	const [generatedCode, setGeneratedCode] = useState('');
-	const [loading, setLoading] = useState(false); // New state for loading indicator
-	const [delimiter1, setDelimiter1] = useState('');
-	const [delimiter2, setDelimiter2] = useState('');
-	const [options, setOptions] = useState({
-		showInfo: false,
-		shouldShorten: true,
-		selectedDate: '',
-		referee: '',
-		competition: '',
-		additionalCodes: '',
-		sortOption: 'position',
-		formats: [
-		  "{playerName} of {team}",
-		  "{team} player {playerName}",
-		  "{playerName} ({team})",
-		  "{team} #{shirtNumber} {playerName}",
-		  "{playerName}, {team}",
-		  "{playerName}",
-		  "{team} {playerName} #{shirtNumber}",
-		  "{playerName} - {team} ({shirtNumber})",
-		],
-		selectedFormat: "{playerName} of {team}",
-		shouldChangeGoalkeeperStyle: false,
-		includeNoNumberPlayers: true,
+  useEffect(() => {
+    if (!league) {
+      setClubs([]);
+      return;
+    }
+    let cancelled = false;
+    setLoadingClubs(true);
+    setClubs([]);
 
-	  });
-	const navigate = useNavigate();
+    fetchLeagueClubs(LEAGUE_CODES[league])
+      .then((data) => {
+        if (!cancelled) {
+          setClubs(data.clubs);
+        }
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+        console.error('Error loading league clubs:', error);
+        toast.error(
+          describeApiError(error, `Could not load the clubs in ${league}. Try again in a moment.`)
+        );
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingClubs(false);
+        }
+      });
 
-	useEffect(() => {
-		if (selectedLeague) {
-			const fetchTeams = async () => {
-				try {
-					setTeams([]); // Clear previous teams
-					const data = await fetchLeagueClubs(codes[selectedLeague]);
+    return () => {
+      cancelled = true;
+    };
+  }, [league]);
 
-					const teamList = data.clubs.map((club) => club.name);
-					setTeams(teamList);
-					const teamMapping = data.clubs.reduce((map, club) => {
-						map[club.name] = club.id;
-						return map;
-					}, {});
-					setTeamMap(teamMapping);
-				} catch (error) {
-					console.error("Error fetching teams:", error);
-					toast.error(describeApiError(error, "Failed to fetch teams. Please try again."));
-				}
-			};
-			fetchTeams();
-		} else {
-			setTeams([]);
-		}
-	}, [selectedLeague]);
+  // Each club can only be on one side of the fixture.
+  const awayChoices = useMemo(
+    () => clubs.filter((club) => club.id !== home.club?.id),
+    [clubs, home.club]
+  );
+  const homeChoices = useMemo(
+    () => clubs.filter((club) => club.id !== away.club?.id),
+    [clubs, away.club]
+  );
 
-	const handleGenerate = async () => {
-		try {
-			setLoading(true); // Set loading to true when generation starts
-			const clubData = await fetchClubProfile(teamMap[selectedTeam1]);
+  const filename = [
+    options.selectedDate,
+    home.club?.name ?? 'team',
+    'v',
+    away.club?.name ?? 'team',
+  ]
+    .filter(Boolean)
+    .join('-');
 
-			const squad1 = await fetchClubPlayers(teamMap[selectedTeam1]);
+  const clubSelect = (
+    id: string,
+    label: string,
+    value: string,
+    choices: Club[],
+    onPick: (_club: Club | null) => void
+  ) => (
+    <div>
+      <label className="field-label" htmlFor={id}>
+        {label}
+      </label>
+      <select
+        id={id}
+        className="select"
+        value={value}
+        disabled={!league || loadingClubs}
+        onChange={(e) => onPick(choices.find((club) => club.id === e.target.value) ?? null)}
+      >
+        <option value="">
+          {loadingClubs ? 'Loading clubs…' : league ? 'Choose a club' : 'Choose a league first'}
+        </option>
+        {choices.map((club) => (
+          <option key={club.id} value={club.id}>
+            {club.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 
-			let squad2 = { players: [] };
-			let clubData2 = null;
-			if (selectedTeam2) {
-				try {
-					clubData2 = await fetchClubProfile(teamMap[selectedTeam2]);
-					squad2 = await fetchClubPlayers(teamMap[selectedTeam2]);
-				} catch (error) {
-					console.error("Error fetching away club data:", error);
-					clubData2 = null;
-				}
-			}
+  return (
+    <div className="workspace">
+      <Toaster position="top-right" />
 
-			const squad1Filtered = squad1.players.map((player) => ({
-				number: player.shirtNumber,
-				name: player.name,
-				position: player.position,
-			}));
+      <div className="workspace-setup">
+        <section className="panel">
+          <div className="panel-head">
+            <h1 className="panel-title">Team sheet</h1>
+            <span className="eyebrow">From a league</span>
+          </div>
+          <div className="panel-body stack">
+            <div>
+              <label className="field-label" htmlFor="league">
+                League
+              </label>
+              <select
+                id="league"
+                className="select"
+                value={league}
+                onChange={(e) => {
+                  setLeague(e.target.value);
+                  selectHome(null);
+                  clearAway();
+                  setHomePrefix('');
+                }}
+              >
+                <option value="">Choose a league</option>
+                {Object.keys(LEAGUE_CODES).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-			const squad2Filtered = (squad2.players || []).map((player) => ({
-				number: player.shirtNumber,
-				name: player.name,
-				position: player.position,
-			}));
+            <MatchTeamSlot
+              side="home"
+              slot={home}
+              prefix={homePrefix}
+              onPrefixChange={setHomePrefix}
+              clash={prefixClash}
+            >
+              {clubSelect('home-club', 'Home club', home.club?.id ?? '', homeChoices, selectHome)}
+            </MatchTeamSlot>
 
-			const finalCodes = generateCode({
-				squad1: squad1Filtered,
-				squad2: squad2Filtered,
-				selectedTeam1: selectedTeam1,
-				selectedTeam2: selectedTeam2 || '',
-				delimiter1,
-				delimiter2,
-				selectedFormat: options.selectedFormat,
-				sortOption: options.sortOption,
-				showInfo: options.showInfo,
-				referee: options.referee,
-				competition: options.competition,
-				additionalCodes: options.additionalCodes,
-				shouldShorten: options.shouldShorten,
-				clubData,
-				clubData2,
-				shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
-				ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
-			});
-			setGeneratedCode(finalCodes);
-			toast.success("Code generated successfully!");
-		} catch (error) {
-			console.error("Error fetching squad data:", error);
-			toast.error(describeApiError(error, "Failed to fetch squad/club data. Please try again."));
-		} finally {
-			setLoading(false); // Set loading to false when generation is complete
-		}
-	};
+            <MatchTeamSlot
+              side="away"
+              slot={away}
+              prefix={awayPrefix}
+              onPrefixChange={setAwayPrefix}
+              clash={prefixClash}
+              onClear={clearAway}
+            >
+              {clubSelect('away-club', 'Away club', away.club?.id ?? '', awayChoices, selectAway)}
+            </MatchTeamSlot>
+          </div>
+          {home.club && away.club && (
+            <div className="panel-foot">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    homeId: home.club!.id,
+                    homeName: home.club!.name,
+                    awayId: away.club!.id,
+                    awayName: away.club!.name,
+                  });
+                  navigate(`/metadata?${params.toString()}`);
+                }}
+              >
+                Build XMP metadata for this fixture
+              </button>
+            </div>
+          )}
+        </section>
 
-	return (
-									<div className='generated-code-page container-page'>
-										<Toaster position="top-right" />
-										<div className="card generated-code-card">
-											<div className="card-header">
-												<div>
-													<div className="card-title">League code replacements</div>
-													<div className="card-subtitle">
-														Generate Photo Mechanic code replacements from a league fixture.
-													</div>
-												</div>
-												<div className="card-header-meta">
-													<CacheStatusBadge />
-													<span className="pill">Single-team friendly · Away optional</span>
-												</div>
-											</div>
-											<form
-												onSubmit={(e) => {
-													e.preventDefault();
-													handleGenerate();
-												}}
-											>
-												<div className="stack-md">
-													<div>
-														<label className="field-label" htmlFor="league-select">League</label>
-														<select
-															id="league-select"
-															className="select"
-															value={selectedLeague}
-															onChange={(e) => {
-																setSelectedLeague(e.target.value);
-																setSelectedTeam1('');
-																setSelectedTeam2('');
-																setDelimiter1('');
-																setDelimiter2('');
-															}}
-															required
-														>
-															<option value="" disabled>
-																-- Select a league --
-															</option>
-															{Object.keys(codes).map((league) => (
-																<option key={league} value={league}>
-																	{league}
-																</option>
-															))}
-														</select>
-													</div>
-													{selectedLeague && teams.length > 0 && (
-														<div className="generated-grid">
-															<div className="generated-column">
-																<div className="generated-section-title">Home team (required)</div>
-																<label className="field-label" htmlFor="home-team">Team</label>
-																<div className="generated-inline-row">
-																	<select
-																		id="home-team"
-																		className="select"
-																		value={selectedTeam1}
-																		onChange={(e) => {
-																			setSelectedTeam1(e.target.value);
-																			if (!delimiter1) {setDelimiter1(e.target.value[0]?.toLowerCase() || '');}
-																		}}
-																		required
-																	>
-																		<option value="" disabled>
-																			-- Select home team --
-																		</option>
-																		{teams.map((team) => (
-																			<option key={team} value={team}>
-																				{team}
-																			</option>
-																		))}
-																	</select>
-																	<div className="generated-inline-row">
-																		<span className="muted" style={{ fontSize: 12 }}>Delim</span>
-																		<input
-																			type="text"
-																			className="input generated-delim-input"
-																			value={delimiter1}
-																			onChange={(e) => setDelimiter1(e.target.value.slice(0, 1).toLowerCase())}
-																			title="Team 1 delimiter"
-																			placeholder="c"
-																		/>
-																	</div>
-																</div>
-															</div>
-															<div className="generated-column">
-																<div className="generated-section-title">Away team (optional)</div>
-																<label className="field-label" htmlFor="away-team">Team</label>
-																<div className="generated-inline-row">
-																	<select
-																		id="away-team"
-																		className="select"
-																		value={selectedTeam2}
-																		onChange={(e) => {
-																			setSelectedTeam2(e.target.value);
-																			if (!delimiter2) {setDelimiter2(e.target.value[0]?.toLowerCase() || '');}
-																		}}
-																	>
-																		<option value="" disabled>
-																			-- Select away team --
-																		</option>
-																		{teams.map((team) => (
-																			<option key={team} value={team}>
-																				{team}
-																			</option>
-																		))}
-																	</select>
-																	<div className="generated-inline-row">
-																		<span className="muted" style={{ fontSize: 12 }}>Delim</span>
-																		<input
-																			type="text"
-																			className="input generated-delim-input"
-																			value={delimiter2}
-																			onChange={(e) => setDelimiter2(e.target.value.slice(0, 1).toLowerCase())}
-																			title="Team 2 delimiter"
-																			placeholder="b"
-																		/>
-																	</div>
-																</div>
-															</div>
-														</div>
-													)}
-												</div>
-												{delimiter1 && delimiter2 && delimiter1 === delimiter2 && (
-													<p className="muted" style={{ color: 'var(--error, #d32f2f)', margin: '8px 0 0', fontSize: 13 }}>
-														Delimiters must be different — both teams are using “{delimiter1}”.
-													</p>
-												)}
-												<div className="btn-row" style={{ marginTop: 18 }}>
-													<button
-														type="submit"
-														className="btn"
-														disabled={loading || !selectedTeam1 || (!!delimiter1 && !!delimiter2 && delimiter1 === delimiter2)}
-													>
-														{loading ? 'Generating code replacements...' : 'Generate code replacements'}
-													</button>												{selectedTeam1 && selectedTeam2 && (
-													<button
-														type="button"
-														className="btn btn-secondary"
-														onClick={() => {
-															if (!generatedCode) {
-																const confirmed = window.confirm(
-																	'You haven\'t generated code replacements yet. Are you sure you want to leave without generating/downloading them?'
-																);
-																if (!confirmed) {
-																	return;
-																}
-															}
-															const params = new URLSearchParams({
-																homeId: teamMap[selectedTeam1],
-																homeName: selectedTeam1,
-																awayId: teamMap[selectedTeam2],
-																awayName: selectedTeam2,
-															});
-														navigate(`/metadata?${params.toString()}`);
-														}}
-													>
-														Generate XMP metadata file
-													</button>
-												)}												</div>
-											</form>
-											<div className="generated-extra-card">
-												<AdditionalOptions options={options} setOptions={setOptions} />
-											</div>
-											{generatedCode && (
-												<div className="preview-block success-fade-in" style={{ marginTop: 16 }}>
-													<div className="preview-heading">
-														<span>Generated code replacements</span>
-														<div className="preview-actions">
-															<CopyButton 
-																text={generatedCode}
-																label="Copy All"
-															/>
-															<button
-																className="btn btn-secondary"
-																type="button"
-																onClick={() => {
-																const homeTeam = selectedTeam1 || 'team';
-																const awayTeam = selectedTeam2 || 'team';
-																const fixtureDate = options.selectedDate;
-																const filename = fixtureDate 
-																	? `${fixtureDate}-${homeTeam}-v-${awayTeam}.txt`
-																	: `${homeTeam}-v-${awayTeam}.txt`;
-																const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
-																const link = document.createElement('a');
-																link.href = URL.createObjectURL(blob);
-																link.download = filename;
-																	link.click();
-																}}
-															>
-																Download .txt
-															</button>
-														</div>
-													</div>
-													<pre className="preview-body">{generatedCode}</pre>
-												</div>
-											)}
-										</div>
-									</div>
-	);
+        <FixtureDetails
+          options={options}
+          setOptions={setOptions}
+          sampleTeam={home.club?.name}
+          samplePlayer={
+            home.players[0]
+              ? { name: home.players[0].name, number: home.players[0].shirtNumber ?? 1 }
+              : null
+          }
+        />
+      </div>
+
+      <CodeLedger
+        code={code}
+        homePrefix={homePrefix}
+        awayPrefix={awayPrefix}
+        filename={filename}
+        busy={busy}
+        generation={generation}
+        emptyTitle="Nothing to caption yet"
+        emptyText="Choose a league, then the home club. Its squad loads straight into the file."
+      />
+    </div>
+  );
 }
