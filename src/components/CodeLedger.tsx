@@ -68,6 +68,9 @@ interface CodeLedgerProps {
   generation: string;
   emptyTitle: string;
   emptyText: string;
+  /** Shown in place of the empty state while `busy` is true. */
+  busyTitle?: string;
+  busyText?: string;
 }
 
 /**
@@ -85,6 +88,8 @@ export default function CodeLedger({
   generation,
   emptyTitle,
   emptyText,
+  busyTitle = 'Loading squad',
+  busyText = 'Pulling the squad list from Transfermarkt.',
 }: CodeLedgerProps): React.ReactElement {
   const lines = useMemo(
     () => parseLines(code, homePrefix, awayPrefix),
@@ -162,10 +167,8 @@ export default function CodeLedger({
               ))}
             </div>
             <div className="ledger-empty-message">
-              <p className="ledger-empty-title">{busy ? 'Loading squad' : emptyTitle}</p>
-              <p className="ledger-empty-text">
-                {busy ? 'Pulling the squad list from Transfermarkt.' : emptyText}
-              </p>
+              <p className="ledger-empty-title">{busy ? busyTitle : emptyTitle}</p>
+              <p className="ledger-empty-text">{busy ? busyText : emptyText}</p>
             </div>
           </div>
         )}

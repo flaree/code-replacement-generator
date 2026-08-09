@@ -34,57 +34,42 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div className="container-page">
-          <div className="card" style={{ maxWidth: 600, margin: '40px auto' }}>
-            <div className="card-header">
-              <div>
-                <div className="card-title" style={{ color: '#ff6b6b' }}>
-                  Something went wrong
-                </div>
-                <div className="card-subtitle">
-                  An unexpected error occurred. Please try again.
-                </div>
-              </div>
+        <div style={{ maxWidth: 620, margin: '48px auto', padding: '0 20px' }}>
+          <section className="panel">
+            <div className="panel-head">
+              <h1 className="panel-title">This page stopped</h1>
+              <span className="tag tag-signal">Error</span>
             </div>
-            <div className="stack-md">
+            <div className="panel-body stack">
+              <p className="muted">
+                Nothing you had entered was sent anywhere, but it is gone from the screen.
+                Try again, and reload the page if it happens twice.
+              </p>
               {process.env.NODE_ENV === 'development' && this.state.error && (
-                <div style={{ 
-                  padding: '12px', 
-                  background: '#f5f5f5', 
-                  borderRadius: '4px',
-                  fontSize: '13px',
-                  fontFamily: 'monospace',
-                  overflow: 'auto'
-                }}>
-                  <strong>Error:</strong> {this.state.error.toString()}
-                  {this.state.errorInfo && (
-                    <details style={{ marginTop: '8px' }}>
-                      <summary>Stack trace</summary>
-                      <pre style={{ fontSize: '11px', marginTop: '8px' }}>
-                        {this.state.errorInfo.componentStack}
-                      </pre>
-                    </details>
-                  )}
-                </div>
+                <details>
+                  <summary className="field-label" style={{ cursor: 'pointer' }}>
+                    Developer detail
+                  </summary>
+                  <pre className="file-preview" style={{ marginTop: 8, maxHeight: 260 }}>
+                    {this.state.error.toString()}
+                    {this.state.errorInfo?.componentStack}
+                  </pre>
+                </details>
               )}
-              <div className="btn-row">
-                <button 
-                  className="btn" 
-                  onClick={this.handleReset}
-                  type="button"
-                >
-                  Try again
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => window.location.reload()}
-                  type="button"
-                >
-                  Reload page
-                </button>
-              </div>
             </div>
-          </div>
+            <div className="panel-foot">
+              <button className="btn" onClick={this.handleReset} type="button">
+                Try again
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => window.location.reload()}
+                type="button"
+              >
+                Reload the page
+              </button>
+            </div>
+          </section>
         </div>
       );
     }

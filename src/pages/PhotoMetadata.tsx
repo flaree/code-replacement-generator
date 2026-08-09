@@ -1,11 +1,14 @@
-// @ts-nocheck - TODO: Add proper TypeScript types
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+// @ts-nocheck - the IPTC reader and XMP writer below work in raw bytes and template
+// strings; typing them properly is a separate job from the interface around them.
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import './codegen.css';
-import { escapeXml, copyToClipboard, downloadTextFile, getTodayISO } from '../utils/helpers';
-import { searchClubs, fetchClubProfile, describeApiError } from '../services/api';
 import toast, { Toaster } from 'react-hot-toast';
+import './codegen.css';
 import CacheStatusBadge from '../components/CacheStatusBadge';
+import CopyButton from '../components/CopyButton';
+import ClubField from '../components/ClubField';
+import { escapeXml, copyToClipboard, downloadTextFile, getTodayISO } from '../utils/helpers';
+import { fetchClubProfile } from '../services/api';
 
 const COMMON_COMPETITIONS = [
   'LOI Premier Division', 'LOI First Division', 'Scottish Premiership', 'Scottish Championship', 'Scottish Cup', 'League Cup',
@@ -14,6 +17,23 @@ const COMMON_COMPETITIONS = [
   'La Liga', 'Bundesliga', 'Serie A', 'Ligue 1', 'Eredivisie',
   'World Cup', 'European Championship',
 ];
+
+const EMPTY_META = {
+  objectName: '',
+  headline: '',
+  description: '',
+  byline: '',
+  credit: '',
+  copyright: '',
+  jobId: '',
+  keywords: '',
+  dateCreated: '',
+  city: '',
+  state: '',
+  country: '',
+  source: '',
+  stadium: '',
+};
 
 function readIptcTags(data) {
   const fields = {};
@@ -86,136 +106,94 @@ function parseIptcFromJpeg(buffer) {
   return null;
 }
 
+const generateXMP = (m) => {
+  const keywords = (m.keywords || '')
+    .split(',')
+    .map(k => k.trim())
+    .filter(Boolean);
+
+  const title = escapeXml(m.objectName);
+  const headline = escapeXml(m.headline);
+  const desc = escapeXml(m.description);
+  const byline = escapeXml(m.byline);
+  const credit = escapeXml(m.credit);
+  const jobId = escapeXml(m.jobId);
+  const copyright = escapeXml(m.copyright);
+  const dateCreated = escapeXml(m.dateCreated);
+  const city = escapeXml(m.city);
+  const state = escapeXml(m.state);
+  const country = escapeXml(m.country);
+  const source = escapeXml(m.source);
+  const stadium = escapeXml(m.stadium);
+  const event = headline || title;
+
+  const keywordNodes = keywords.map(k => `            <rdf:li>${escapeXml(k)}</rdf:li>`).join('\n');
+
+  // eslint-disable-next-line no-useless-escape
+  return `<?xpacket begin=\"\uFEFF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\">\n  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n           xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n           xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\"\n           xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\"\n           xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\"\n           xmlns:Iptc4xmpExt=\"http://iptc.org/std/Iptc4xmpExt/2008-02-29/\">\n    <rdf:Description rdf:about=\"\"\n     Iptc4xmpCore:Location=\"${stadium}\">\n      <dc:title>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${title}</rdf:li>\n        </rdf:Alt>\n      </dc:title>\n      <dc:creator>\n        <rdf:Seq>\n          <rdf:li>${byline}</rdf:li>\n        </rdf:Seq>\n      </dc:creator>\n      <dc:rights>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${copyright}</rdf:li>\n        </rdf:Alt>\n      </dc:rights>\n      <photoshop:City>${city}</photoshop:City>\n      <photoshop:State>${state}</photoshop:State>\n      <photoshop:Country>${country}</photoshop:Country>\n      <photoshop:Credit>${credit}</photoshop:Credit>\n      <photoshop:Source>${source}</photoshop:Source>\n      <photoshop:DateCreated>${dateCreated}</photoshop:DateCreated>\n      <photoshop:Headline>${headline}</photoshop:Headline>\n      <photoshop:TransmissionReference>${jobId}</photoshop:TransmissionReference>\n      <dc:description>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${desc}</rdf:li>\n        </rdf:Alt>\n      </dc:description>\n      <dc:subject>\n        <rdf:Bag>\n${keywordNodes}\n        </rdf:Bag>\n      </dc:subject>\n      <Iptc4xmpCore:DateCreated>${dateCreated}</Iptc4xmpCore:DateCreated>\n      <Iptc4xmpCore:Credit>${credit}</Iptc4xmpCore:Credit>\n      <Iptc4xmpCore:CopyrightNotice>${copyright}</Iptc4xmpCore:CopyrightNotice>\n      <Iptc4xmpCore:Source>${source}</Iptc4xmpCore:Source>\n      <Iptc4xmpCore:Headline>${headline}</Iptc4xmpCore:Headline>\n      <Iptc4xmpCore:JobID>${jobId}</Iptc4xmpCore:JobID>\n      <Iptc4xmpCore:OriginalTransmissionReference>${jobId}</Iptc4xmpCore:OriginalTransmissionReference>\n      <Iptc4xmpExt:Event>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${event}</rdf:li>\n        </rdf:Alt>\n      </Iptc4xmpExt:Event>\n    </rdf:Description>\n  </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end=\"w\"?>`;
+};
+
+/**
+ * Build the IPTC fields for a fixture and export them as an XMP sidecar.
+ *
+ * Choosing the two clubs writes the title, headline, caption and keywords for
+ * you; everything stays editable afterwards. The pane on the right is the XMP
+ * that will be written, not a summary of it.
+ */
 export default function PhotoMetadata() {
   const [searchParams] = useSearchParams();
-  const [meta, setMeta] = useState({
-    objectName: '', // Title
-    headline: '',
-    description: '', // Caption/Description
-    byline: '', // Author
-    credit: '',
-    copyright: '',
-    jobId: '',
-    keywords: '', // comma separated
-    dateCreated: '', // YYYY-MM-DD
-    city: '',
-    state: '',
-    country: '',
-    source: '',
-    stadium: '',
-  });
-
-  const handleChange = (field) => (e) => setMeta({ ...meta, [field]: e.target.value });
-
-  const asJSON = () => JSON.stringify({ ...meta, keywords: meta.keywords.split(',').map(k => k.trim()).filter(Boolean) }, null, 2);
-
-  const handleCopy = async () => {
-    const success = await copyToClipboard(asJSON());
-    if (success) {
-      toast.success('Metadata JSON copied to clipboard');
-    } else {
-      toast.error('Copy failed');
-    }
-  };
-
-  const generateXMP = (m) => {
-    const keywords = (m.keywords || '')
-      .split(',')
-      .map(k => k.trim())
-      .filter(Boolean);
-
-    const title = escapeXml(m.objectName);
-    const headline = escapeXml(m.headline);
-    const desc = escapeXml(m.description);
-    const byline = escapeXml(m.byline);
-    const credit = escapeXml(m.credit);
-    const jobId = escapeXml(m.jobId);
-    const copyright = escapeXml(m.copyright);
-    const dateCreated = escapeXml(m.dateCreated);
-    const city = escapeXml(m.city);
-    const state = escapeXml(m.state);
-    const country = escapeXml(m.country);
-    const source = escapeXml(m.source);
-    const stadium = escapeXml(m.stadium);
-    const event = headline || title;
-
-    const keywordNodes = keywords.map(k => `            <rdf:li>${escapeXml(k)}</rdf:li>`).join('\n');
-
-    // eslint-disable-next-line no-useless-escape
-    return `<?xpacket begin=\"\uFEFF\" id=\"W5M0MpCehiHzreSzNTczkc9d\"?>\n<x:xmpmeta xmlns:x=\"adobe:ns:meta/\">\n  <rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n           xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n           xmlns:photoshop=\"http://ns.adobe.com/photoshop/1.0/\"\n           xmlns:xmp=\"http://ns.adobe.com/xap/1.0/\"\n           xmlns:Iptc4xmpCore=\"http://iptc.org/std/Iptc4xmpCore/1.0/xmlns/\"\n           xmlns:Iptc4xmpExt=\"http://iptc.org/std/Iptc4xmpExt/2008-02-29/\">\n    <rdf:Description rdf:about=\"\"\n     Iptc4xmpCore:Location=\"${stadium}\">\n      <dc:title>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${title}</rdf:li>\n        </rdf:Alt>\n      </dc:title>\n      <dc:creator>\n        <rdf:Seq>\n          <rdf:li>${byline}</rdf:li>\n        </rdf:Seq>\n      </dc:creator>\n      <dc:rights>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${copyright}</rdf:li>\n        </rdf:Alt>\n      </dc:rights>\n      <photoshop:City>${city}</photoshop:City>\n      <photoshop:State>${state}</photoshop:State>\n      <photoshop:Country>${country}</photoshop:Country>\n      <photoshop:Credit>${credit}</photoshop:Credit>\n      <photoshop:Source>${source}</photoshop:Source>\n      <photoshop:DateCreated>${dateCreated}</photoshop:DateCreated>\n      <photoshop:Headline>${headline}</photoshop:Headline>\n      <photoshop:TransmissionReference>${jobId}</photoshop:TransmissionReference>\n      <dc:description>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${desc}</rdf:li>\n        </rdf:Alt>\n      </dc:description>\n      <dc:subject>\n        <rdf:Bag>\n${keywordNodes}\n        </rdf:Bag>\n      </dc:subject>\n      <Iptc4xmpCore:DateCreated>${dateCreated}</Iptc4xmpCore:DateCreated>\n      <Iptc4xmpCore:Credit>${credit}</Iptc4xmpCore:Credit>\n      <Iptc4xmpCore:CopyrightNotice>${copyright}</Iptc4xmpCore:CopyrightNotice>\n      <Iptc4xmpCore:Source>${source}</Iptc4xmpCore:Source>\n      <Iptc4xmpCore:Headline>${headline}</Iptc4xmpCore:Headline>\n      <Iptc4xmpCore:JobID>${jobId}</Iptc4xmpCore:JobID>\n      <Iptc4xmpCore:OriginalTransmissionReference>${jobId}</Iptc4xmpCore:OriginalTransmissionReference>\n      <Iptc4xmpExt:Event>\n        <rdf:Alt>\n          <rdf:li xml:lang=\"x-default\">${event}</rdf:li>\n        </rdf:Alt>\n      </Iptc4xmpExt:Event>\n    </rdf:Description>\n  </rdf:RDF>\n</x:xmpmeta>\n<?xpacket end=\"w\"?>`;
-  };
-
-  const handleDownload = () => {
-    const xmp = generateXMP(meta);
-    downloadTextFile(xmp, `${meta.dateCreated ? meta.dateCreated + '-' : ''}${meta.objectName || 'metadata'}.xmp`, 'application/xml');
-  };
-
-  // Club search states (hidden behind dropdown)
-  const [showClubSearch, setShowClubSearch] = useState(true);
-  const [homeSearchTerm, setHomeSearchTerm] = useState('');
-  const [awaySearchTerm, setAwaySearchTerm] = useState('');
-  const [homeResults, setHomeResults] = useState([]);
-  const [awayResults, setAwayResults] = useState([]);
-  const [searchingHome, setSearchingHome] = useState(false);
-  const [searchingAway, setSearchingAway] = useState(false);
-  const [selectedHomeClub, setSelectedHomeClub] = useState(null);
-  const [selectedAwayClub, setSelectedAwayClub] = useState(null);
-  const [checkToday, setCheckToday] = useState(false);
+  const [meta, setMeta] = useState(EMPTY_META);
   const [competition, setCompetition] = useState('');
-  const [showTemplates, setShowTemplates] = useState(false);
+  const [home, setHome] = useState(null);
+  const [away, setAway] = useState(null);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [templates, setTemplates] = useState(() => {
     try { return JSON.parse(localStorage.getItem('photo_meta_templates') || '[]'); }
     catch { return []; }
   });
-  const exifInputRef = useRef(null);
+
+  const [fixtureFacts, setFixtureFacts] = useState({ stadium: '', country: '' });
+
+  const jpegInputRef = useRef(null);
   const competitionRef = useRef('');
   const prevCompetitionRef = useRef('');
+  /** Exactly the keywords this page added, so it can take them back out. */
+  const autoKeywordsRef = useRef([]);
 
-  // Handle URL parameters for pre-filling teams
+  const handleChange = (field) => (e) => setMeta({ ...meta, [field]: e.target.value });
+
+  const asJSON = () =>
+    JSON.stringify(
+      { ...meta, keywords: meta.keywords.split(',').map((k) => k.trim()).filter(Boolean) },
+      null,
+      2
+    );
+
+  const xmp = generateXMP(meta);
+
+  // Arriving from a code-replacement page carries the fixture with it.
   useEffect(() => {
     const homeId = searchParams.get('homeId');
     const homeName = searchParams.get('homeName');
-    const homeCountry = searchParams.get('homeCountry');
     const awayId = searchParams.get('awayId');
     const awayName = searchParams.get('awayName');
-    const awayCountry = searchParams.get('awayCountry');
 
     if (homeId && homeName) {
-      setSelectedHomeClub({ id: homeId, name: homeName, country: homeCountry || '' });
-      setShowClubSearch(true);
+      setHome({ id: homeId, name: homeName, country: searchParams.get('homeCountry') || '' });
     }
     if (awayId && awayName) {
-      setSelectedAwayClub({ id: awayId, name: awayName, country: awayCountry || '' });
-      setShowClubSearch(true);
+      setAway({ id: awayId, name: awayName, country: searchParams.get('awayCountry') || '' });
     }
   }, [searchParams]);
 
-  const handleClubSearch = async (term, setResults, setSearching) => {
-    if (!term) {
-      return;
-    }
-    try {
-      setSearching(true);
-      setResults([]);
-      const data = await searchClubs(term);
-      setResults(data.results.map((t) => ({ id: t.id, name: t.name, country: t.country })));
-    } catch (e) {
-      console.error('Club search failed', e);
-      setResults([]);
-      toast.error(describeApiError(e, 'Club search failed'));
-    } finally {
-      setSearching(false);
-    }
-  };
-
-  // Persisted Creator & Rights (byline, credit, copyright, source)
+  // Creator and rights rarely change between jobs, so they persist.
   useEffect(() => {
     try {
       const saved = localStorage.getItem('photo_meta_creator_rights');
       if (saved) {
         const obj = JSON.parse(saved);
-        setMeta(prev => ({
+        setMeta((prev) => ({
           ...prev,
           byline: obj.byline || '',
           credit: obj.credit || '',
@@ -224,168 +202,145 @@ export default function PhotoMetadata() {
         }));
       }
     } catch (e) {
-      // ignore
+      // Nothing saved, or a corrupt entry: start from the defaults.
     }
   }, []);
 
-  // Normalize keywords to lowercase on load
-  useEffect(() => {
-    setMeta(prev => {
-      if (!prev.keywords) {return prev;}
-      const normalized = prev.keywords
-        .split(',')
-        .map(k => k.trim().toLowerCase())
-        .join(', ');
-      return normalized !== prev.keywords ? { ...prev, keywords: normalized } : prev;
-    });
-  }, []); // Run once on mount
-
-  // keep checkToday in sync with dateCreated
-  useEffect(() => {
-    const today = getTodayISO();
-    setCheckToday(Boolean(meta.dateCreated && meta.dateCreated === today));
-  }, [meta.dateCreated]);
-
   const saveCreatorRights = () => {
-    const payload = {
-      byline: meta.byline || '',
-      credit: meta.credit || '',
-      copyright: meta.copyright || '',
-      source: meta.source || '',
-    };
     try {
-      localStorage.setItem('photo_meta_creator_rights', JSON.stringify(payload));
-      toast.success('Creator & Rights saved');
+      localStorage.setItem(
+        'photo_meta_creator_rights',
+        JSON.stringify({
+          byline: meta.byline || '',
+          credit: meta.credit || '',
+          copyright: meta.copyright || '',
+          source: meta.source || '',
+        })
+      );
+      toast.success('Saved. These load with every new job.');
     } catch (e) {
-      toast.error('Failed to save Creator & Rights');
+      toast.error('Your browser blocked local storage, so nothing was saved.');
     }
   };
 
   const clearSavedCreatorRights = () => {
-    try {
-      localStorage.removeItem('photo_meta_creator_rights');
-    } catch (e) {
-      // ignore
-    }
-    setMeta(prev => ({ ...prev, byline: '', credit: '', copyright: '', source: '' }));
-    toast.success('Saved Creator & Rights cleared');
+    try { localStorage.removeItem('photo_meta_creator_rights'); } catch (e) { /* ignore */ }
+    setMeta((prev) => ({ ...prev, byline: '', credit: '', copyright: '', source: '' }));
+    toast.success('Cleared.');
   };
 
   const applyTemplate = (t) => {
     if (t.competition) { setCompetition(t.competition); }
-    setMeta(prev => ({
+    setMeta((prev) => ({
       ...prev,
-      ...(t.byline    && { byline: t.byline }),
-      ...(t.credit    && { credit: t.credit }),
+      ...(t.byline && { byline: t.byline }),
+      ...(t.credit && { credit: t.credit }),
       ...(t.copyright && { copyright: t.copyright }),
-      ...(t.source    && { source: t.source }),
+      ...(t.source && { source: t.source }),
     }));
-    toast.success(`Template "${t.name}" applied`);
+    toast.success(`Applied ${t.name}.`);
   };
 
   const deleteTemplate = (index) => {
     const updated = templates.filter((_, i) => i !== index);
     setTemplates(updated);
     try { localStorage.setItem('photo_meta_templates', JSON.stringify(updated)); } catch (e) { /* ignore */ }
-    toast.success('Template deleted');
+    toast.success('Template deleted.');
   };
 
   const saveTemplate = () => {
-    if (!templateName.trim()) { toast.error('Enter a template name'); return; }
+    if (!templateName.trim()) {
+      toast.error('Give the template a name first.');
+      return;
+    }
     const t = {
       name: templateName.trim(),
       competition,
-      byline:    meta.byline,
-      credit:    meta.credit,
+      byline: meta.byline,
+      credit: meta.credit,
       copyright: meta.copyright,
-      source:    meta.source,
+      source: meta.source,
     };
-    const updated = [...templates.filter(x => x.name !== t.name), t];
+    const updated = [...templates.filter((x) => x.name !== t.name), t];
     setTemplates(updated);
     try { localStorage.setItem('photo_meta_templates', JSON.stringify(updated)); } catch (e) { /* ignore */ }
     setTemplateName('');
-    toast.success(`Template "${t.name}" saved`);
+    toast.success(`Saved ${t.name}.`);
   };
 
-  const handleExifImport = (file) => {
+  const handleJpegImport = (file) => {
     if (!file) { return; }
     if (!file.type.includes('jpeg') && !file.type.includes('jpg')) {
-      toast.error('Please select a JPEG file');
+      toast.error('That is not a JPEG. IPTC can only be read from JPEG files.');
       return;
     }
     const reader = new FileReader();
     reader.onload = (ev) => {
       const parsed = parseIptcFromJpeg(ev.target.result);
       if (!parsed || Object.keys(parsed).length === 0) {
-        toast.error('No IPTC data found in this file');
+        toast.error('No IPTC fields in that file. Nothing was changed.');
         return;
       }
-      setMeta(prev => ({ ...prev, ...parsed }));
-      toast.success('IPTC metadata imported');
+      setMeta((prev) => ({ ...prev, ...parsed }));
+      toast.success(`Read ${Object.keys(parsed).length} fields from the JPEG.`);
     };
     reader.readAsArrayBuffer(file);
   };
 
-  const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) {return '';}
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) { return ''; }
     const [year, month, day] = dateStr.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    return new Date(year, month - 1, day).toLocaleDateString('en-GB', {
+      day: 'numeric', month: 'long', year: 'numeric',
+    });
   };
 
   const applyClubToMeta = useCallback(async () => {
-    // Build headline/title/description from selected home/away clubs using profile data when available
-    if (!selectedHomeClub && !selectedAwayClub) {
-      return;
-    }
+    if (!home && !away) { return; }
 
-    const homeProfile = selectedHomeClub ? await fetchClubProfile(selectedHomeClub.id).catch(() => null) : null;
+    const homeProfile = home ? await fetchClubProfile(home.id).catch(() => null) : null;
 
-    const homeName = selectedHomeClub?.name || (homeProfile && homeProfile.name) || '';
-    const awayName = selectedAwayClub?.name || '';
-
-    const stadium = (homeProfile && (homeProfile.stadiumName)) || '';
-    const country = selectedHomeClub?.country || (homeProfile && homeProfile.country) || '';
+    const homeName = home?.name || homeProfile?.name || '';
+    const awayName = away?.name || '';
+    const stadium = homeProfile?.stadiumName || '';
+    const country = home?.country || homeProfile?.country || '';
 
     const title = homeName && awayName ? `${homeName} vs ${awayName}` : (homeName || awayName || 'Match');
     const description = `during the ${competitionRef.current || '{COMPETITION}'} match between ${homeName || 'Home Team'} and ${awayName || 'Away Team'}${stadium ? ' at ' + stadium : ''}.`;
-    
+
     setMeta((prev) => {
       const dateSuffix = prev.dateCreated ? ` (${formatDisplayDate(prev.dateCreated)})` : '';
       return {
-      ...prev,
-      objectName: title + dateSuffix,
-      headline: `${homeName || 'Home Team'} -v- ${awayName || 'Away Team'}${dateSuffix}`,
-      description: description,
-      country: country || prev.country,
-      stadium: stadium || prev.stadium,
-	  keywords: (() => {
-        const existingKeywords = prev.keywords ? prev.keywords.split(',').map(k => k.trim()) : [];
-        const newKeywords = [homeName, awayName, stadium, country, competitionRef.current].filter(Boolean);
-        const allKeywords = [...existingKeywords];
-        newKeywords.forEach(kw => {
-          if (!allKeywords.some(existing => existing.toLowerCase() === kw.toLowerCase())) {
-            allKeywords.push(kw);
-          }
-        });
-        return allKeywords.join(', ');
-      })(),
-    };
+        ...prev,
+        objectName: title + dateSuffix,
+        headline: `${homeName || 'Home Team'} -v- ${awayName || 'Away Team'}${dateSuffix}`,
+        description,
+        country: country || prev.country,
+        stadium: stadium || prev.stadium,
+      };
     });
-  }, [selectedHomeClub, selectedAwayClub]);
 
-  // Auto-apply club metadata when selections change
+    // Keywords are owned by the effect below, not written here. This call is
+    // async, so writing them from here deposited whatever the competition
+    // happened to say while the profile request was in flight.
+    setFixtureFacts({ stadium, country });
+  }, [home, away]);
+
   useEffect(() => {
-    if (selectedHomeClub || selectedAwayClub) {
+    if (home || away) {
       applyClubToMeta();
+      return;
     }
-  }, [selectedHomeClub, selectedAwayClub, applyClubToMeta]);
+    // With no clubs there is no fixture to take the stadium and country from,
+    // so they stop counting as keywords this page contributed.
+    setFixtureFacts({ stadium: '', country: '' });
+  }, [home, away, applyClubToMeta]);
 
+  // The date is part of the title and headline, so changing it rewrites both.
   useEffect(() => {
-    if ((selectedHomeClub || selectedAwayClub) && meta.dateCreated) {
-      const homeName = selectedHomeClub?.name || '';
-      const awayName = selectedAwayClub?.name || '';
-      
+    if ((home || away) && meta.dateCreated) {
+      const homeName = home?.name || '';
+      const awayName = away?.name || '';
       setMeta((prev) => {
         const dateSuffix = prev.dateCreated ? ` (${formatDisplayDate(prev.dateCreated)})` : '';
         const baseTitle = homeName && awayName ? `${homeName} vs ${awayName}` : (homeName || awayName || 'Match');
@@ -396,430 +351,368 @@ export default function PhotoMetadata() {
         };
       });
     }
-  }, [meta.dateCreated, selectedHomeClub, selectedAwayClub]);
+  }, [meta.dateCreated, home, away]);
 
-  // Keep competitionRef current so it can be read inside useCallback without triggering re-fetch
+  useEffect(() => { competitionRef.current = competition; }, [competition]);
+
+  // Swapping competition rewrites it in the caption, where it appears once.
   useEffect(() => {
-    competitionRef.current = competition;
+    const previous = prevCompetitionRef.current;
+    prevCompetitionRef.current = competition;
+    setMeta((m) => {
+      const toReplace = previous || '{COMPETITION}';
+      if (!toReplace || !m.description.includes(toReplace)) {
+        return m;
+      }
+      return {
+        ...m,
+        description: m.description.replace(toReplace, competition || '{COMPETITION}'),
+      };
+    });
   }, [competition]);
 
-  // Update description placeholder and keywords whenever competition changes
+  /**
+   * Keep the keywords the app contributes in step with the fixture.
+   *
+   * Everything the app adds is remembered, so the next pass can take exactly
+   * those back out before adding the current set. Anything you typed yourself
+   * was never in that set and is left alone. Diffing against a single
+   * remembered value instead used to strand a keyword for every intermediate
+   * competition — typing "test league one two" left "test", "test league" and
+   * "test league one" behind.
+   */
   useEffect(() => {
-    const prev = prevCompetitionRef.current;
-    prevCompetitionRef.current = competition;
-    setMeta(m => {
-      const toReplace = prev || '{COMPETITION}';
-      let desc = m.description;
-      if (toReplace && desc.includes(toReplace)) {
-        desc = desc.replace(toReplace, competition || '{COMPETITION}');
-      }
-      let kws = m.keywords ? m.keywords.split(',').map(k => k.trim()).filter(Boolean) : [];
-      if (prev) { kws = kws.filter(k => k.toLowerCase() !== prev.toLowerCase()); }
-      if (competition && !kws.some(k => k.toLowerCase() === competition.toLowerCase())) {
-        kws.push(competition);
-      }
-      return { ...m, description: desc, keywords: kws.join(', ') };
+    const additions = [
+      home?.name,
+      away?.name,
+      fixtureFacts.stadium,
+      fixtureFacts.country,
+      competition,
+    ]
+      .map((value) => (value ?? '').trim())
+      .filter(Boolean);
+
+    const previousAuto = autoKeywordsRef.current;
+    autoKeywordsRef.current = additions;
+
+    setMeta((m) => {
+      const kept = (m.keywords ? m.keywords.split(',') : [])
+        .map((k) => k.trim())
+        .filter(Boolean)
+        .filter((k) => !previousAuto.some((a) => a.toLowerCase() === k.toLowerCase()));
+
+      const next = [...kept];
+      additions.forEach((kw) => {
+        if (!next.some((k) => k.toLowerCase() === kw.toLowerCase())) {
+          next.push(kw);
+        }
+      });
+
+      const joined = next.join(', ');
+      return joined === m.keywords ? m : { ...m, keywords: joined };
     });
-  }, [competition]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [home, away, competition, fixtureFacts]);
+
+  const keywordCount = meta.keywords.split(',').map((k) => k.trim()).filter(Boolean).length;
+  const filename = `${meta.dateCreated ? meta.dateCreated + '-' : ''}${meta.objectName || 'metadata'}`;
 
   return (
-  <div className="generated-code-page container-page">
-    <Toaster position="top-right" />
-    <div className="card generated-code-card">
-    <div className="card-header">
-      <div>
-      <div className="card-title">Photo metadata (IPTC/XMP)</div>
-      <div className="card-subtitle">
-        Build IPTC fields for Photo Mechanic and export as XMP.
-      </div>
-      </div>
-      <div className="card-header-meta">
-        <CacheStatusBadge />
-        <span className="pill">Club-aware · Job ID · Fixture today</span>
-      </div>
-    </div>
+    <div className="workspace">
+      <Toaster position="top-right" />
 
-    <div className="stack-md" style={{ marginBottom: 10 }}>
-      <p className="muted" style={{ margin: 0 }}>
-      Keywords should be comma-separated. Creator & rights can be saved for reuse across sessions.
-      </p>
-      <div className="generated-inline-row" style={{ justifyContent: 'flex-end' }}>
-      <input
-        ref={exifInputRef}
-        type="file"
-        accept="image/jpeg"
-        aria-label="Import JPEG file"
-        style={{ display: 'none' }}
-        onChange={(e) => { handleExifImport(e.target.files?.[0]); e.target.value = ''; }}
-      />
-      <button
-        type="button"
-        className="btn btn-ghost"
-        onClick={() => exifInputRef.current?.click()}
-      >
-        Import from JPEG
-      </button>
-      <button
-        type="button"
-        className="btn btn-ghost"
-        onClick={() => setShowTemplates((s) => !s)}
-      >
-        {showTemplates ? 'Hide templates' : 'Templates'}
-      </button>
-      <button
-        type="button"
-        className="btn btn-secondary"
-        onClick={() => setShowClubSearch((s) => !s)}
-      >
-        {showClubSearch ? 'Hide club search' : 'Use club search'}
-      </button>
-      </div>
-    </div>
-
-    {showTemplates && (
-      <div className="card" style={{ padding: 14, marginBottom: 16 }}>
-        <div className="generated-section-title">Templates</div>
-        {templates.length === 0 ? (
-          <p className="muted" style={{ margin: '8px 0 12px' }}>No saved templates yet. Fill in competition and creator &amp; rights fields below, then save.</p>
-        ) : (
-          <div style={{ marginBottom: 12 }}>
-            {templates.map((t) => (
-              <div key={t.name} className="generated-inline-row" style={{ marginBottom: 6 }}>
-                <span style={{ flex: 1, fontSize: 14 }}>{t.name}{t.competition ? ` · ${t.competition}` : ''}</span>
-                <button type="button" className="btn btn-secondary" style={{ padding: '2px 12px', fontSize: 12 }} onClick={() => applyTemplate(t)}>Apply</button>
-                <button type="button" className="btn btn-ghost" style={{ padding: '2px 12px', fontSize: 12 }} onClick={() => deleteTemplate(i)}>Delete</button>
-              </div>
-            ))}
+      <div className="workspace-setup">
+        <section className="panel">
+          <div className="panel-head">
+            <h1 className="panel-title">Fixture</h1>
+            <CacheStatusBadge />
           </div>
-        )}
-        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10 }}>
-          <label className="field-label">Save current settings as template</label>
-          <div className="generated-inline-row">
-            <input
-              className="input"
-              value={templateName}
-              onChange={(e) => setTemplateName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && saveTemplate()}
-              placeholder="Template name (e.g. Scottish Premiership)"
+
+          <div className="panel-body stack">
+            <div>
+              <label className="field-label" htmlFor="pm-competition">Competition</label>
+              <input
+                id="pm-competition"
+                className="input"
+                list="competition-list"
+                value={competition}
+                placeholder="e.g. Scottish Premiership"
+                onChange={(e) => setCompetition(e.target.value)}
+              />
+              <datalist id="competition-list">
+                {COMMON_COMPETITIONS.map((c) => <option key={c} value={c} />)}
+              </datalist>
+            </div>
+
+            <ClubField
+              label="Home club"
+              placeholder="e.g. Celtic"
+              club={home}
+              onSelect={setHome}
+              onClear={() => setHome(null)}
             />
-            <button type="button" className="btn btn-secondary" onClick={saveTemplate}>Save</button>
-          </div>
-        </div>
-      </div>
-    )}
+            <ClubField
+              label="Away club"
+              placeholder="e.g. Bohemians"
+              club={away}
+              onSelect={setAway}
+              onClear={() => setAway(null)}
+            />
 
-    <div className="card" style={{ padding: 14, marginBottom: 16 }}>
-      <div className="generated-section-title">Competition</div>
-      <div className="generated-inline-row">
-        <input
-          className="input"
-          list="competition-datalist"
-          value={competition}
-          onChange={(e) => setCompetition(e.target.value)}
-          placeholder="e.g. Scottish Premiership"
-          title="Competition"
-        />
-        {competition && (
-          <button type="button" className="btn btn-ghost" onClick={() => setCompetition('')}>Clear</button>
-        )}
-      </div>
-      <datalist id="competition-datalist">
-        {COMMON_COMPETITIONS.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
-    </div>
-
-    {showClubSearch && (
-      <div className="generated-grid" style={{ marginBottom: 18 }}>
-      <div className="generated-column card" style={{ padding: 14 }}>
-        <div className="generated-section-title">Home club</div>
-        <label className="field-label">Search</label>
-        <div className="generated-inline-row">
-        <input
-          className="input"
-          value={homeSearchTerm}
-          onChange={(e) => setHomeSearchTerm(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && homeSearchTerm && !searchingHome) {
-              handleClubSearch(homeSearchTerm, setHomeResults, setSearchingHome);
-            }
-          }}
-          placeholder="e.g. Celtic"
-        />
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => handleClubSearch(homeSearchTerm, setHomeResults, setSearchingHome)}
-          disabled={searchingHome}
-        >
-          {searchingHome ? 'Searching…' : 'Search'}
-        </button>
-        </div>
-        {homeResults.length > 0 && (
-        <div style={{ marginTop: 10 }}>
-          <label className="field-label">Results</label>
-          <select
-          className="select"
-          value={selectedHomeClub?.id || ''}
-          title="Select home club"
-          aria-label="Select home club"
-          onChange={(e) => {
-            const sel = homeResults.find((r) => r.id === e.target.value);
-            setSelectedHomeClub(sel || null);
-          }}
-          >
-          <option value="">-- Select home club --</option>
-          {homeResults.map((r) => (
-            <option key={r.id} value={r.id}>
-            {r.name} {r.country ? `- ${r.country}` : ''}
-            </option>
-          ))}
-          </select>
-        </div>
-        )}
-        {selectedHomeClub && homeResults.length === 0 && (
-          <div style={{ marginTop: 10 }}>
-            <label className="field-label">Selected</label>
-            <div className="card" style={{ padding: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{selectedHomeClub.name} {selectedHomeClub.country ? `- ${selectedHomeClub.country}` : ''}</span>
+            <div>
+              <label className="field-label" htmlFor="pm-date">Date of the fixture</label>
+              <div className="field-row">
+                <input
+                  id="pm-date"
+                  className="input"
+                  type="date"
+                  value={meta.dateCreated}
+                  onChange={handleChange('dateCreated')}
+                />
                 <button
                   type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setSelectedHomeClub(null)}
+                  className="btn btn-secondary"
+                  disabled={meta.dateCreated === getTodayISO()}
+                  onClick={() => setMeta((prev) => ({ ...prev, dateCreated: getTodayISO() }))}
                 >
-                  Clear
+                  Today
+                </button>
+              </div>
+              <p className="field-hint">Written into the title, the headline and the file name.</p>
+            </div>
+          </div>
+
+          <div className="panel-foot">
+            <input
+              ref={jpegInputRef}
+              type="file"
+              accept="image/jpeg"
+              aria-label="Choose a JPEG to read IPTC from"
+              style={{ display: 'none' }}
+              onChange={(e) => { handleJpegImport(e.target.files?.[0]); e.target.value = ''; }}
+            />
+            <button type="button" className="btn btn-secondary" onClick={() => jpegInputRef.current?.click()}>
+              Read fields from a JPEG
+            </button>
+          </div>
+        </section>
+
+        <div className={`disclosure ${templatesOpen ? 'disclosure-open' : ''}`}>
+          <button
+            type="button"
+            className="disclosure-summary"
+            aria-expanded={templatesOpen}
+            onClick={() => setTemplatesOpen(!templatesOpen)}
+          >
+            <span className="disclosure-chevron" aria-hidden="true" />
+            <span className="disclosure-summary-label">
+              Templates
+              <span className="field-hint">
+                {templates.length ? `${templates.length} saved` : 'None saved yet'}
+              </span>
+            </span>
+          </button>
+
+          {templatesOpen && (
+            <div className="disclosure-panel stack">
+              {templates.length === 0 ? (
+                <p className="field-hint" style={{ marginTop: 0 }}>
+                  A template stores the competition plus your creator and rights fields. Fill those
+                  in, then save one here.
+                </p>
+              ) : (
+                <div className="stack-sm">
+                  {templates.map((t, index) => (
+                    <div key={t.name} className="template-row">
+                      <span className="template-name">
+                        {t.name}
+                        {t.competition && <span className="muted"> · {t.competition}</span>}
+                      </span>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => applyTemplate(t)}>
+                        Apply
+                      </button>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => deleteTemplate(index)}>
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div>
+                <label className="field-label" htmlFor="pm-template-name">Save what is on screen</label>
+                <div className="field-row">
+                  <input
+                    id="pm-template-name"
+                    className="input"
+                    value={templateName}
+                    placeholder="e.g. Scottish Premiership"
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && saveTemplate()}
+                  />
+                  <button type="button" className="btn btn-secondary" onClick={saveTemplate}>
+                    Save
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="stack">
+        <section className="panel">
+          <div className="panel-head">
+            <h2 className="panel-title">Photo metadata</h2>
+            <span className="eyebrow">IPTC fields</span>
+          </div>
+
+          <div className="panel-body stack">
+            <div>
+              <span className="eyebrow">Caption</span>
+              <div className="stack-sm" style={{ marginTop: 8 }}>
+                <div className="grid-2">
+                  <div>
+                    <label className="field-label" htmlFor="pm-title">Title</label>
+                    <input id="pm-title" className="input" value={meta.objectName} onChange={handleChange('objectName')} placeholder="Celtic vs Bohemians" />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor="pm-headline">Headline</label>
+                    <input id="pm-headline" className="input" value={meta.headline} onChange={handleChange('headline')} placeholder="Celtic -v- Bohemians" />
+                  </div>
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-desc">Caption</label>
+                  <textarea id="pm-desc" className="textarea" value={meta.description} onChange={handleChange('description')} placeholder="during the … match between … and … at …" />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <span className="eyebrow">Creator and rights</span>
+              <div className="grid-2" style={{ marginTop: 8 }}>
+                <div>
+                  <label className="field-label" htmlFor="pm-byline">Byline</label>
+                  <input id="pm-byline" className="input" value={meta.byline} onChange={handleChange('byline')} placeholder="Your name" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-credit">Credit</label>
+                  <input id="pm-credit" className="input" value={meta.credit} onChange={handleChange('credit')} placeholder="Agency or publication" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-copyright">Copyright holder</label>
+                  <input id="pm-copyright" className="input" value={meta.copyright} onChange={handleChange('copyright')} placeholder="© Your name" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-source">Source</label>
+                  <input id="pm-source" className="input" value={meta.source} onChange={handleChange('source')} placeholder="Where the image came from" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-job">Job ID</label>
+                  <input id="pm-job" className="input" value={meta.jobId} onChange={handleChange('jobId')} placeholder="Your reference for this job" />
+                </div>
+              </div>
+              <div className="btn-row" style={{ marginTop: 10 }}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={saveCreatorRights}>
+                  Save these for next time
+                </button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={clearSavedCreatorRights}>
+                  Clear saved
                 </button>
               </div>
             </div>
-          </div>
-        )}
-      </div>
 
-      <div className="generated-column card" style={{ padding: 14 }}>
-        <div className="generated-section-title">Away club</div>
-        <label className="field-label">Search</label>
-        <div className="generated-inline-row">
-        <input
-          className="input"
-          value={awaySearchTerm}
-          onChange={(e) => setAwaySearchTerm(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && awaySearchTerm && !searchingAway) {
-              handleClubSearch(awaySearchTerm, setAwayResults, setSearchingAway);
-            }
-          }}
-          placeholder="e.g. Bohemians"
-        />
-        <button
-          type="button"
-          className="btn btn-secondary"
-          onClick={() => handleClubSearch(awaySearchTerm, setAwayResults, setSearchingAway)}
-          disabled={searchingAway}
-        >
-          {searchingAway ? 'Searching…' : 'Search'}
-        </button>
-        </div>
-        {awayResults.length > 0 && (
-        <div style={{ marginTop: 10 }}>
-          <label className="field-label">Results</label>
-          <select
-          className="select"
-          value={selectedAwayClub?.id || ''}
-          title="Select away club"
-          aria-label="Select away club"
-          onChange={(e) => {
-            const sel = awayResults.find((r) => r.id === e.target.value);
-            setSelectedAwayClub(sel || null);
-          }}
-          >
-          <option value="">-- Select away club --</option>
-          {awayResults.map((r) => (
-            <option key={r.id} value={r.id}>
-            {r.name} {r.country ? `- ${r.country}` : ''}
-            </option>
-          ))}
-          </select>
-        </div>
-        )}
-        {selectedAwayClub && awayResults.length === 0 && (
-          <div style={{ marginTop: 10 }}>
-            <label className="field-label">Selected</label>
-            <div className="card" style={{ padding: 10 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{selectedAwayClub.name} {selectedAwayClub.country ? `- ${selectedAwayClub.country}` : ''}</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => setSelectedAwayClub(null)}
-                >
-                  Clear
-                </button>
+            <div>
+              <span className="eyebrow">Location</span>
+              <div className="grid-2" style={{ marginTop: 8 }}>
+                <div>
+                  <label className="field-label" htmlFor="pm-stadium">Stadium</label>
+                  <input id="pm-stadium" className="input" value={meta.stadium} onChange={handleChange('stadium')} placeholder="Celtic Park" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-city">City</label>
+                  <input id="pm-city" className="input" value={meta.city} onChange={handleChange('city')} placeholder="Glasgow" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-state">State or province</label>
+                  <input id="pm-state" className="input" value={meta.state} onChange={handleChange('state')} placeholder="Optional" />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="pm-country">Country</label>
+                  <input id="pm-country" className="input" value={meta.country} onChange={handleChange('country')} placeholder="Scotland" />
+                </div>
               </div>
             </div>
+
+            <div>
+              <div className="roster-head">
+                <label className="field-label" htmlFor="pm-keywords" style={{ marginBottom: 0 }}>Keywords</label>
+                <span className="ledger-count">{keywordCount}</span>
+              </div>
+              <textarea
+                id="pm-keywords"
+                className="textarea"
+                value={meta.keywords}
+                onChange={handleChange('keywords')}
+                placeholder="celtic, bohemians, celtic park, scotland"
+              />
+              <p className="field-hint">Separate with commas. Clubs, stadium and competition are added for you.</p>
+            </div>
           </div>
-        )}
-      </div>
-      </div>
-    )}
 
-    <div className="grid-2">
-      <div className="card" style={{ padding: 14 }}>
-      <div className="generated-section-title">Core</div>
-      <label className="field-label">Title (Object Name)</label>
-      <input className="input" value={meta.objectName} onChange={handleChange('objectName')} title="Title" placeholder="Photo title" />
-      <label className="field-label" style={{ marginTop: 10 }}>Headline</label>
-      <input className="input" value={meta.headline} onChange={handleChange('headline')} title="Headline" placeholder="Photo headline" />
-      <label className="field-label" style={{ marginTop: 10 }}>Description / Caption</label>
-      <textarea
-        className="textarea"
-        style={{ minHeight: 120, maxHeight: 160 }}
-        value={meta.description}
-        onChange={handleChange('description')}
-        title="Description"
-        placeholder="Photo description or caption"
-      />
-      </div>
+          <div className="panel-foot">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => downloadTextFile(xmp, `${filename}.xmp`, 'application/xml')}
+            >
+              Download .xmp
+            </button>
+            <CopyButton
+              text={xmp}
+              label="Copy XMP"
+              successMessage="XMP copied. Paste into Photo Mechanic."
+              className="btn btn-secondary"
+            />
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={async () => {
+                if (await copyToClipboard(asJSON())) {
+                  toast.success('Fields copied as JSON.');
+                } else {
+                  toast.error('Your browser blocked the clipboard.');
+                }
+              }}
+            >
+              Copy as JSON
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              style={{ marginLeft: 'auto' }}
+              onClick={() => {
+                autoKeywordsRef.current = [];
+                prevCompetitionRef.current = '';
+                setMeta(EMPTY_META);
+                setCompetition('');
+                setHome(null);
+                setAway(null);
+                setFixtureFacts({ stadium: '', country: '' });
+              }}
+            >
+              Clear everything
+            </button>
+          </div>
+        </section>
 
-      <div className="card" style={{ padding: 14 }}>
-      <div className="generated-section-title">Creator & rights</div>
-      <label className="field-label">Byline (Author)</label>
-      <input className="input" value={meta.byline} onChange={handleChange('byline')} title="Byline" placeholder="Author name" />
-      <label className="field-label" style={{ marginTop: 10 }}>Credit</label>
-      <input className="input" value={meta.credit} onChange={handleChange('credit')} title="Credit" placeholder="Photo credit" />
-      <label className="field-label" style={{ marginTop: 10 }}>Job ID</label>
-      <input className="input" value={meta.jobId} onChange={handleChange('jobId')} title="Job ID" placeholder="Job identifier" />
-      <label className="field-label" style={{ marginTop: 10 }}>Copyright Author</label>
-      <input className="input" value={meta.copyright} onChange={handleChange('copyright')} title="Copyright" placeholder="Copyright holder" />
-      <label className="field-label" style={{ marginTop: 10 }}>Source</label>
-      <input className="input" value={meta.source} onChange={handleChange('source')} title="Source" placeholder="Photo source" />
-      <div className="btn-row" style={{ marginTop: 10 }}>
-        <button type="button" className="btn btn-secondary" onClick={saveCreatorRights}>
-        Save creator/rights
-        </button>
-        <button type="button" className="btn btn-ghost" onClick={clearSavedCreatorRights}>
-        Clear saved
-        </button>
-      </div>
+        <section className="panel">
+          <div className="panel-head">
+            <h2 className="panel-title">XMP sidecar</h2>
+            <span className="eyebrow">{filename}.xmp</span>
+          </div>
+          <pre className="file-preview">{xmp}</pre>
+        </section>
       </div>
     </div>
-
-    <div className="grid-2" style={{ marginTop: 16 }}>
-      <div className="card" style={{ padding: 14 }}>
-      <div className="generated-section-title">Location & date</div>
-      <label className="field-label">Stadium</label>
-      <input className="input" value={meta.stadium} onChange={handleChange('stadium')} title="Stadium" placeholder="Stadium name" />
-      <label className="field-label" style={{ marginTop: 10 }}>City</label>
-      <input className="input" value={meta.city} onChange={handleChange('city')} title="City" placeholder="City name" />
-      <label className="field-label" style={{ marginTop: 10 }}>State / Province</label>
-      <input className="input" value={meta.state} onChange={handleChange('state')} title="State" placeholder="State or province" />
-      <label className="field-label" style={{ marginTop: 10 }}>Country</label>
-      <input className="input" value={meta.country} onChange={handleChange('country')} title="Country" placeholder="Country name" />
-      <label className="field-label" style={{ marginTop: 10 }}>Date</label>
-      <div className="generated-inline-row" style={{ alignItems: 'center' }}>
-        <input
-        className="input"
-        type="date"
-        value={meta.dateCreated}
-        title="Date created"
-        onChange={(e) => {
-          handleChange('dateCreated')(e);
-          const val = e.target.value;
-          setCheckToday(Boolean(val && val === getTodayISO()));
-        }}
-        />
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, whiteSpace: 'nowrap' }}>
-        <input
-          type="checkbox"
-          checked={checkToday}
-          onChange={(e) => {
-          const on = e.target.checked;
-          setCheckToday(on);
-          if (on) {
-            setMeta((prev) => ({ ...prev, dateCreated: getTodayISO() }));
-          } else {
-            setMeta((prev) => ({ ...prev, dateCreated: '' }));
-          }
-          }}
-        />
-        Fixture today
-        </label>
-      </div>
-      </div>
-      <div className="card" style={{ padding: 14 }}>
-      <div className="generated-section-title">Keywords</div>
-      <label className="field-label">Keywords (comma separated)</label>
-      <textarea
-        className="textarea"
-        style={{ minHeight: 170, maxHeight: 210 }}
-        value={meta.keywords}
-        onChange={handleChange('keywords')}
-        title="Keywords"
-        placeholder="keyword1, keyword2, keyword3"
-      />
-      </div>
-    </div>
-
-    <div className="btn-row">
-      <button type="button" className="btn" onClick={handleCopy}>
-      Copy JSON
-      </button>
-      <button
-      type="button"
-      className="btn btn-secondary"
-      onClick={() => {
-        const xmpToCopy = generateXMP(meta);
-        navigator.clipboard && navigator.clipboard.writeText(xmpToCopy);
-        toast.success('XMP copied to clipboard');
-      }}
-      >
-      Copy XMP
-      </button>
-      <button type="button" className="btn" onClick={handleDownload}>
-      Download XMP
-      </button>
-      <button
-      type="button"
-      className="btn btn-ghost"
-      onClick={() => {
-        setMeta({
-        objectName: '',
-        headline: '',
-        description: '',
-        byline: '',
-        credit: '',
-        copyright: '',
-        jobId: '',
-        keywords: '',
-        dateCreated: '',
-        city: '',
-        state: '',
-        country: '',
-        source: '',
-        stadium: '',
-        });
-        setCompetition('');
-        setSelectedHomeClub(null);
-        setSelectedAwayClub(null);
-        setHomeResults([]);
-        setAwayResults([]);
-        setHomeSearchTerm('');
-        setAwaySearchTerm('');
-        setCheckToday(false);
-      }}
-      >
-      Clear
-      </button>
-    </div>
-
-    <div className="preview-block">
-      <div className="preview-heading">
-      <span>Preview (JSON)</span>
-      </div>
-      <pre className="preview-body">{asJSON()}</pre>
-    </div>
-    </div>
-  </div>
   );
 }

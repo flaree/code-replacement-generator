@@ -789,80 +789,12 @@ kbd {
 }
 
 /* ---------------------------------------------------------------------------
-   Carried over from the previous system.
-
-   The full-league, metadata and about pages still describe themselves in the
-   old vocabulary. These map that vocabulary onto the current one so those
-   pages pick up the new look without being restructured.
+   Reading measure for the prose pages
    --------------------------------------------------------------------------- */
 
 .container-page {
   max-width: 900px;
   margin: 0 auto;
-}
-
-.card {
-  padding: 16px;
-  background: var(--panel);
-  border: 1px solid var(--rule);
-  border-radius: var(--radius-lg);
-}
-
-.card + .card {
-  margin-top: 14px;
-}
-
-.card-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--rule);
-}
-
-.card-header-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.card-title {
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1.1;
-}
-
-.card-subtitle {
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--text-dim);
-}
-
-.stack-md {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 7px;
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  background: var(--panel-2);
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-dim);
 }
 
 /* ---------------------------------------------------------------------------

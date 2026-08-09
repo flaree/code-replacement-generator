@@ -470,6 +470,15 @@
 
 .disclosure-summary-label {
 	flex: 1;
+	min-width: 0;
+}
+
+/* The summary's second line says what is set, so it needs its own line. */
+.disclosure-summary-label .field-hint {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .disclosure-panel {
@@ -522,34 +531,56 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Full league codes — the delimiter map
+   Whole league — the club roster and its keys
    --------------------------------------------------------------------------- */
 
-.delimiter-grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(212px, 1fr));
-	gap: 6px;
-	max-height: 420px;
-	overflow-y: auto;
+.roster-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 5px;
 }
 
-.delimiter-item {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 6px 10px;
-	background: var(--panel-2);
+.roster {
+	max-height: 320px;
+	overflow-y: auto;
 	border: 1px solid var(--rule);
 	border-radius: var(--radius);
+	background: var(--field);
 }
 
-.delimiter-code {
-	flex: none;
-	width: 44px;
+.roster-row {
+	display: grid;
+	grid-template-columns: auto 52px minmax(0, 1fr);
+	align-items: center;
+	gap: 10px;
+	padding: 5px 10px;
+}
+
+.roster-row + .roster-row {
+	border-top: 1px solid var(--rule);
+}
+
+.roster-row input[type='checkbox'] {
+	width: 15px;
+	height: 15px;
+	accent-color: var(--text);
+	cursor: pointer;
+}
+
+/* An excluded club stays legible — it is a choice you may want to undo. */
+.roster-row-out .roster-name,
+.roster-row-out .roster-key {
+	color: var(--text-faint);
+}
+
+.roster-key {
+	width: 100%;
 	min-height: 28px;
-	padding: 2px 4px;
+	padding: 3px 4px;
 	text-align: center;
-	background: var(--field);
+	background: var(--panel);
 	border: 1px solid var(--field-border);
 	border-radius: 3px;
 	color: var(--text);
@@ -558,7 +589,96 @@
 	font-weight: 600;
 }
 
-.team-name {
+.roster-key-clash {
+	border-color: var(--danger);
+	color: var(--danger);
+}
+
+.roster-key:disabled {
+	opacity: 0.55;
+	cursor: not-allowed;
+}
+
+.roster-name {
+	min-width: 0;
+	font-size: 13px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.progress {
+	margin-top: 12px;
+}
+
+.progress-track {
+	height: 3px;
+	overflow: hidden;
+	background: var(--panel-3);
+	border-radius: 2px;
+}
+
+.progress-fill {
+	height: 100%;
+	background: var(--text);
+	transition: width var(--t-med);
+}
+
+.error-list {
+	margin: 6px 0;
+	padding-left: 18px;
+	font-family: var(--font-mono);
+	font-size: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   Metadata
+   --------------------------------------------------------------------------- */
+
+/* An input paired with the button that acts on it. */
+.field-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.field-row .input {
+	flex: 1;
+	min-width: 0;
+}
+
+.club-picked {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	min-height: 38px;
+	padding: 4px 4px 4px 10px;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
+	background: var(--panel-2);
+}
+
+.club-picked-name {
+	flex: 1;
+	min-width: 0;
+	font-size: 14px;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.template-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 5px 5px 5px 10px;
+	border: 1px solid var(--rule);
+	border-radius: var(--radius);
+	background: var(--field);
+}
+
+.template-name {
 	flex: 1;
 	min-width: 0;
 	font-size: 13px;
@@ -567,138 +687,18 @@
 	white-space: nowrap;
 }
 
-.loading-container {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	gap: 12px;
-	padding: 40px 20px;
-	text-align: center;
-	color: var(--text-faint);
-	font-size: 13px;
-}
-
-@media (max-width: 700px) {
-	.delimiter-grid {
-		grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-	}
-}
-
-/* ---------------------------------------------------------------------------
-   Carried over from the previous system, for the pages that still use it.
-   --------------------------------------------------------------------------- */
-
-.generated-code-page {
-	color: var(--text);
-}
-
-.generated-code-card {
-	max-width: 900px;
-	margin: 0 auto;
-}
-
-.generated-grid {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 14px;
-}
-
-@media (max-width: 800px) {
-	.generated-grid {
-		grid-template-columns: minmax(0, 1fr);
-	}
-}
-
-.generated-column {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
-}
-
-.generated-section-title {
-	font-family: var(--font-mono);
-	font-size: 10px;
-	font-weight: 500;
-	letter-spacing: 0.14em;
-	text-transform: uppercase;
-	color: var(--text-faint);
-}
-
-.generated-inline-row {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: 8px;
-}
-
-.generated-delim-input {
-	width: 46px;
-	text-align: center;
-	font-family: var(--font-mono);
-}
-
-.generated-extra-card {
-	margin-top: 14px;
-}
-
-.team-preview {
-	margin: 16px 0;
-	padding: 14px;
-	background: var(--panel-2);
-	border: 1px solid var(--rule);
-	border-radius: var(--radius);
-}
-
-.team-preview h3 {
-	margin: 0 0 12px;
-	font-family: var(--font-display);
-	font-size: 16px;
-	font-weight: 600;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-}
-
-/* The result block on pages that still generate on demand. */
-.preview-block {
-	margin-top: 16px;
-	border: 1px solid var(--rule);
-	border-radius: var(--radius);
-	overflow: hidden;
-}
-
-.preview-heading {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
-	padding: 10px 12px;
-	border-bottom: 1px solid var(--rule);
-	background: var(--panel-2);
-	font-size: 13px;
-	font-weight: 500;
-}
-
-.preview-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-}
-
-.preview-body {
-	max-height: 420px;
+/* A file shown as itself: monospaced, scrollable, not word-wrapped into prose. */
+.file-preview {
+	max-height: 460px;
 	overflow: auto;
 	margin: 0;
-	padding: 12px;
+	padding: 12px 14px;
 	background: var(--field);
+	border-radius: 0 0 var(--radius-lg) var(--radius-lg);
 	font-family: var(--font-mono);
-	font-size: 12.5px;
-	line-height: 1.7;
+	font-size: 12px;
+	line-height: 1.65;
 	color: var(--text);
 	white-space: pre-wrap;
 	word-break: break-word;
-}
-
-.success-fade-in {
-	animation: ledger-in 260ms cubic-bezier(0.2, 0, 0.2, 1) both;
 }

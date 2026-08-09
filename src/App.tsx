@@ -1,10 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitter, faChrome, faInstagram, faGithub } from '@fortawesome/free-brands-svg-icons';
 import './App.css';
 import TeamCodeGenerator from './pages/TeamCodeGenerator';
-import LeagueCodeGenerator from './pages/LeagueCodeGenerator';
 import ManualClubSearch from './pages/ManualClubSearch';
 import About from './pages/About';
 import PhotoMetadata from './pages/PhotoMetadata';
@@ -15,11 +14,15 @@ import ErrorBoundary from './components/ErrorBoundary';
  * The old labels — Clubs, League, Full League Codes — described the data
  * source. These describe what you get and how you find the teams, which is the
  * only difference that matters when you are choosing between them.
+ *
+ * The whole-league build is withheld for now: it fires two requests per club,
+ * which is the fastest way to get Transfermarkt to block the API for everyone.
+ * `src/pages/LeagueCodeGenerator.tsx` is still in the repo — restoring it is
+ * this entry plus its route.
  */
 const NAV_ITEMS = [
   { to: '/', label: 'Club search' },
   { to: '/league', label: 'League fixture' },
-  { to: '/league-codes', label: 'Full league' },
   { to: '/metadata', label: 'Metadata' },
   { to: '/about', label: 'About' },
 ];
@@ -130,7 +133,9 @@ function App(): React.ReactElement {
             <Routes>
               <Route path="/" element={<ManualClubSearch />} />
               <Route path="/league" element={<TeamCodeGenerator />} />
-              <Route path="/league-codes" element={<LeagueCodeGenerator />} />
+              {/* Withheld — see NAV_ITEMS. Old links land on the club search
+                  rather than a blank page. */}
+              <Route path="/league-codes" element={<Navigate to="/" replace />} />
               <Route path="/metadata" element={<PhotoMetadata />} />
               <Route path="/about" element={<About />} />
             </Routes>

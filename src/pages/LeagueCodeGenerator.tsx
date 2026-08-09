@@ -1,31 +1,18 @@
-// @ts-nocheck - TODO: Add proper TypeScript types
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import './codegen.css';
 import FixtureDetails from '../components/FixtureDetails';
-import { generateCode } from "../utils/codeGenerator";
-import { fetchLeagueClubs, fetchClubPlayers, fetchClubProfile, getCacheInfo, describeApiError } from "../services/api";
-import toast, { Toaster } from 'react-hot-toast';
-import CopyButton from "../components/CopyButton";
-import CacheStatusBadge from "../components/CacheStatusBadge";
-
-const codes = {
-	"League of Ireland Premier Division": 'IR1',
-	"League of Ireland First Division": 'IR2',
-	"Northern Ireland Football League Premiership": 'NIR1',
-	"Scottish Premiership": 'SC1',
-	"English Premier League": 'GB1',
-	"English Championship": 'GB2',
-	"English League One": 'GB3',
-	"English League Two": 'GB4',
-	"Spanish La Liga": 'ES1',
-	"Italian Serie A": 'IT1',
-	"German Bundesliga": 'L1',
-	"French Ligue 1": 'FR1',
-	"Liga Portugal": 'PO1',
-	"Brazilian Serie A": 'BRA1',
-	"Major League Soccer": 'MLS1',
-	"Dutch Eredivisie": 'NL1',
-};
+import CodeLedger from '../components/CodeLedger';
+import { generateCode } from '../utils/codeGenerator';
+import {
+  Club,
+  describeApiError,
+  fetchClubPlayers,
+  fetchClubProfile,
+  fetchLeagueClubs,
+  getCacheInfo,
+} from '../services/api';
+import { CodeOptions, DEFAULT_CODE_OPTIONS, LEAGUE_CODES } from '../constants/config';
 
 /**
  * Wait before the next request, unless the last response came out of the API's cache.
@@ -37,540 +24,410 @@ const codes = {
  * @param scrapedDelay - Milliseconds to wait when the last response required a scrape
  */
 const pauseUnlessCached = (scrapedDelay: number): Promise<void> =>
-	new Promise(resolve => {
-		setTimeout(resolve, getCacheInfo()?.status === 'HIT' ? 0 : scrapedDelay);
-	});
+  new Promise((resolve) => {
+    setTimeout(resolve, getCacheInfo()?.status === 'HIT' ? 0 : scrapedDelay);
+  });
 
 /**
- * Generate unique delimiters for all teams
- * Uses first 1 letter of team name, then 2, then 3, etc. if clashes occur
+ * Give every club in the league a key that nothing else is using.
+ *
+ * One letter where possible, because that is the fastest thing to type. Clubs
+ * that collide take more letters of their own name before falling back to a
+ * number, so the key still resembles the club it stands for.
  */
-const generateDelimiters = (teamNames: string[]): Record<string, string> => {
-	const delimiters: Record<string, string> = {};
-	const usedDelimiters = new Set<string>();
+const assignPrefixes = (clubs: Club[]): Record<string, string> => {
+  const assigned: Record<string, string> = {};
+  const taken = new Set<string>();
 
-	teamNames.forEach(teamName => {
-		let delimiter = '';
-		let length = 1;
-		
-		// Try increasing lengths until we find a unique delimiter
-		while (length <= teamName.length) {
-			delimiter = teamName.substring(0, length).toLowerCase();
-			
-			if (!usedDelimiters.has(delimiter)) {
-				break;
-			}
-			
-			length++;
-		}
-		
-		// If we've exhausted the team name and still have collision, add numbers
-		if (usedDelimiters.has(delimiter)) {
-			let counter = 1;
-			const baseDelimiter = delimiter;
-			while (usedDelimiters.has(delimiter)) {
-				delimiter = `${baseDelimiter}${counter}`;
-				counter++;
-			}
-		}
-		
-		usedDelimiters.add(delimiter);
-		delimiters[teamName] = delimiter;
-	});
+  clubs.forEach((club) => {
+    const letters = club.name.toLowerCase().replace(/[^a-z]/g, '');
+    let prefix = '';
 
-	return delimiters;
+    for (let length = 1; length <= letters.length; length++) {
+      prefix = letters.slice(0, length);
+      if (!taken.has(prefix)) {
+        break;
+      }
+    }
+
+    if (taken.has(prefix)) {
+      const base = prefix;
+      let counter = 1;
+      while (taken.has(prefix)) {
+        prefix = `${base}${counter}`;
+        counter++;
+      }
+    }
+
+    taken.add(prefix);
+    assigned[club.id] = prefix;
+  });
+
+  return assigned;
 };
 
-export default function LeagueCodeGenerator() {
-	const [selectedLeague, setSelectedLeague] = useState('');
-	const [teams, setTeams] = useState([]);
-	const [teamMap, setTeamMap] = useState({});
-	const [generatedCode, setGeneratedCode] = useState('');
-	const [loading, setLoading] = useState(false);
-	const [delimiters, setDelimiters] = useState({});
-	const [selectedTeams, setSelectedTeams] = useState(new Set());
-	const [currentTeam, setCurrentTeam] = useState('');
-	const [processedCount, setProcessedCount] = useState(0);
-	const [errors, setErrors] = useState([]);
-	const [options, setOptions] = useState({
-		showInfo: false,
-		shouldShorten: true,
-		selectedDate: '',
-		referee: '',
-		competition: '',
-		additionalCodes: '',
-		sortOption: 'position',
-		formats: [
-			"{playerName} of {team}",
-			"{team} player {playerName}",
-			"{playerName} ({team})",
-			"{team} #{shirtNumber} {playerName}",
-			"{playerName}, {team}",
-			"{playerName}",
-			"{team} {playerName} #{shirtNumber}",
-			"{playerName} - {team} ({shirtNumber})",
-		],
-		selectedFormat: "{playerName} of {team}",
-		shouldChangeGoalkeeperStyle: false,
-		includeNoNumberPlayers: true,
-	});
+interface BuildError {
+  club: string;
+  part: 'profile' | 'players';
+  detail: string;
+}
 
-	useEffect(() => {
-		if (selectedLeague) {
-			const fetchTeams = async () => {
-				try {
-					setTeams([]);
-					setGeneratedCode('');
-					const data = await fetchLeagueClubs(codes[selectedLeague]);
+/**
+ * Build one code replacement file covering every club in a league.
+ *
+ * Unlike the fixture pages this one keeps an explicit build step: it makes two
+ * throttled requests per club, so it should only run when you ask it to.
+ */
+export default function LeagueCodeGenerator(): React.ReactElement {
+  const [options, setOptions] = useState<CodeOptions>(DEFAULT_CODE_OPTIONS);
+  const [league, setLeague] = useState('');
+  const [clubs, setClubs] = useState<Club[]>([]);
+  const [prefixes, setPrefixes] = useState<Record<string, string>>({});
+  const [included, setIncluded] = useState<Set<string>>(new Set());
+  const [code, setCode] = useState('');
+  const [building, setBuilding] = useState(false);
+  const [doneCount, setDoneCount] = useState(0);
+  const [currentClub, setCurrentClub] = useState('');
+  const [errors, setErrors] = useState<BuildError[]>([]);
 
-					const teamList = data.clubs.map((club) => club.name);
-					setTeams(teamList);
-					
-					const teamMapping = data.clubs.reduce((map, club) => {
-						map[club.name] = club.id;
-						return map;
-					}, {});
-					setTeamMap(teamMapping);
+  // Which league the UI is actually showing. A response is applied only if its
+  // league is still the selected one — rather than being dropped by a cleanup
+  // flag, which strands the roster empty if the effect is torn down and the
+  // request is never reissued.
+  const shownLeague = useRef('');
 
-					// Generate delimiters for all teams
-					const generatedDelimiters = generateDelimiters(teamList);
-					setDelimiters(generatedDelimiters);
-					
-					// Select all teams by default
-					setSelectedTeams(new Set(teamList));
-				} catch (error) {
-					console.error("Error fetching teams:", error);
-					toast.error(describeApiError(error, "Failed to fetch teams. Please try again."));
-				}
-			};
-			fetchTeams();
-		} else {
-			setTeams([]);
-			setDelimiters({});
-			setSelectedTeams(new Set());
-		}
-	}, [selectedLeague]);
+  useEffect(() => {
+    shownLeague.current = league;
 
-	const handleGenerate = async () => {
-		if (!selectedLeague || teams.length === 0) {
-			toast.error("Please select a league first.");
-			return;
-		}
-		
-		if (selectedTeams.size === 0) {
-			toast.error("Please select at least one team.");
-			return;
-		}
-		
-		const teamsToProcess = teams.filter(team => selectedTeams.has(team));
+    if (!league) {
+      setClubs([]);
+      setPrefixes({});
+      setIncluded(new Set());
+      return;
+    }
+    setCode('');
+    setErrors([]);
 
-		try {
-			setLoading(true);
-			setProcessedCount(0);
-			setCurrentTeam('');
-			setErrors([]);
-			const allGeneratedCodes = [];
-			const errorList = [];
-			
-			// Fetch all team squads and generate codes
-			for (let i = 0; i < teamsToProcess.length; i++) {
-				const teamName = teamsToProcess[i];
-				const teamId = teamMap[teamName];
-				const delimiter = delimiters[teamName];
-				
-				setCurrentTeam(teamName);
-				
-				try {
-					// Add delay between requests to avoid rate limiting (except for first request)
-					if (i > 0) {
-						await pauseUnlessCached(2000);
-					}
+    fetchLeagueClubs(LEAGUE_CODES[league])
+      .then((data) => {
+        if (shownLeague.current !== league) {
+          return;
+        }
+        setClubs(data.clubs);
+        setPrefixes(assignPrefixes(data.clubs));
+        setIncluded(new Set(data.clubs.map((club) => club.id)));
+      })
+      .catch((error) => {
+        if (shownLeague.current !== league) {
+          return;
+        }
+        console.error('Error loading league clubs:', error);
+        toast.error(
+          describeApiError(error, `Could not load the clubs in ${league}. Try again in a moment.`)
+        );
+      });
+  }, [league]);
 
-					// Fetch profile first
-					let clubData = null;
-					try {
-						clubData = await fetchClubProfile(teamId);
-					} catch (profileError) {
-						console.error(`Error fetching profile for ${teamName}:`, profileError);
-						errorList.push({ team: teamName, type: 'profile', error: profileError.message });
-					}
+  // A key shared by two included clubs would make one overwrite the other.
+  const clashing = useMemo(() => {
+    const counts = new Map<string, number>();
+    clubs
+      .filter((club) => included.has(club.id))
+      .forEach((club) => {
+        const prefix = prefixes[club.id] ?? '';
+        counts.set(prefix, (counts.get(prefix) ?? 0) + 1);
+      });
+    return new Set(
+      [...counts.entries()].filter(([prefix, n]) => prefix !== '' && n > 1).map(([prefix]) => prefix)
+    );
+  }, [clubs, included, prefixes]);
 
-					// Add 500ms delay between profile and players
-					await pauseUnlessCached(500);
+  const selected = clubs.filter((club) => included.has(club.id));
+  const missingPrefix = selected.some((club) => !prefixes[club.id]);
 
-					// Fetch players
-					let squadData = null;
-					try {
-						squadData = await fetchClubPlayers(teamId);
-					} catch (playersError) {
-						console.error(`Error fetching players for ${teamName}:`, playersError);
-						errorList.push({ team: teamName, type: 'players', error: playersError.message });
-					}
+  const toggle = (id: string) =>
+    setIncluded((previous) => {
+      const next = new Set(previous);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
 
-					// If we got squad data, generate the code
-					if (squadData && squadData.players) {
-						const squad = squadData.players.map((player) => ({
-							number: player.shirtNumber,
-							name: player.name,
-							position: player.position,
-						}));
+  const build = async () => {
+    setBuilding(true);
+    setDoneCount(0);
+    setErrors([]);
+    setCode('');
 
-						// Generate code for this team
-						const teamCode = generateCode({
-							squad1: squad,
-							squad2: [],
-							selectedTeam1: teamName,
-							selectedTeam2: '',
-							delimiter1: delimiter,
-							delimiter2: '',
-							selectedFormat: options.selectedFormat,
-							sortOption: options.sortOption,
-							showInfo: false,
-							referee: '',
-							competition: '',
-							additionalCodes: '',
-							shouldShorten: options.shouldShorten,
-							clubData: clubData,
-							clubData2: null,
-							shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
-							ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
-						});
+    const collected: string[] = [];
+    const failures: BuildError[] = [];
 
-						allGeneratedCodes.push(teamCode);
-					} else {
-						// No squad data available
-						allGeneratedCodes.push(`# ${teamName} (${delimiter}) - ERROR FETCHING DATA\n`);
-					}
+    for (let i = 0; i < selected.length; i++) {
+      const club = selected[i];
+      const prefix = prefixes[club.id];
+      setCurrentClub(club.name);
 
-					setProcessedCount(i + 1);
-				} catch (error) {
-					console.error(`Error fetching data for ${teamName}:`, error);
-					errorList.push({ team: teamName, type: 'unknown', error: error.message });
-					allGeneratedCodes.push(`# ${teamName} (${delimiter}) - ERROR FETCHING DATA\n`);
-					setProcessedCount(i + 1);
-				}
-			}
+      if (i > 0) {
+        await pauseUnlessCached(2000);
+      }
 
-			// Update errors state
-			setErrors(errorList);
+      let profile = null;
+      try {
+        profile = await fetchClubProfile(club.id);
+      } catch (error) {
+        failures.push({
+          club: club.name,
+          part: 'profile',
+          detail: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
 
-			// Add additional info at the top if enabled
-			let finalCode = '';
-			if (options.showInfo) {
-				const additionalInfo = `Ref\tReferee ${options.referee || "-"}\nref\treferee ${
-					options.referee || "-"
-				}\nco\t${options.competition}\n${options.additionalCodes}\n\n`;
-				finalCode = additionalInfo;
-			}
+      await pauseUnlessCached(500);
 
-			// Add delimiter reference section
-			finalCode += "# Team Delimiters\n";
-			teamsToProcess.forEach(teamName => {
-				const delimiter = delimiters[teamName];
-				finalCode += `${delimiter}\t${teamName}\n`;
-			});
-			finalCode += "\n\n";
+      try {
+        const squad = await fetchClubPlayers(club.id);
+        collected.push(
+          generateCode({
+            squad1: (squad.players ?? []).map((player) => ({
+              number: player.shirtNumber,
+              name: player.name,
+              position: player.position,
+            })),
+            squad2: [],
+            selectedTeam1: club.name,
+            selectedTeam2: '',
+            delimiter1: prefix,
+            delimiter2: '',
+            selectedFormat: options.selectedFormat,
+            sortOption: options.sortOption,
+            showInfo: false,
+            shouldShorten: options.shouldShorten,
+            clubData: profile,
+            clubData2: null,
+            shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
+            ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
+          })
+        );
+      } catch (error) {
+        failures.push({
+          club: club.name,
+          part: 'players',
+          detail: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
 
-			// Add all team codes
-			finalCode += allGeneratedCodes.join("\n\n");
+      setDoneCount(i + 1);
+    }
 
-			setGeneratedCode(finalCode);
-			setCurrentTeam('');
-			
-			if (errorList.length === 0) {
-				toast.success("League codes generated successfully!");
-			} else {
-				toast.success(`Generation complete with ${errorList.length} error(s)`);
-			}
-		} catch (error) {
-			console.error("Error generating codes:", error);
-			toast.error("Failed to generate codes. Please try again.");
-			setCurrentTeam('');
-		} finally {
-			setLoading(false);
-		}
-	};
+    // The fixture block belongs at the top of the file, once, above every club.
+    const fixtureBlock =
+      options.referee || options.competition || options.additionalCodes.trim()
+        ? `Ref\tReferee ${options.referee || '-'}\nref\treferee ${options.referee || '-'}\nco\t${
+            options.competition
+          }\n${options.additionalCodes}\n\n`
+        : '';
 
-	return (
-		<div className='generated-code-page container-page'>
-			<Toaster position="top-right" />
-			<div className="card generated-code-card">
-				<div className="card-header">
-					<div>
-						<div className="card-title">League code replacements</div>
-						<div className="card-subtitle">
-							Generate Photo Mechanic code replacements for all teams in an entire league.
-						</div>
-					</div>
-					<div className="card-header-meta">
-						<CacheStatusBadge />
-						<span className="pill">All teams · Auto delimiters</span>
-					</div>
-				</div>
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						handleGenerate();
-					}}
-				>
-					<div className="stack-md">
-						<div>
-							<label className="field-label" htmlFor="league-select">League</label>
-							<select
-								id="league-select"
-								className="select"
-								value={selectedLeague}
-								onChange={(e) => setSelectedLeague(e.target.value)}
-								disabled={loading}
-								required
-							>
-								<option value="" disabled>
-									Choose a league
-								</option>
-								{Object.keys(codes).map((league) => (
-									<option key={league} value={league}>
-										{league}
-									</option>
-								))}
-							</select>
-						</div>
+    const keyMap = selected
+      .map((club) => `${prefixes[club.id]}\t${club.name}`)
+      .join('\n');
 
-						{teams.length > 0 && (
-							<div className="team-preview">
-								<h3>
-									Teams in {selectedLeague} ({selectedTeams.size}/{teams.length} selected) - Click delimiters to edit, team names to toggle
-								</h3>
-								<div className="delimiter-grid">
-									{teams.map(team => {
-										const isSelected = selectedTeams.has(team);
-										const currentDelimiter = delimiters[team] || '';
-										const duplicateCount = Object.values(delimiters).filter(d => d === currentDelimiter && d !== '').length;
-										const hasDuplicate = duplicateCount > 1;
-										
-										return (
-											<div 
-												key={team} 
-												className="delimiter-item"
-												style={{
-													opacity: isSelected ? 1 : 0.5,
-													background: isSelected ? 'var(--bg-secondary)' : 'var(--bg-primary)',
-												}}
-											>
-												<input
-													type="text"
-													className="delimiter-code"
-													value={(delimiters[team] || '').toUpperCase()}
-													onChange={(e) => {
-														const newValue = e.target.value.toLowerCase();
-														setDelimiters(prev => ({
-															...prev,
-															[team]: newValue
-														}));
-													}}
-													style={{
-														cursor: 'text',
-														textAlign: 'center',
-														border: hasDuplicate ? '2px solid #ef4444' : 'none',
-														outline: 'none',
-														background: hasDuplicate ? '#ef4444' : 'var(--primary-color)',
-														color: 'white',
-														maxWidth: '60px',
-														flexShrink: 0,
-													}}
-													title={hasDuplicate ? `⚠️ Duplicate delimiter! (used by ${duplicateCount} teams)` : `Edit delimiter for ${team}`}
-													disabled={!isSelected}
-												/>
-												<span 
-													className="team-name"
-													onClick={() => {
-														setSelectedTeams(prev => {
-															const newSet = new Set(prev);
-															if (newSet.has(team)) {
-																newSet.delete(team);
-															} else {
-																newSet.add(team);
-															}
-															return newSet;
-														});
-													}}
-													style={{
-														cursor: 'pointer',
-														textDecoration: isSelected ? 'none' : 'line-through',
-													}}
-													title={`Click to ${isSelected ? 'deselect' : 'select'} ${team}`}
-												>
-													{team}
-												</span>
-											</div>
-										);
-									})}
-								</div>
-								<div style={{ 
-									marginTop: 12, 
-									display: 'flex', 
-									gap: 8,
-									justifyContent: 'flex-end' 
-								}}>
-									<button
-										type="button"
-										className="btn btn-secondary"
-										onClick={() => setSelectedTeams(new Set(teams))}
-										style={{ fontSize: 13, padding: '6px 12px' }}
-									>
-										Select All
-									</button>
-									<button
-										type="button"
-										className="btn btn-secondary"
-										onClick={() => setSelectedTeams(new Set())}
-										style={{ fontSize: 13, padding: '6px 12px' }}
-									>
-										Deselect All
-									</button>
-								</div>
-							</div>
-						)}
-					</div>
-					<div className="btn-row" style={{ marginTop: 18 }}>
-						<button
-							type="submit"
-							className="btn"
-							disabled={loading || !selectedLeague}
-						>
-							{loading ? 'Building the file…' : 'Build code replacements'}
-						</button>
-					</div>
-					{loading && (
-						<div style={{ 
-							marginTop: 16, 
-							padding: 16, 
-							background: 'var(--bg-secondary)', 
-							borderRadius: 8,
-							border: '1px solid var(--border-color)'
-						}}>
-							<div style={{ 
-								display: 'flex', 
-								justifyContent: 'space-between', 
-								alignItems: 'center',
-								marginBottom: 12 
-							}}>
-								<span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-									Processing teams...
-								</span>
-								<span style={{ 
-									fontSize: 14, 
-									color: 'var(--text-muted)',
-									fontFamily: 'monospace'
-								}}>
-									{processedCount}/{selectedTeams.size}
-								</span>
-							</div>
-							{currentTeam && (
-								<div style={{ 
-									fontSize: 13, 
-									color: 'var(--text-muted)',
-									marginBottom: 8
-								}}>
-									Current: {currentTeam}
-								</div>
-							)}
-							<div style={{ 
-								width: '100%', 
-								height: 8, 
-								background: 'var(--bg-primary)', 
-								borderRadius: 4,
-								overflow: 'hidden'
-							}}>
-								<div style={{ 
-									width: `${(processedCount / selectedTeams.size) * 100}%`, 
-									height: '100%', 
-									background: 'var(--primary-color)',
-									transition: 'width 0.3s ease'
-								}} />
-							</div>
-						</div>
-					)}
-				</form>
-				<div className="generated-extra-card">
-					<FixtureDetails options={options} setOptions={setOptions} />
-				</div>
-				{errors.length > 0 && (
-					<div style={{ 
-						marginTop: 16, 
-						padding: 16, 
-						background: 'rgba(239, 68, 68, 0.1)', 
-						borderRadius: 8,
-						border: '1px solid rgba(239, 68, 68, 0.3)'
-					}}>
-						<div style={{ 
-							fontWeight: 600, 
-							color: '#ef4444',
-							marginBottom: 12,
-							fontSize: 14
-						}}>
-							⚠️ Errors encountered ({errors.length} team{errors.length > 1 ? 's' : ''})
-						</div>
-						<div style={{ 
-							display: 'flex', 
-							flexDirection: 'column', 
-							gap: 8 
-						}}>
-							{errors.map((error) => (
-								<div key={`${error.team}-${error.type}`} style={{ 
-									fontSize: 13, 
-									color: 'var(--text-primary)',
-									padding: 8,
-									background: 'var(--bg-primary)',
-									borderRadius: 4,
-									fontFamily: 'monospace'
-								}}>
-									<strong>{error.team}</strong> - Failed to fetch <span style={{ 
-										color: '#ef4444',
-										fontWeight: 600
-									}}>{error.type}</span>
-									{error.error && (
-										<div style={{ 
-											fontSize: 12, 
-											color: 'var(--text-muted)', 
-											marginTop: 4 
-										}}>
-											{error.error}
-										</div>
-									)}
-								</div>
-							))}
-						</div>
-					</div>
-				)}
-				{generatedCode && (
-					<div className="preview-block success-fade-in" style={{ marginTop: 16 }}>
-						<div className="preview-heading">
-							<span>Generated code replacements</span>
-							<div className="preview-actions">
-								<CopyButton 
-									text={generatedCode}
-									label="Copy All"
-								/>
-								<button
-									className="btn btn-secondary"
-									type="button"
-									onClick={() => {
-										const leagueName = selectedLeague.replace(/\s+/g, '_').toLowerCase();
-										const blob = new Blob([generatedCode], { type: 'text/plain;charset=utf-8' });
-										const link = document.createElement('a');
-										link.href = URL.createObjectURL(blob);
-										link.download = `${leagueName}_code_replacements.txt`;
-										link.click();
-									}}
-								>
-									Download .txt
-								</button>
-							</div>
-						</div>
-						<pre className="preview-body">{generatedCode}</pre>
-					</div>
-				)}
-			</div>
-		</div>
-	);
+    setCode(`${fixtureBlock}${keyMap}\n\n\n${collected.join('\n\n')}`);
+    setCurrentClub('');
+    setBuilding(false);
+
+    if (failures.length === 0) {
+      toast.success(`${selected.length} clubs added to the file.`);
+    } else {
+      setErrors(failures);
+      toast(`Built with ${failures.length} club${failures.length > 1 ? 's' : ''} missing.`, {
+        icon: '⚠️',
+      });
+    }
+  };
+
+  return (
+    <div className="workspace">
+      <Toaster position="top-right" />
+
+      <div className="workspace-setup">
+        <section className="panel">
+          <div className="panel-head">
+            <h1 className="panel-title">Whole league</h1>
+            <span className="eyebrow">Every club, one file</span>
+          </div>
+
+          <div className="panel-body stack">
+            <div>
+              <label className="field-label" htmlFor="league">
+                League
+              </label>
+              <select
+                id="league"
+                className="select"
+                value={league}
+                disabled={building}
+                onChange={(e) => setLeague(e.target.value)}
+              >
+                <option value="">Choose a league</option>
+                {Object.keys(LEAGUE_CODES).map((name) => (
+                  <option key={name} value={name}>
+                    {name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {clubs.length > 0 && (
+              <div>
+                <div className="roster-head">
+                  <span className="field-label" style={{ marginBottom: 0 }}>
+                    Clubs to include
+                  </span>
+                  <span className="ledger-count">
+                    {selected.length} of {clubs.length}
+                  </span>
+                </div>
+
+                <div className="roster">
+                  {clubs.map((club) => {
+                    const prefix = prefixes[club.id] ?? '';
+                    const isIn = included.has(club.id);
+                    const clash = isIn && clashing.has(prefix);
+
+                    return (
+                      <div
+                        key={club.id}
+                        className={`roster-row${isIn ? '' : ' roster-row-out'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isIn}
+                          aria-label={`Include ${club.name}`}
+                          onChange={() => toggle(club.id)}
+                        />
+                        <input
+                          type="text"
+                          className={`roster-key${clash ? ' roster-key-clash' : ''}`}
+                          value={prefix}
+                          disabled={!isIn}
+                          aria-invalid={clash}
+                          aria-label={`Key for ${club.name}`}
+                          title={clash ? 'Another club is using this key' : undefined}
+                          onChange={(e) =>
+                            setPrefixes((previous) => ({
+                              ...previous,
+                              [club.id]: e.target.value.toLowerCase().slice(0, 4),
+                            }))
+                          }
+                        />
+                        <span className="roster-name">{club.name}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="btn-row" style={{ marginTop: 8 }}>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setIncluded(new Set(clubs.map((club) => club.id)))}
+                  >
+                    Include all
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm"
+                    onClick={() => setIncluded(new Set())}
+                  >
+                    Include none
+                  </button>
+                </div>
+
+                {clashing.size > 0 && (
+                  <p className="field-error">
+                    {clashing.size === 1 ? 'Two clubs share a key' : `${clashing.size} keys are shared`}
+                    . Give each club its own so the codes don&rsquo;t overwrite one another.
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="panel-foot" style={{ display: 'block' }}>
+            <button
+              type="button"
+              className="btn"
+              disabled={building || selected.length === 0 || clashing.size > 0 || missingPrefix}
+              onClick={build}
+            >
+              {building
+                ? `Building… ${doneCount} of ${selected.length}`
+                : selected.length
+                  ? `Build file for ${selected.length} club${selected.length === 1 ? '' : 's'}`
+                  : 'Build file'}
+            </button>
+
+            {building && (
+              <div className="progress" role="status" aria-live="polite">
+                <div className="progress-track">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${selected.length ? (doneCount / selected.length) * 100 : 0}%`,
+                    }}
+                  />
+                </div>
+                <p className="field-hint">
+                  {currentClub ? `Fetching ${currentClub}` : 'Finishing up'} · pauses between
+                  clubs so Transfermarkt doesn&rsquo;t block the run
+                </p>
+              </div>
+            )}
+
+            {!building && !code && selected.length > 0 && (
+              <p className="field-hint">
+                Two requests per club, spaced out — a full league takes a couple of minutes.
+              </p>
+            )}
+          </div>
+        </section>
+
+        {errors.length > 0 && (
+          <div className="notice notice-signal">
+            <div>
+              <strong>
+                {errors.length} club{errors.length > 1 ? 's' : ''} came back incomplete
+              </strong>
+              <ul className="error-list">
+                {errors.map((error) => (
+                  <li key={`${error.club}-${error.part}`}>
+                    {error.club} — no {error.part}
+                  </li>
+                ))}
+              </ul>
+              Those clubs are missing from the file. Rebuilding usually picks them up.
+            </div>
+          </div>
+        )}
+
+        <FixtureDetails options={options} setOptions={setOptions} />
+      </div>
+
+      <CodeLedger
+        code={code}
+        homePrefix=""
+        awayPrefix=""
+        filename={`${league.replace(/\s+/g, '-').toLowerCase() || 'league'}-codes`}
+        busy={building}
+        generation={`${league}:${doneCount}`}
+        emptyTitle="No league built yet"
+        emptyText="Choose a league, check the clubs and their keys, then build the file."
+        busyTitle="Building the league"
+        busyText="Each club is fetched in turn, with a pause in between."
+      />
+    </div>
+  );
 }
