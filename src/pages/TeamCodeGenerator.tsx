@@ -4,6 +4,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import './codegen.css';
 import FixtureDetails from '../components/FixtureDetails';
 import MatchTeamSlot from '../components/MatchTeamSlot';
+import LeagueClubPicker from '../components/LeagueClubPicker';
 import CodeLedger from '../components/CodeLedger';
 import { useMatchFile } from '../hooks/useMatchFile';
 import { Club, describeApiError, fetchLeagueClubs } from '../services/api';
@@ -93,33 +94,17 @@ export default function TeamCodeGenerator(): React.ReactElement {
     .join('-');
 
   const clubSelect = (
-    id: string,
     label: string,
-    value: string,
     choices: Club[],
     onPick: (_club: Club | null) => void
   ) => (
-    <div>
-      <label className="field-label" htmlFor={id}>
-        {label}
-      </label>
-      <select
-        id={id}
-        className="select"
-        value={value}
-        disabled={!league || loadingClubs}
-        onChange={(e) => onPick(choices.find((club) => club.id === e.target.value) ?? null)}
-      >
-        <option value="">
-          {loadingClubs ? 'Loading clubs…' : league ? 'Choose a club' : 'Choose a league first'}
-        </option>
-        {choices.map((club) => (
-          <option key={club.id} value={club.id}>
-            {club.name}
-          </option>
-        ))}
-      </select>
-    </div>
+    <LeagueClubPicker
+      label={label}
+      choices={choices}
+      disabled={!league || loadingClubs}
+      disabledPlaceholder={loadingClubs ? 'Loading clubs…' : 'Choose a league first'}
+      onSelect={onPick}
+    />
   );
 
   return (
@@ -164,7 +149,7 @@ export default function TeamCodeGenerator(): React.ReactElement {
               onPrefixChange={setHomePrefix}
               clash={prefixClash}
             >
-              {clubSelect('home-club', 'Home club', home.club?.id ?? '', homeChoices, selectHome)}
+              {clubSelect('Home club', homeChoices, selectHome)}
             </MatchTeamSlot>
 
             <MatchTeamSlot
@@ -175,7 +160,7 @@ export default function TeamCodeGenerator(): React.ReactElement {
               clash={prefixClash}
               onClear={clearAway}
             >
-              {clubSelect('away-club', 'Away club', away.club?.id ?? '', awayChoices, selectAway)}
+              {clubSelect('Away club', awayChoices, selectAway)}
             </MatchTeamSlot>
           </div>
           {home.club && away.club && (
