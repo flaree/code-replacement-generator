@@ -20,6 +20,9 @@ export const LEAGUE_CODES: Record<string, string> = {
   "Brazilian Serie A": 'BRA1',
   "Major League Soccer": 'MLS1',
   "Dutch Eredivisie": 'NL1',
+  "UEFA Champions League": 'CL',
+  "UEFA Europa League": 'EL',
+  "UEFA Europa Conference League": 'UCOL',
 };
 
 // Player Name Formats
