@@ -44,6 +44,8 @@ export interface GenerateCodeParams {
    * metadata fields with `={code}#1=`, `={code}#2=`, etc.
    */
   codeStyle?: CodeStyle;
+  /** Prefix for the name-only code in 'simple' style, e.g. the "." in ".b1". Defaults to ".". */
+  nameCodePrefix?: string;
 }
 
 export const generateCode = ({
@@ -65,7 +67,11 @@ export const generateCode = ({
   shouldChangeGoalkeeperStyle,
   ignoreNoNumberPlayers,
   codeStyle = "simple",
+  nameCodePrefix: rawNameCodePrefix = ".",
 }: GenerateCodeParams): string => {
+  // An emptied-out prefix would make the name-only code identical to the
+  // caption code, silently overwriting it — a dot is the safe fallback.
+  const nameCodePrefix = rawNameCodePrefix || ".";
   const formatPlayer = (
     player: Player, 
     team: string, 
@@ -176,7 +182,9 @@ export const generateCode = ({
           )}`
       ),
       "\n",
-      ...players.map((player) => `.${delimiter}${number(player)}\t${player.name || "-"}`),
+      ...players.map(
+        (player) => `${nameCodePrefix}${delimiter}${number(player)}\t${player.name || "-"}`
+      ),
     ];
   };
 

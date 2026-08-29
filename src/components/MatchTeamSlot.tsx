@@ -96,10 +96,10 @@ export default function MatchTeamSlot({
                 type="text"
                 className="prefix-input"
                 value={prefix}
-                maxLength={1}
+                maxLength={2}
                 aria-invalid={clash}
                 aria-describedby={clash ? `${prefixId}-err` : undefined}
-                onChange={(e) => onPrefixChange(e.target.value.slice(0, 1).toLowerCase())}
+                onChange={(e) => onPrefixChange(e.target.value.slice(0, 2).toLowerCase())}
               />
             </div>
           </div>

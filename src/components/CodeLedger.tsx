@@ -17,22 +17,31 @@ interface Line {
  * Split a code replacement file into its parts.
  *
  * The file format is `code<TAB>description`, one per line, with blank lines
- * separating blocks. Which team a line belongs to is carried by the first
- * character of its code, so that is how each line gets its kit colour.
+ * separating blocks. Which team a line belongs to is carried by its key
+ * (after the name-only prefix, if any), so that is how each line gets its
+ * kit colour. Keys can be one or two characters, so this checks the longer
+ * of the two team keys first — if one key happens to be a prefix of the
+ * other, the more specific match wins.
  */
-const parseLines = (code: string, homePrefix: string, awayPrefix: string): Line[] => {
+const parseLines = (
+  code: string,
+  homePrefix: string,
+  awayPrefix: string,
+  namePrefix: string
+): Line[] => {
   const sideOf = (raw: string): Side => {
-    const first = raw.startsWith('.') ? raw.slice(1, 2) : raw.slice(0, 1);
-    if (!first) {
+    const stripped = namePrefix && raw.startsWith(namePrefix) ? raw.slice(namePrefix.length) : raw;
+    if (!stripped) {
       return null;
     }
-    if (homePrefix && first === homePrefix) {
-      return 'home';
-    }
-    if (awayPrefix && first === awayPrefix) {
-      return 'away';
-    }
-    return null;
+    const bySize = [
+      { side: 'home' as const, prefix: homePrefix },
+      { side: 'away' as const, prefix: awayPrefix },
+    ]
+      .filter((entry) => entry.prefix)
+      .sort((a, b) => b.prefix.length - a.prefix.length);
+
+    return bySize.find((entry) => stripped.startsWith(entry.prefix))?.side ?? null;
   };
 
   return code.split('\n').map((line) => {
@@ -60,6 +69,8 @@ interface CodeLedgerProps {
   code: string;
   homePrefix: string;
   awayPrefix: string;
+  /** Prefix stripped off a code before reading its team letter, e.g. the "." in ".b1". */
+  namePrefix?: string;
   /** Filename used for the download, without extension. */
   filename: string;
   /** True while a squad is still being fetched. */
@@ -83,6 +94,7 @@ export default function CodeLedger({
   code,
   homePrefix,
   awayPrefix,
+  namePrefix: rawNamePrefix = '.',
   filename,
   busy = false,
   generation,
@@ -91,9 +103,11 @@ export default function CodeLedger({
   busyTitle = 'Loading squad',
   busyText = 'Pulling the squad list from Transfermarkt.',
 }: CodeLedgerProps): React.ReactElement {
+  // Matches the generator's own fallback for a cleared prefix field.
+  const namePrefix = rawNamePrefix || '.';
   const lines = useMemo(
-    () => parseLines(code, homePrefix, awayPrefix),
-    [code, homePrefix, awayPrefix]
+    () => parseLines(code, homePrefix, awayPrefix, namePrefix),
+    [code, homePrefix, awayPrefix, namePrefix]
   );
 
   const codeCount = useMemo(

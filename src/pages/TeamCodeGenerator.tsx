@@ -200,6 +200,7 @@ export default function TeamCodeGenerator(): React.ReactElement {
         code={code}
         homePrefix={homePrefix}
         awayPrefix={awayPrefix}
+        namePrefix={options.nameCodePrefix}
         filename={filename}
         busy={busy}
         generation={generation}

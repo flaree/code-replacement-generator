@@ -50,6 +50,7 @@ export default function FixtureDetails({
   const [saved, setSaved] = useState(false);
 
   const player = samplePlayer ?? { name: 'Dawson Devoy', number: 10 };
+  const namePrefix = options.nameCodePrefix || '.';
 
   const set = <K extends keyof CodeOptions>(key: K, value: CodeOptions[K]): void => {
     setOptions((previous) => ({ ...previous, [key]: value }));
@@ -76,6 +77,7 @@ export default function FixtureDetails({
         includeNoNumberPlayers:
           parsed.includeNoNumberPlayers ?? previous.includeNoNumberPlayers,
         codeStyle: parsed.codeStyle ?? previous.codeStyle,
+        nameCodePrefix: parsed.nameCodePrefix ?? previous.nameCodePrefix,
       }));
       setSaved(true);
     } catch {
@@ -98,6 +100,7 @@ export default function FixtureDetails({
           shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
           includeNoNumberPlayers: options.includeNoNumberPlayers,
           codeStyle: options.codeStyle,
+          nameCodePrefix: options.nameCodePrefix,
         })
       );
       setSaved(true);
@@ -184,13 +187,34 @@ export default function FixtureDetails({
                     onChange={() => set('codeStyle', CODE_STYLES.SIMPLE)}
                   />
                   <span className="check-text">
-                    Simple: <code>b1</code> + <code>.b1</code>
+                    Simple: <code>b1</code> + <code>{namePrefix}b1</code>
                     <span className="check-sub">
-                      <code>b1</code> types the full caption, <code>.b1</code> types just the
-                      name. No template setup needed.
+                      <code>b1</code> types the full caption, <code>{namePrefix}b1</code> types
+                      just the name. No template setup needed.
                     </span>
                   </span>
                 </label>
+                {options.codeStyle === CODE_STYLES.SIMPLE && (
+                  <div style={{ marginLeft: 25 }}>
+                    <label className="field-label" htmlFor="fx-name-prefix">
+                      Name-only code prefix
+                    </label>
+                    <input
+                      id="fx-name-prefix"
+                      type="text"
+                      className="input"
+                      style={{ maxWidth: 80 }}
+                      value={options.nameCodePrefix}
+                      maxLength={3}
+                      onChange={(e) => set('nameCodePrefix', e.target.value)}
+                    />
+                    <p className="field-hint">
+                      Defaults to a dot. Change it if <code>.</code> clashes with something else
+                      in your workflow — the name-only code becomes{' '}
+                      <code>{namePrefix}b1</code> instead of <code>.b1</code>.
+                    </p>
+                  </div>
+                )}
                 <label className="check">
                   <input
                     type="radio"

@@ -170,6 +170,7 @@ export const useMatchFile = (options: CodeOptions): UseMatchFileReturn => {
       shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
       ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
       codeStyle: options.codeStyle,
+      nameCodePrefix: options.nameCodePrefix,
     });
   }, [home, away, homePrefix, awayPrefix, options]);
 

@@ -59,6 +59,8 @@ export interface CodeOptions {
   shouldChangeGoalkeeperStyle: boolean;
   includeNoNumberPlayers: boolean;
   codeStyle: CodeStyle;
+  /** Prefix put in front of the delimiter for the name-only code in 'simple' style, e.g. the "." in ".b1". */
+  nameCodePrefix: string;
 }
 
 // Default Code Generation Options
@@ -75,6 +77,7 @@ export const DEFAULT_CODE_OPTIONS: CodeOptions = {
   shouldChangeGoalkeeperStyle: false,
   includeNoNumberPlayers: true,
   codeStyle: CODE_STYLES.SIMPLE,
+  nameCodePrefix: '.',
 };
 
 // Sort Options
