@@ -37,6 +37,14 @@ export const PLAYER_NAME_FORMATS: string[] = [
   "{playerName} - {team} ({shirtNumber})",
 ];
 
+// Code Styles
+export const CODE_STYLES = {
+  SIMPLE: 'simple' as const,
+  COLUMNS: 'columns' as const,
+};
+
+export type CodeStyle = typeof CODE_STYLES[keyof typeof CODE_STYLES];
+
 // Types for Code Generation Options
 export interface CodeOptions {
   showInfo: boolean;
@@ -50,6 +58,7 @@ export interface CodeOptions {
   selectedFormat: string;
   shouldChangeGoalkeeperStyle: boolean;
   includeNoNumberPlayers: boolean;
+  codeStyle: CodeStyle;
 }
 
 // Default Code Generation Options
@@ -65,6 +74,7 @@ export const DEFAULT_CODE_OPTIONS: CodeOptions = {
   selectedFormat: "{playerName} of {team}",
   shouldChangeGoalkeeperStyle: false,
   includeNoNumberPlayers: true,
+  codeStyle: CODE_STYLES.SIMPLE,
 };
 
 // Sort Options

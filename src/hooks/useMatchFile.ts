@@ -169,6 +169,7 @@ export const useMatchFile = (options: CodeOptions): UseMatchFileReturn => {
       clubData2: away.profile,
       shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
       ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
+      codeStyle: options.codeStyle,
     });
   }, [home, away, homePrefix, awayPrefix, options]);
 

@@ -3,6 +3,8 @@
  * Generates Photo Mechanic code replacement files from squad data
  */
 
+import { CodeStyle } from '../constants/config';
+
 export interface Player {
   number?: string | number;
   name: string;
@@ -34,6 +36,14 @@ export interface GenerateCodeParams {
   clubData2?: ClubData | null;
   shouldChangeGoalkeeperStyle: boolean;
   ignoreNoNumberPlayers?: boolean;
+  /**
+   * 'simple' (default) emits two rows per player: the full caption under the
+   * plain prefix code, and just the name under a `.`-prefixed one.
+   * 'columns' emits one row per player with several tab-separated fields, so
+   * a Photo Mechanic template can pull different columns into different
+   * metadata fields with `={code}#1=`, `={code}#2=`, etc.
+   */
+  codeStyle?: CodeStyle;
 }
 
 export const generateCode = ({
@@ -54,6 +64,7 @@ export const generateCode = ({
   clubData2,
   shouldChangeGoalkeeperStyle,
   ignoreNoNumberPlayers,
+  codeStyle = "simple",
 }: GenerateCodeParams): string => {
   const formatPlayer = (
     player: Player, 
@@ -124,36 +135,55 @@ export const generateCode = ({
   const sortedSquad1 = sortPlayers(filteredSquad1);
   const sortedSquad2 = sortPlayers(filteredSquad2);
 
+  /**
+   * One squad's rows, in whichever style was asked for.
+   *
+   * Columns mode packs everything a template might want (caption, name,
+   * position, team, number) into one row per player, ordered so `#1` is
+   * always the full caption and `#5` is always the number — stable column
+   * positions are what let a saved Photo Mechanic template keep working
+   * fixture after fixture.
+   */
+  const buildSquadLines = (
+    players: Player[],
+    team: string,
+    delimiter: string
+  ): string[] => {
+    const number = (player: Player) => String(player.number || "-");
+
+    if (codeStyle === "columns") {
+      return players.map((player) => {
+        const caption = formatPlayer(player, team, delimiter, shouldChangeGoalkeeperStyle);
+        return [
+          `${delimiter || "-"}${number(player)}`,
+          caption,
+          player.name || "-",
+          player.position || "-",
+          team || "-",
+          number(player),
+        ].join("\t");
+      });
+    }
+
+    return [
+      ...players.map(
+        (player) =>
+          `${delimiter || "-"}${number(player)}\t${formatPlayer(
+            player,
+            team,
+            delimiter,
+            shouldChangeGoalkeeperStyle
+          )}`
+      ),
+      "\n",
+      ...players.map((player) => `.${delimiter}${number(player)}\t${player.name || "-"}`),
+    ];
+  };
+
   const code = [
-    ...sortedSquad1.map(
-      (player) =>
-        `${delimiter1 || "-"}${player.number || "-"}\t${formatPlayer(
-          player,
-          selectedTeam1,
-          delimiter1,
-          shouldChangeGoalkeeperStyle
-        )}`
-    ),
+    ...buildSquadLines(sortedSquad1, selectedTeam1, delimiter1),
     "\n",
-    ...sortedSquad1.map(
-      (player) =>
-        `.${delimiter1}${player.number || "-"}\t${player.name || "-"}`
-    ),
-    "\n",
-    ...sortedSquad2.map(
-      (player) =>
-        `${delimiter2 || "-"}${player.number || "-"}\t${formatPlayer(
-          player,
-          selectedTeam2,
-          delimiter2,
-          shouldChangeGoalkeeperStyle
-        )}`
-    ),
-    "\n",
-    ...sortedSquad2.map(
-      (player) =>
-        `.${delimiter2}${player.number || "-"}\t${player.name || "-"}`
-    ),
+    ...buildSquadLines(sortedSquad2, selectedTeam2, delimiter2),
   ].join("\n");
 
   const additionalInfo = showInfo

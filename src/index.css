@@ -573,7 +573,8 @@ kbd {
   padding: 3px 0;
 }
 
-.check input[type='checkbox'] {
+.check input[type='checkbox'],
+.check input[type='radio'] {
   flex: none;
   width: 16px;
   height: 16px;

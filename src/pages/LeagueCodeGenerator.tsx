@@ -209,6 +209,7 @@ export default function LeagueCodeGenerator(): React.ReactElement {
             clubData2: null,
             shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
             ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
+            codeStyle: options.codeStyle,
           })
         );
       } catch (error) {

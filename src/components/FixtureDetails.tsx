@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CodeOptions } from '../constants/config';
+import { CODE_STYLES, CodeOptions } from '../constants/config';
 
 const STORAGE_KEY = 'code_generator_additional_options';
 
@@ -75,6 +75,7 @@ export default function FixtureDetails({
           parsed.shouldChangeGoalkeeperStyle ?? previous.shouldChangeGoalkeeperStyle,
         includeNoNumberPlayers:
           parsed.includeNoNumberPlayers ?? previous.includeNoNumberPlayers,
+        codeStyle: parsed.codeStyle ?? previous.codeStyle,
       }));
       setSaved(true);
     } catch {
@@ -96,6 +97,7 @@ export default function FixtureDetails({
           selectedFormat: options.selectedFormat,
           shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
           includeNoNumberPlayers: options.includeNoNumberPlayers,
+          codeStyle: options.codeStyle,
         })
       );
       setSaved(true);
@@ -170,6 +172,43 @@ export default function FixtureDetails({
                 ))}
               </div>
             </fieldset>
+
+            <div>
+              <span className="field-label">Code style</span>
+              <div className="stack-sm">
+                <label className="check">
+                  <input
+                    type="radio"
+                    name="code-style"
+                    checked={options.codeStyle === CODE_STYLES.SIMPLE}
+                    onChange={() => set('codeStyle', CODE_STYLES.SIMPLE)}
+                  />
+                  <span className="check-text">
+                    Simple: <code>b1</code> + <code>.b1</code>
+                    <span className="check-sub">
+                      <code>b1</code> types the full caption, <code>.b1</code> types just the
+                      name. No template setup needed.
+                    </span>
+                  </span>
+                </label>
+                <label className="check">
+                  <input
+                    type="radio"
+                    name="code-style"
+                    checked={options.codeStyle === CODE_STYLES.COLUMNS}
+                    onChange={() => set('codeStyle', CODE_STYLES.COLUMNS)}
+                  />
+                  <span className="check-text">
+                    Multi-column: one code per player
+                    <span className="check-sub">
+                      <code>b1</code> carries caption, name, position, team and number as columns
+                      1&ndash;5. Point each field in your Photo Mechanic template at a column:{' '}
+                      <code>{'={b1}#1='}</code>, <code>{'={b1}#2='}</code>, and so on.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            </div>
 
             <div className="grid-2">
               <div>
