@@ -171,6 +171,7 @@ export const useMatchFile = (options: CodeOptions): UseMatchFileReturn => {
       ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
       codeStyle: options.codeStyle,
       nameCodePrefix: options.nameCodePrefix,
+      nameCodePosition: options.nameCodePosition,
     });
   }, [home, away, homePrefix, awayPrefix, options]);
 

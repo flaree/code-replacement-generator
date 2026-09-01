@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import CopyButton from './CopyButton';
 import CacheStatusBadge from './CacheStatusBadge';
 import { downloadTextFile } from '../utils/helpers';
+import { NameCodePosition } from '../constants/config';
 
 type LineKind = 'blank' | 'entry' | 'raw';
 type Side = 'home' | 'away' | null;
@@ -18,19 +19,27 @@ interface Line {
  *
  * The file format is `code<TAB>description`, one per line, with blank lines
  * separating blocks. Which team a line belongs to is carried by its key
- * (after the name-only prefix, if any), so that is how each line gets its
- * kit colour. Keys can be one or two characters, so this checks the longer
- * of the two team keys first — if one key happens to be a prefix of the
- * other, the more specific match wins.
+ * (after the name-only mark is stripped off, if present), so that is how
+ * each line gets its kit colour. Keys can be one or two characters, so this
+ * checks the longer of the two team keys first — if one key happens to be a
+ * prefix of the other, the more specific match wins.
  */
 const parseLines = (
   code: string,
   homePrefix: string,
   awayPrefix: string,
-  namePrefix: string
+  namePrefix: string,
+  namePosition: NameCodePosition
 ): Line[] => {
   const sideOf = (raw: string): Side => {
-    const stripped = namePrefix && raw.startsWith(namePrefix) ? raw.slice(namePrefix.length) : raw;
+    let stripped = raw;
+    if (namePrefix) {
+      if (namePosition === 'suffix' && raw.endsWith(namePrefix)) {
+        stripped = raw.slice(0, raw.length - namePrefix.length);
+      } else if (namePosition === 'prefix' && raw.startsWith(namePrefix)) {
+        stripped = raw.slice(namePrefix.length);
+      }
+    }
     if (!stripped) {
       return null;
     }
@@ -69,8 +78,10 @@ interface CodeLedgerProps {
   code: string;
   homePrefix: string;
   awayPrefix: string;
-  /** Prefix stripped off a code before reading its team letter, e.g. the "." in ".b1". */
+  /** Mark stripped off a code before reading its team letter, e.g. the "." in ".b1". */
   namePrefix?: string;
+  /** Whether that mark sits before the key (".b1") or after it ("b1."). */
+  namePosition?: NameCodePosition;
   /** Filename used for the download, without extension. */
   filename: string;
   /** True while a squad is still being fetched. */
@@ -95,6 +106,7 @@ export default function CodeLedger({
   homePrefix,
   awayPrefix,
   namePrefix: rawNamePrefix = '.',
+  namePosition = 'prefix',
   filename,
   busy = false,
   generation,
@@ -103,11 +115,11 @@ export default function CodeLedger({
   busyTitle = 'Loading squad',
   busyText = 'Pulling the squad list from Transfermarkt.',
 }: CodeLedgerProps): React.ReactElement {
-  // Matches the generator's own fallback for a cleared prefix field.
+  // Matches the generator's own fallback for a cleared mark field.
   const namePrefix = rawNamePrefix || '.';
   const lines = useMemo(
-    () => parseLines(code, homePrefix, awayPrefix, namePrefix),
-    [code, homePrefix, awayPrefix, namePrefix]
+    () => parseLines(code, homePrefix, awayPrefix, namePrefix, namePosition),
+    [code, homePrefix, awayPrefix, namePrefix, namePosition]
   );
 
   const codeCount = useMemo(

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CODE_STYLES, CodeOptions } from '../constants/config';
+import { CODE_STYLES, NAME_CODE_POSITIONS, CodeOptions } from '../constants/config';
 
 const STORAGE_KEY = 'code_generator_additional_options';
 
@@ -51,6 +51,8 @@ export default function FixtureDetails({
 
   const player = samplePlayer ?? { name: 'Dawson Devoy', number: 10 };
   const namePrefix = options.nameCodePrefix || '.';
+  const nameCodeExample =
+    options.nameCodePosition === NAME_CODE_POSITIONS.SUFFIX ? `b1${namePrefix}` : `${namePrefix}b1`;
 
   const set = <K extends keyof CodeOptions>(key: K, value: CodeOptions[K]): void => {
     setOptions((previous) => ({ ...previous, [key]: value }));
@@ -78,6 +80,7 @@ export default function FixtureDetails({
           parsed.includeNoNumberPlayers ?? previous.includeNoNumberPlayers,
         codeStyle: parsed.codeStyle ?? previous.codeStyle,
         nameCodePrefix: parsed.nameCodePrefix ?? previous.nameCodePrefix,
+        nameCodePosition: parsed.nameCodePosition ?? previous.nameCodePosition,
       }));
       setSaved(true);
     } catch {
@@ -101,6 +104,7 @@ export default function FixtureDetails({
           includeNoNumberPlayers: options.includeNoNumberPlayers,
           codeStyle: options.codeStyle,
           nameCodePrefix: options.nameCodePrefix,
+          nameCodePosition: options.nameCodePosition,
         })
       );
       setSaved(true);
@@ -187,31 +191,54 @@ export default function FixtureDetails({
                     onChange={() => set('codeStyle', CODE_STYLES.SIMPLE)}
                   />
                   <span className="check-text">
-                    Simple: <code>b1</code> + <code>{namePrefix}b1</code>
+                    Simple: <code>b1</code> + <code>{nameCodeExample}</code>
                     <span className="check-sub">
-                      <code>b1</code> types the full caption, <code>{namePrefix}b1</code> types
+                      <code>b1</code> types the full caption, <code>{nameCodeExample}</code> types
                       just the name. No template setup needed.
                     </span>
                   </span>
                 </label>
                 {options.codeStyle === CODE_STYLES.SIMPLE && (
                   <div style={{ marginLeft: 25 }}>
-                    <label className="field-label" htmlFor="fx-name-prefix">
-                      Name-only code prefix
-                    </label>
-                    <input
-                      id="fx-name-prefix"
-                      type="text"
-                      className="input"
-                      style={{ maxWidth: 80 }}
-                      value={options.nameCodePrefix}
-                      maxLength={3}
-                      onChange={(e) => set('nameCodePrefix', e.target.value)}
-                    />
+                    <div className="grid-2">
+                      <div>
+                        <label className="field-label" htmlFor="fx-name-prefix">
+                          Name-only code mark
+                        </label>
+                        <input
+                          id="fx-name-prefix"
+                          type="text"
+                          className="input"
+                          style={{ maxWidth: 80 }}
+                          value={options.nameCodePrefix}
+                          maxLength={3}
+                          onChange={(e) => set('nameCodePrefix', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="field-label" htmlFor="fx-name-position">
+                          Position
+                        </label>
+                        <select
+                          id="fx-name-position"
+                          className="select"
+                          value={options.nameCodePosition}
+                          onChange={(e) =>
+                            set(
+                              'nameCodePosition',
+                              e.target.value as CodeOptions['nameCodePosition']
+                            )
+                          }
+                        >
+                          <option value={NAME_CODE_POSITIONS.PREFIX}>Before the key (.b1)</option>
+                          <option value={NAME_CODE_POSITIONS.SUFFIX}>After the key (b1.)</option>
+                        </select>
+                      </div>
+                    </div>
                     <p className="field-hint">
-                      Defaults to a dot. Change it if <code>.</code> clashes with something else
-                      in your workflow — the name-only code becomes{' '}
-                      <code>{namePrefix}b1</code> instead of <code>.b1</code>.
+                      Defaults to a dot before the key. Change either if that clashes with
+                      something else in your workflow — the name-only code becomes{' '}
+                      <code>{nameCodeExample}</code> instead of <code>.b1</code>.
                     </p>
                   </div>
                 )}

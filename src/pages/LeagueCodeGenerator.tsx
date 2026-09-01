@@ -211,6 +211,7 @@ export default function LeagueCodeGenerator(): React.ReactElement {
             ignoreNoNumberPlayers: !options.includeNoNumberPlayers,
             codeStyle: options.codeStyle,
             nameCodePrefix: options.nameCodePrefix,
+            nameCodePosition: options.nameCodePosition,
           })
         );
       } catch (error) {
@@ -423,6 +424,7 @@ export default function LeagueCodeGenerator(): React.ReactElement {
         homePrefix=""
         awayPrefix=""
         namePrefix={options.nameCodePrefix}
+        namePosition={options.nameCodePosition}
         filename={`${league.replace(/\s+/g, '-').toLowerCase() || 'league'}-codes`}
         busy={building}
         generation={`${league}:${doneCount}`}

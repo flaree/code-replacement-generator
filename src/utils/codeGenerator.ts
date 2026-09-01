@@ -3,7 +3,7 @@
  * Generates Photo Mechanic code replacement files from squad data
  */
 
-import { CodeStyle } from '../constants/config';
+import { CodeStyle, NameCodePosition } from '../constants/config';
 
 export interface Player {
   number?: string | number;
@@ -38,14 +38,17 @@ export interface GenerateCodeParams {
   ignoreNoNumberPlayers?: boolean;
   /**
    * 'simple' (default) emits two rows per player: the full caption under the
-   * plain prefix code, and just the name under a `.`-prefixed one.
+   * plain code, and just the name under one with a mark attached (`.` by
+   * default, as a prefix or suffix — see `nameCodePrefix`/`nameCodePosition`).
    * 'columns' emits one row per player with several tab-separated fields, so
    * a Photo Mechanic template can pull different columns into different
    * metadata fields with `={code}#1=`, `={code}#2=`, etc.
    */
   codeStyle?: CodeStyle;
-  /** Prefix for the name-only code in 'simple' style, e.g. the "." in ".b1". Defaults to ".". */
+  /** Mark for the name-only code in 'simple' style, e.g. the "." in ".b1". Defaults to ".". */
   nameCodePrefix?: string;
+  /** Whether the mark goes before the delimiter (".b1") or after it ("b1."). Defaults to 'prefix'. */
+  nameCodePosition?: NameCodePosition;
 }
 
 export const generateCode = ({
@@ -68,8 +71,9 @@ export const generateCode = ({
   ignoreNoNumberPlayers,
   codeStyle = "simple",
   nameCodePrefix: rawNameCodePrefix = ".",
+  nameCodePosition = "prefix",
 }: GenerateCodeParams): string => {
-  // An emptied-out prefix would make the name-only code identical to the
+  // An emptied-out mark would make the name-only code identical to the
   // caption code, silently overwriting it — a dot is the safe fallback.
   const nameCodePrefix = rawNameCodePrefix || ".";
   const formatPlayer = (
@@ -182,9 +186,12 @@ export const generateCode = ({
           )}`
       ),
       "\n",
-      ...players.map(
-        (player) => `${nameCodePrefix}${delimiter}${number(player)}\t${player.name || "-"}`
-      ),
+      ...players.map((player) => {
+        const base = `${delimiter}${number(player)}`;
+        const nameCode =
+          nameCodePosition === "suffix" ? `${base}${nameCodePrefix}` : `${nameCodePrefix}${base}`;
+        return `${nameCode}\t${player.name || "-"}`;
+      }),
     ];
   };
 

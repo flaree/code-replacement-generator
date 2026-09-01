@@ -45,6 +45,14 @@ export const CODE_STYLES = {
 
 export type CodeStyle = typeof CODE_STYLES[keyof typeof CODE_STYLES];
 
+// Name Code Positions
+export const NAME_CODE_POSITIONS = {
+  PREFIX: 'prefix' as const,
+  SUFFIX: 'suffix' as const,
+};
+
+export type NameCodePosition = typeof NAME_CODE_POSITIONS[keyof typeof NAME_CODE_POSITIONS];
+
 // Types for Code Generation Options
 export interface CodeOptions {
   showInfo: boolean;
@@ -59,8 +67,10 @@ export interface CodeOptions {
   shouldChangeGoalkeeperStyle: boolean;
   includeNoNumberPlayers: boolean;
   codeStyle: CodeStyle;
-  /** Prefix put in front of the delimiter for the name-only code in 'simple' style, e.g. the "." in ".b1". */
+  /** Mark put next to the delimiter for the name-only code in 'simple' style, e.g. the "." in ".b1". */
   nameCodePrefix: string;
+  /** Whether that mark goes before the delimiter (".b1") or after it ("b1."). */
+  nameCodePosition: NameCodePosition;
 }
 
 // Default Code Generation Options
@@ -78,6 +88,7 @@ export const DEFAULT_CODE_OPTIONS: CodeOptions = {
   includeNoNumberPlayers: true,
   codeStyle: CODE_STYLES.SIMPLE,
   nameCodePrefix: '.',
+  nameCodePosition: NAME_CODE_POSITIONS.PREFIX,
 };
 
 // Sort Options
