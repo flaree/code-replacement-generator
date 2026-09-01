@@ -8,7 +8,7 @@ import {
   fetchFullSquadData,
 } from '../services/api';
 import { generateCode } from '../utils/codeGenerator';
-import { CodeOptions } from '../constants/config';
+import { CodeOptions, resolveCaptionFormat } from '../constants/config';
 
 export interface TeamSlot {
   club: Club | null;
@@ -153,7 +153,7 @@ export const useMatchFile = (options: CodeOptions): UseMatchFileReturn => {
       selectedTeam2: away.club?.name ?? '',
       delimiter1: homePrefix,
       delimiter2: awayPrefix,
-      selectedFormat: options.selectedFormat,
+      selectedFormat: resolveCaptionFormat(options),
       sortOption: options.sortOption,
       // The fixture block is in the file whenever there is something to put in
       // it. It used to be gated on the options panel being expanded, so

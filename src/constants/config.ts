@@ -31,11 +31,15 @@ export const PLAYER_NAME_FORMATS: string[] = [
   "{team} player {playerName}",
   "{playerName} ({team})",
   "{team} #{shirtNumber} {playerName}",
+  "{playerName} #{shirtNumber} of {team}",
   "{playerName}, {team}",
   "{playerName}",
   "{team} {playerName} #{shirtNumber}",
   "{playerName} - {team} ({shirtNumber})",
 ];
+
+/** Placeholders a caption format (built-in or custom) can use. */
+export const CAPTION_PLACEHOLDERS = ['{playerName}', '{team}', '{shirtNumber}', '{delimiter}'];
 
 // Code Styles
 export const CODE_STYLES = {
@@ -64,6 +68,10 @@ export interface CodeOptions {
   sortOption: string;
   formats: string[];
   selectedFormat: string;
+  /** A user-authored format, editable in the "Custom" box regardless of which format is active. */
+  customFormat: string;
+  /** When true, `customFormat` is used instead of `selectedFormat`. */
+  useCustomFormat: boolean;
   shouldChangeGoalkeeperStyle: boolean;
   includeNoNumberPlayers: boolean;
   codeStyle: CodeStyle;
@@ -72,6 +80,18 @@ export interface CodeOptions {
   /** Whether that mark goes before the delimiter (".b1") or after it ("b1."). */
   nameCodePosition: NameCodePosition;
 }
+
+/**
+ * The caption format actually used to generate a file.
+ *
+ * A blank custom box falls back to the last chosen preset rather than
+ * producing an empty caption — flipping the "Custom" radio on shouldn't wipe
+ * out the file before you've typed anything.
+ */
+export const resolveCaptionFormat = (options: CodeOptions): string =>
+  options.useCustomFormat && options.customFormat.trim()
+    ? options.customFormat
+    : options.selectedFormat;
 
 // Default Code Generation Options
 export const DEFAULT_CODE_OPTIONS: CodeOptions = {
@@ -84,6 +104,8 @@ export const DEFAULT_CODE_OPTIONS: CodeOptions = {
   sortOption: 'position',
   formats: PLAYER_NAME_FORMATS,
   selectedFormat: "{playerName} of {team}",
+  customFormat: '',
+  useCustomFormat: false,
   shouldChangeGoalkeeperStyle: false,
   includeNoNumberPlayers: true,
   codeStyle: CODE_STYLES.SIMPLE,

@@ -76,25 +76,39 @@ export const generateCode = ({
   // An emptied-out mark would make the name-only code identical to the
   // caption code, silently overwriting it — a dot is the safe fallback.
   const nameCodePrefix = rawNameCodePrefix || ".";
+  /**
+   * Fill in a format's placeholders, every occurrence of each.
+   *
+   * A curated preset only ever uses a placeholder once, but a user-authored
+   * custom format might repeat one (e.g. wanting the number twice) —
+   * `String.replace` with a plain string only swaps the first match, so this
+   * uses split/join instead to catch every occurrence.
+   */
+  const fillTemplate = (
+    template: string,
+    values: Record<string, string>
+  ): string =>
+    Object.entries(values).reduce(
+      (result, [token, value]) => result.split(token).join(value),
+      template
+    );
+
   const formatPlayer = (
-    player: Player, 
-    team: string, 
-    delimiter: string, 
+    player: Player,
+    team: string,
+    delimiter: string,
     shouldChangeGoalkeeperStyle: boolean
   ): string => {
+    const values = {
+      "{playerName}": player.name || "-",
+      "{team}": team || "-",
+      "{delimiter}": delimiter || "-",
+      "{shirtNumber}": String(player.number || "-"),
+    };
     if (shouldChangeGoalkeeperStyle && player.position === "Goalkeeper") {
-      const goalkeeperFormat = "{team}'s goalkeeper {playerName}";
-      return goalkeeperFormat
-        .replace("{playerName}", player.name || "-")
-        .replace("{team}", team || "-")
-        .replace("{delimiter}", delimiter || "-")
-        .replace("{shirtNumber}", String(player.number || "-"));
+      return fillTemplate("{team}'s goalkeeper {playerName}", values);
     }
-    return selectedFormat
-      .replace("{playerName}", player.name || "-")
-      .replace("{team}", team || "-")
-      .replace("{delimiter}", delimiter || "-")
-      .replace("{shirtNumber}", String(player.number || "-"));
+    return fillTemplate(selectedFormat, values);
   };
 
   /**

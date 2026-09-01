@@ -12,7 +12,12 @@ import {
   fetchLeagueClubs,
   getCacheInfo,
 } from '../services/api';
-import { CodeOptions, DEFAULT_CODE_OPTIONS, LEAGUE_CODES } from '../constants/config';
+import {
+  CodeOptions,
+  DEFAULT_CODE_OPTIONS,
+  LEAGUE_CODES,
+  resolveCaptionFormat,
+} from '../constants/config';
 
 /**
  * Wait before the next request, unless the last response came out of the API's cache.
@@ -201,7 +206,7 @@ export default function LeagueCodeGenerator(): React.ReactElement {
             selectedTeam2: '',
             delimiter1: prefix,
             delimiter2: '',
-            selectedFormat: options.selectedFormat,
+            selectedFormat: resolveCaptionFormat(options),
             sortOption: options.sortOption,
             showInfo: false,
             shouldShorten: options.shouldShorten,

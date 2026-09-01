@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CODE_STYLES, NAME_CODE_POSITIONS, CodeOptions } from '../constants/config';
+import { CAPTION_PLACEHOLDERS, CODE_STYLES, NAME_CODE_POSITIONS, CodeOptions } from '../constants/config';
 
 const STORAGE_KEY = 'code_generator_additional_options';
 
@@ -29,10 +29,11 @@ const renderFormat = (
   team: string,
   player: SamplePlayer
 ): string =>
-  format
-    .replace('{playerName}', player.name)
-    .replace('{team}', team)
-    .replace('{shirtNumber}', String(player.number));
+  [
+    ['{playerName}', player.name],
+    ['{team}', team],
+    ['{shirtNumber}', String(player.number)],
+  ].reduce((result, [token, value]) => result.split(token).join(value), format);
 
 /**
  * Everything about the fixture that isn't the two squads.
@@ -74,6 +75,8 @@ export default function FixtureDetails({
         additionalCodes: parsed.additionalCodes ?? previous.additionalCodes,
         sortOption: parsed.sortOption ?? previous.sortOption,
         selectedFormat: parsed.selectedFormat ?? previous.selectedFormat,
+        customFormat: parsed.customFormat ?? previous.customFormat,
+        useCustomFormat: parsed.useCustomFormat ?? previous.useCustomFormat,
         shouldChangeGoalkeeperStyle:
           parsed.shouldChangeGoalkeeperStyle ?? previous.shouldChangeGoalkeeperStyle,
         includeNoNumberPlayers:
@@ -100,6 +103,8 @@ export default function FixtureDetails({
           additionalCodes: options.additionalCodes,
           sortOption: options.sortOption,
           selectedFormat: options.selectedFormat,
+          customFormat: options.customFormat,
+          useCustomFormat: options.useCustomFormat,
           shouldChangeGoalkeeperStyle: options.shouldChangeGoalkeeperStyle,
           includeNoNumberPlayers: options.includeNoNumberPlayers,
           codeStyle: options.codeStyle,
@@ -162,22 +167,69 @@ export default function FixtureDetails({
                   <label
                     key={format}
                     className={`format-option ${
-                      options.selectedFormat === format ? 'format-option-checked' : ''
+                      !options.useCustomFormat && options.selectedFormat === format
+                        ? 'format-option-checked'
+                        : ''
                     }`}
                   >
                     <input
                       type="radio"
                       name="caption-format"
                       value={format}
-                      checked={options.selectedFormat === format}
-                      onChange={() => set('selectedFormat', format)}
+                      checked={!options.useCustomFormat && options.selectedFormat === format}
+                      onChange={() => {
+                        set('selectedFormat', format);
+                        set('useCustomFormat', false);
+                      }}
                     />
                     <span className="format-option-sample">
                       {renderFormat(format, sampleTeam, player)}
                     </span>
                   </label>
                 ))}
+                <label
+                  className={`format-option ${options.useCustomFormat ? 'format-option-checked' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="caption-format"
+                    checked={options.useCustomFormat}
+                    onChange={() => set('useCustomFormat', true)}
+                  />
+                  <span className="format-option-sample">Custom</span>
+                </label>
               </div>
+
+              {options.useCustomFormat && (
+                <div style={{ marginTop: 8 }}>
+                  <input
+                    id="fx-custom-format"
+                    type="text"
+                    className="input"
+                    value={options.customFormat}
+                    placeholder="{playerName} #{shirtNumber} of {team}"
+                    onChange={(e) => set('customFormat', e.target.value)}
+                  />
+                  <p className="field-hint">
+                    Build your own with{' '}
+                    {CAPTION_PLACEHOLDERS.map((token, index) => (
+                      <React.Fragment key={token}>
+                        {index > 0 && ', '}
+                        <code>{token}</code>
+                      </React.Fragment>
+                    ))}
+                    .{' '}
+                    {options.customFormat.trim() ? (
+                      <>
+                        Preview: &ldquo;{renderFormat(options.customFormat, sampleTeam, player)}
+                        &rdquo;
+                      </>
+                    ) : (
+                      'Leave it blank to fall back to the format selected above.'
+                    )}
+                  </p>
+                </div>
+              )}
             </fieldset>
 
             <div>
