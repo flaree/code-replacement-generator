@@ -7,6 +7,7 @@ const STORAGE_KEY = 'code_generator_additional_options';
 interface SamplePlayer {
   name: string;
   number: string | number;
+  position?: string;
 }
 
 interface FixtureDetailsProps {
@@ -33,6 +34,7 @@ const renderFormat = (
     ['{playerName}', player.name],
     ['{team}', team],
     ['{shirtNumber}', String(player.number)],
+    ['{position}', player.position || '-'],
   ].reduce((result, [token, value]) => result.split(token).join(value), format);
 
 /**
@@ -50,7 +52,7 @@ export default function FixtureDetails({
   const [open, setOpen] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const player = samplePlayer ?? { name: 'Dawson Devoy', number: 10 };
+  const player = samplePlayer ?? { name: 'Dawson Devoy', number: 10, position: 'Midfielder' };
   const namePrefix = options.nameCodePrefix || '.';
   const nameCodeExample =
     options.nameCodePosition === NAME_CODE_POSITIONS.SUFFIX ? `b1${namePrefix}` : `${namePrefix}b1`;

@@ -38,8 +38,14 @@ export const PLAYER_NAME_FORMATS: string[] = [
   "{playerName} - {team} ({shirtNumber})",
 ];
 
-/** Placeholders a caption format (built-in or custom) can use. */
-export const CAPTION_PLACEHOLDERS = ['{playerName}', '{team}', '{shirtNumber}', '{delimiter}'];
+/**
+ * Placeholders advertised for a caption format (built-in or custom).
+ *
+ * `{delimiter}` (the team's key letter) is still filled in by the generator
+ * for anyone with an older custom format that already uses it — it's just
+ * not offered here, since a key letter reads as noise in a caption sentence.
+ */
+export const CAPTION_PLACEHOLDERS = ['{playerName}', '{team}', '{shirtNumber}', '{position}'];
 
 // Code Styles
 export const CODE_STYLES = {

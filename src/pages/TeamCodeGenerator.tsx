@@ -190,7 +190,11 @@ export default function TeamCodeGenerator(): React.ReactElement {
           sampleTeam={home.club?.name}
           samplePlayer={
             home.players[0]
-              ? { name: home.players[0].name, number: home.players[0].shirtNumber ?? 1 }
+              ? {
+                  name: home.players[0].name,
+                  number: home.players[0].shirtNumber ?? 1,
+                  position: home.players[0].position,
+                }
               : null
           }
         />

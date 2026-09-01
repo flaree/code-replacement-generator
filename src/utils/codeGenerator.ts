@@ -104,6 +104,7 @@ export const generateCode = ({
       "{team}": team || "-",
       "{delimiter}": delimiter || "-",
       "{shirtNumber}": String(player.number || "-"),
+      "{position}": player.position || "-",
     };
     if (shouldChangeGoalkeeperStyle && player.position === "Goalkeeper") {
       return fillTemplate("{team}'s goalkeeper {playerName}", values);
