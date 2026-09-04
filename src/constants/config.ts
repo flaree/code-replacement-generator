@@ -63,6 +63,16 @@ export const NAME_CODE_POSITIONS = {
 
 export type NameCodePosition = typeof NAME_CODE_POSITIONS[keyof typeof NAME_CODE_POSITIONS];
 
+// How an initials code treats the team key: "btf", "tf", or both.
+export const INITIALS_DELIMITER_MODES = {
+  WITH: 'with' as const,
+  WITHOUT: 'without' as const,
+  BOTH: 'both' as const,
+};
+
+export type InitialsDelimiterMode =
+  typeof INITIALS_DELIMITER_MODES[keyof typeof INITIALS_DELIMITER_MODES];
+
 // Types for Code Generation Options
 export interface CodeOptions {
   showInfo: boolean;
@@ -85,6 +95,10 @@ export interface CodeOptions {
   nameCodePrefix: string;
   /** Whether that mark goes before the delimiter (".b1") or after it ("b1."). */
   nameCodePosition: NameCodePosition;
+  /** Adds a second set of codes keyed by a player's initials, e.g. "btf" for Tomas Frühwald. */
+  initialsCodes: boolean;
+  /** Whether an initials code carries the team key ("btf"), goes without it ("tf"), or both. */
+  initialsDelimiterMode: InitialsDelimiterMode;
 }
 
 /**
@@ -117,6 +131,8 @@ export const DEFAULT_CODE_OPTIONS: CodeOptions = {
   codeStyle: CODE_STYLES.SIMPLE,
   nameCodePrefix: '.',
   nameCodePosition: NAME_CODE_POSITIONS.PREFIX,
+  initialsCodes: false,
+  initialsDelimiterMode: INITIALS_DELIMITER_MODES.WITH,
 };
 
 // Sort Options

@@ -217,6 +217,8 @@ export default function LeagueCodeGenerator(): React.ReactElement {
             codeStyle: options.codeStyle,
             nameCodePrefix: options.nameCodePrefix,
             nameCodePosition: options.nameCodePosition,
+            initialsCodes: options.initialsCodes,
+            initialsDelimiterMode: options.initialsDelimiterMode,
           })
         );
       } catch (error) {

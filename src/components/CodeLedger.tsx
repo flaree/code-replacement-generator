@@ -12,6 +12,8 @@ interface Line {
   code: string;
   text: string;
   side: Side;
+  /** True when another line in the file claims the same code. */
+  duplicate: boolean;
 }
 
 /**
@@ -53,13 +55,13 @@ const parseLines = (
     return bySize.find((entry) => stripped.startsWith(entry.prefix))?.side ?? null;
   };
 
-  return code.split('\n').map((line) => {
+  const lines: Line[] = code.split('\n').map((line) => {
     if (!line.trim()) {
-      return { kind: 'blank' as const, code: '', text: '', side: null };
+      return { kind: 'blank' as const, code: '', text: '', side: null, duplicate: false };
     }
     const tab = line.indexOf('\t');
     if (tab === -1) {
-      return { kind: 'raw' as const, code: '', text: line, side: null };
+      return { kind: 'raw' as const, code: '', text: line, side: null, duplicate: false };
     }
     const codeCell = line.slice(0, tab);
     return {
@@ -67,8 +69,25 @@ const parseLines = (
       code: codeCell,
       text: line.slice(tab + 1),
       side: sideOf(codeCell),
+      duplicate: false,
     };
   });
+
+  // Photo Mechanic keeps one replacement per code, so a code claimed twice
+  // means one of the two silently never fires. Codes are compared as written:
+  // the file ships `Ref` and `ref` as deliberately separate entries.
+  const counts = new Map<string, number>();
+  lines.forEach((line) => {
+    if (line.kind === 'entry') {
+      counts.set(line.code, (counts.get(line.code) ?? 0) + 1);
+    }
+  });
+
+  return lines.map((line) =>
+    line.kind === 'entry' && (counts.get(line.code) ?? 0) > 1
+      ? { ...line, duplicate: true }
+      : line
+  );
 };
 
 /** Caption-column widths for the empty file, in px. A 0 marks a blank line. */
@@ -127,6 +146,13 @@ export default function CodeLedger({
     [lines]
   );
 
+  // Listed once each, in the order they first appear, so the warning names the
+  // codes rather than repeating one for every line that claims it.
+  const duplicateCodes = useMemo(
+    () => [...new Set(lines.filter((line) => line.duplicate).map((line) => line.code))],
+    [lines]
+  );
+
   const hasCode = code.trim().length > 0;
 
   return (
@@ -143,6 +169,27 @@ export default function CodeLedger({
         </div>
       </div>
 
+      {duplicateCodes.length > 0 && (
+        <div className="notice notice-signal ledger-notice" role="status">
+          <div>
+            <strong>
+              {duplicateCodes.length === 1
+                ? 'One code is used twice'
+                : `${duplicateCodes.length} codes are used more than once`}
+            </strong>{' '}
+            — Photo Mechanic keeps only one replacement per code, so the others never fire.
+            Marked below:{' '}
+            {duplicateCodes.map((duplicate, index) => (
+              <React.Fragment key={duplicate}>
+                {index > 0 && ', '}
+                <code>{duplicate}</code>
+              </React.Fragment>
+            ))}
+            .
+          </div>
+        </div>
+      )}
+
       <div className="ledger-body">
         {hasCode ? (
           <div key={generation} className="ledger-group">
@@ -156,6 +203,7 @@ export default function CodeLedger({
                   'ledger-line',
                   line.kind === 'blank' ? 'ledger-line-blank' : '',
                   line.side === null && line.kind === 'entry' ? 'ledger-line-meta' : '',
+                  line.duplicate ? 'ledger-line-duplicate' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}

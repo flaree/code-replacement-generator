@@ -3,7 +3,7 @@
  * Generates Photo Mechanic code replacement files from squad data
  */
 
-import { CodeStyle, NameCodePosition } from '../constants/config';
+import { CodeStyle, InitialsDelimiterMode, NameCodePosition } from '../constants/config';
 
 export interface Player {
   number?: string | number;
@@ -49,7 +49,28 @@ export interface GenerateCodeParams {
   nameCodePrefix?: string;
   /** Whether the mark goes before the delimiter (".b1") or after it ("b1."). Defaults to 'prefix'. */
   nameCodePosition?: NameCodePosition;
+  /** Appends a second set of codes keyed by initials rather than shirt number. */
+  initialsCodes?: boolean;
+  /** Whether those initials codes carry the team key, go without it, or both. Defaults to 'with'. */
+  initialsDelimiterMode?: InitialsDelimiterMode;
 }
+
+/**
+ * A player's initials, as used for an initials code.
+ *
+ * The first letter of each of the first two names — "Tomas Frühwald" becomes
+ * "tf". Accents are left alone rather than stripped, so "Öztürk" keeps its
+ * own first letter instead of silently becoming "z".
+ */
+export const playerInitials = (name: string): string =>
+  (name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.slice(0, 1))
+    .join("")
+    .toLowerCase();
 
 export const generateCode = ({
   squad1,
@@ -72,6 +93,8 @@ export const generateCode = ({
   codeStyle = "simple",
   nameCodePrefix: rawNameCodePrefix = ".",
   nameCodePosition = "prefix",
+  initialsCodes = false,
+  initialsDelimiterMode = "with",
 }: GenerateCodeParams): string => {
   // An emptied-out mark would make the name-only code identical to the
   // caption code, silently overwriting it — a dot is the safe fallback.
@@ -160,8 +183,14 @@ export const generateCode = ({
   const sortedSquad1 = sortPlayers(filteredSquad1);
   const sortedSquad2 = sortPlayers(filteredSquad2);
 
+  const number = (player: Player) => String(player.number || "-");
+
   /**
    * One squad's rows, in whichever style was asked for.
+   *
+   * `keyOf` decides what a player's code looks like, so the same shapes serve
+   * both the shirt-number codes and the initials ones — they only differ in
+   * the key, never in what the key types out.
    *
    * Columns mode packs everything a template might want (caption, name,
    * position, team, number) into one row per player, ordered so `#1` is
@@ -172,15 +201,14 @@ export const generateCode = ({
   const buildSquadLines = (
     players: Player[],
     team: string,
-    delimiter: string
+    delimiter: string,
+    keyOf: (_player: Player) => string
   ): string[] => {
-    const number = (player: Player) => String(player.number || "-");
-
     if (codeStyle === "columns") {
       return players.map((player) => {
         const caption = formatPlayer(player, team, delimiter, shouldChangeGoalkeeperStyle);
         return [
-          `${delimiter || "-"}${number(player)}`,
+          keyOf(player),
           caption,
           player.name || "-",
           player.position || "-",
@@ -193,7 +221,7 @@ export const generateCode = ({
     return [
       ...players.map(
         (player) =>
-          `${delimiter || "-"}${number(player)}\t${formatPlayer(
+          `${keyOf(player)}\t${formatPlayer(
             player,
             team,
             delimiter,
@@ -202,7 +230,7 @@ export const generateCode = ({
       ),
       "\n",
       ...players.map((player) => {
-        const base = `${delimiter}${number(player)}`;
+        const base = keyOf(player);
         const nameCode =
           nameCodePosition === "suffix" ? `${base}${nameCodePrefix}` : `${nameCodePrefix}${base}`;
         return `${nameCode}\t${player.name || "-"}`;
@@ -210,10 +238,57 @@ export const generateCode = ({
     ];
   };
 
+  const byNumber = (delimiter: string) => (player: Player) =>
+    `${delimiter || "-"}${number(player)}`;
+
+  /**
+   * The initials blocks, appended after the numbered ones.
+   *
+   * A player with no name has no initials to key on, so they are left out of
+   * this block rather than given a code that is just the team key.
+   */
+  const buildInitialsLines = (
+    players: Player[],
+    team: string,
+    delimiter: string
+  ): string[][] => {
+    if (!initialsCodes) {
+      return [];
+    }
+    const named = players.filter((player) => playerInitials(player.name));
+    if (named.length === 0) {
+      return [];
+    }
+
+    const blocks: string[][] = [];
+    if (initialsDelimiterMode === "with" || initialsDelimiterMode === "both") {
+      blocks.push(
+        buildSquadLines(
+          named,
+          team,
+          delimiter,
+          (player) => `${delimiter || "-"}${playerInitials(player.name)}`
+        )
+      );
+    }
+    if (initialsDelimiterMode === "without" || initialsDelimiterMode === "both") {
+      blocks.push(
+        buildSquadLines(named, team, delimiter, (player) => playerInitials(player.name))
+      );
+    }
+    return blocks;
+  };
+
+  const initialsBlocks = [
+    ...buildInitialsLines(sortedSquad1, selectedTeam1, delimiter1),
+    ...buildInitialsLines(sortedSquad2, selectedTeam2, delimiter2),
+  ];
+
   const code = [
-    ...buildSquadLines(sortedSquad1, selectedTeam1, delimiter1),
+    ...buildSquadLines(sortedSquad1, selectedTeam1, delimiter1, byNumber(delimiter1)),
     "\n",
-    ...buildSquadLines(sortedSquad2, selectedTeam2, delimiter2),
+    ...buildSquadLines(sortedSquad2, selectedTeam2, delimiter2, byNumber(delimiter2)),
+    ...initialsBlocks.flatMap((block) => ["\n", ...block]),
   ].join("\n");
 
   const additionalInfo = showInfo

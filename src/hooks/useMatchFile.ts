@@ -172,6 +172,8 @@ export const useMatchFile = (options: CodeOptions): UseMatchFileReturn => {
       codeStyle: options.codeStyle,
       nameCodePrefix: options.nameCodePrefix,
       nameCodePosition: options.nameCodePosition,
+      initialsCodes: options.initialsCodes,
+      initialsDelimiterMode: options.initialsDelimiterMode,
     });
   }, [home, away, homePrefix, awayPrefix, options]);
 

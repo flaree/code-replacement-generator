@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { CAPTION_PLACEHOLDERS, CODE_STYLES, NAME_CODE_POSITIONS, CodeOptions } from '../constants/config';
+import {
+  CAPTION_PLACEHOLDERS,
+  CODE_STYLES,
+  INITIALS_DELIMITER_MODES,
+  NAME_CODE_POSITIONS,
+  CodeOptions,
+} from '../constants/config';
+import { playerInitials } from '../utils/codeGenerator';
 
 const STORAGE_KEY = 'code_generator_additional_options';
 
@@ -56,6 +63,8 @@ export default function FixtureDetails({
   const namePrefix = options.nameCodePrefix || '.';
   const nameCodeExample =
     options.nameCodePosition === NAME_CODE_POSITIONS.SUFFIX ? `b1${namePrefix}` : `${namePrefix}b1`;
+  // Shown against a real squad member so the example is the code they'd type.
+  const initials = playerInitials(player.name) || 'tf';
 
   const set = <K extends keyof CodeOptions>(key: K, value: CodeOptions[K]): void => {
     setOptions((previous) => ({ ...previous, [key]: value }));
@@ -86,6 +95,8 @@ export default function FixtureDetails({
         codeStyle: parsed.codeStyle ?? previous.codeStyle,
         nameCodePrefix: parsed.nameCodePrefix ?? previous.nameCodePrefix,
         nameCodePosition: parsed.nameCodePosition ?? previous.nameCodePosition,
+        initialsCodes: parsed.initialsCodes ?? previous.initialsCodes,
+        initialsDelimiterMode: parsed.initialsDelimiterMode ?? previous.initialsDelimiterMode,
       }));
       setSaved(true);
     } catch {
@@ -112,6 +123,8 @@ export default function FixtureDetails({
           codeStyle: options.codeStyle,
           nameCodePrefix: options.nameCodePrefix,
           nameCodePosition: options.nameCodePosition,
+          initialsCodes: options.initialsCodes,
+          initialsDelimiterMode: options.initialsDelimiterMode,
         })
       );
       setSaved(true);
@@ -312,6 +325,60 @@ export default function FixtureDetails({
                     </span>
                   </span>
                 </label>
+              </div>
+            </div>
+
+            <div>
+              <span className="field-label">Extra codes by initials</span>
+              <div className="stack-sm">
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={options.initialsCodes}
+                    onChange={(e) => set('initialsCodes', e.target.checked)}
+                  />
+                  <span className="check-text">
+                    Add a second set keyed by initials
+                    <span className="check-sub">
+                      Appended at the end of the file, so <code>b{initials}</code> types the same
+                      caption as the player&rsquo;s shirt-number code — useful when you know the
+                      name but not the number.
+                    </span>
+                  </span>
+                </label>
+                {options.initialsCodes && (
+                  <div style={{ marginLeft: 25 }}>
+                    <label className="field-label" htmlFor="fx-initials-delimiter">
+                      Team key on these codes
+                    </label>
+                    <select
+                      id="fx-initials-delimiter"
+                      className="select"
+                      value={options.initialsDelimiterMode}
+                      onChange={(e) =>
+                        set(
+                          'initialsDelimiterMode',
+                          e.target.value as CodeOptions['initialsDelimiterMode']
+                        )
+                      }
+                    >
+                      <option value={INITIALS_DELIMITER_MODES.WITH}>
+                        Include it (b{initials})
+                      </option>
+                      <option value={INITIALS_DELIMITER_MODES.WITHOUT}>
+                        Leave it out ({initials})
+                      </option>
+                      <option value={INITIALS_DELIMITER_MODES.BOTH}>
+                        Both (b{initials} and {initials})
+                      </option>
+                    </select>
+                    <p className="field-hint">
+                      Initials collide far more easily than shirt numbers — two players sharing
+                      them, or a code already used elsewhere in the file. Anything doubled up is
+                      flagged above the file on the right.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
